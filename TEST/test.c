@@ -1,11 +1,31 @@
 #include "test.h"
 #include "kfifo.h"
+#include "led.h"
+#include "tmodem.h"
 
+extern char mReportMcuStatusPending;
 extern char mUart6FifoLost, mUart3FifoLost;
 extern char mCan1FifoLost, mCan2FifoLost;
 static char mStart = 0;
 static uint32_t mId = 0, mNumEvent=0;
 extern char mAndroidShutDownPending, mAndroidPower;
+int num=0;
+
+extern unsigned int flashdestination;
+extern char devNum;
+void update(void)
+{
+		flashdestination = APPLICATION_ADDRESS;
+		devNum=MCU_NUM;
+		num = 1;
+}
+
+void updateb(void)
+{
+		flashdestination = BOOTLOADER_ADDRESS;
+		devNum=BOOTLOADER_NUM;
+		num = 1;
+}
 
 void android_down(void)
 {
@@ -76,6 +96,7 @@ int send_can2_mesg1(uint32_t id)
 	}
 }
 
+/*
 void report_mesg_to_t8()
 {
 	u8 t;
@@ -88,14 +109,44 @@ void report_mesg_to_t8()
 		while(USART_GetFlagStatus(USART6,USART_FLAG_TC)!=SET);//等待发送结束
 	}		
 }
-
-char mCopyAndroidPower = 0;
+*/
+char mAndroidPowerBefore = 0;
+extern char mPACKETSIZE;
 
 void test_func(void)
 {
 	u8 t;
+	static int k=1;
+	static unsigned int times=0;
 	
+		//灯的亮灭来提示程序在正常跑动
+	if((++times) > 60000)
+	{
+		times = 0;
+		LED0=!LED0;
+		if((k >0) && (k++)>10) {
+			k = 0;
+			flashdestination = APPLICATION_ADDRESS;
+			devNum=MCU_NUM;
+			//num = 1; 
+			/*用于开机后，自动请求更新rom的功能*/
+		}
+	}	
+		
 	//aa bb 0x1 0x0f check1 check2
+	if(num == 1) { 
+		int rand;
+		num = 0;
+		//printf("%s: request update rom.bin.\r\n", __func__);
+		printf("%s:-\r\n", __func__);
+		rand = 3;
+		mPACKETSIZE = 40+rand*8;		
+		if(mPACKETSIZE > 128) mPACKETSIZE=128;
+		printf("rand=%d, mPACKETSIZE=%d\r\n", rand, mPACKETSIZE);
+		report_tmodem_packet0(UPDATE, mPACKETSIZE);
+		report_tmodem_packet0(ACK, 0);
+		report_tmodem_packet(CRC16);
+	}		
 	
 	/************************************
 	用于can CAN_Mode_LoopBack 模式的测试
@@ -105,42 +156,21 @@ void test_func(void)
 			if(mId>0x7ff) mId = 0;
 			for(t=0;t<1;t++) {
 				send_can1_mesg1(mId++);
+				/*用于往can1发送数据的功能*/
 			}
 		}
 	}
 
-	if(mAndroidPower != mCopyAndroidPower) {
-			mCopyAndroidPower = mAndroidPower;
-		  printf("mAndroidPower=%d\r\n", mAndroidPower);
+	if(mAndroidPower != mAndroidPowerBefore) {
+		mAndroidPowerBefore = mAndroidPower;
+		//just for printf mAndroidPower value, if change , printf it
+		printf("%s: mAndroidPower=%d\r\n", __func__, mAndroidPower);
 	}
-		
-	if(mUart3FifoLost) {
-		mUart3FifoLost = 0;
-		printf("uart3_fifo->lostBytes=%d\r\n", uart3_fifo->lostBytes);
-	}	
-	
-	if(mUart6FifoLost) {
-		mUart6FifoLost = 0;
-		printf("uart6_fifo->lostBytes=%d\r\n", uart6_fifo->lostBytes);
-	}	
-	
-	if(mCan1FifoLost) {
-		mCan1FifoLost = 0;
-		printf("can1_fifo->lostBytes=%d\r\n", can1_fifo->lostBytes);
-	}	
-	
-	if(mCan2FifoLost) {
-		mCan2FifoLost = 0;
-		printf("can2_fifo->lostBytes=%d\r\n", can2_fifo->lostBytes);
-	}				
+
 }
 
-void set_start(void)
-{
-	mStart = !mStart;
-}
-
-void set_num_event(uint32_t num)
+/*用于测试往can发数据的功能*/
+void set_can_num_event(uint32_t num)
 {
 	printf("%d\r\n", num);
 	if(num == mNumEvent)
@@ -155,4 +185,17 @@ void set_num_event(uint32_t num)
 	}
 }
 
+void report_mcu_status(void)
+{
+	mReportMcuStatusPending = 1;
+}
 
+extern char mDebugUartPrintfEnable;
+
+void enable_debug_tx(uint32_t num)
+{
+	mDebugUartPrintfEnable = num;
+}
+
+
+ 

@@ -1,24 +1,21 @@
 #include "car_event.h"
 #include "uart_command.h"
+#include "ioctr.h"
 
 struct list_head event_head;
 struct car_event* event_sending = NULL;
 long count_cmd = 0;
-long cmd_sended = 0;
-long numRecvCanCmd = 0;
+long numMcuSendedCmdToAndroid = 0;
+long numMcuReportToAndroid = 0;
 extern long num_can1_IRQ, can1_report_bytes;
 
-void get_can(void)
-{
-	printf("numRecvCanCmd=%ld\r\n", numRecvCanCmd);
-}
 
 /***************************************************************
 把数据加入到链表中去
 ****************************************************************/
 void add_event_to_list(struct car_event *event)
 {
-	numRecvCanCmd++;
+	numMcuReportToAndroid++;
 
 	if(event)
 		list_add_tail(&event->list, &event_head); //add to tail
@@ -92,7 +89,7 @@ struct car_event * check_event(struct car_event *event)
 解析can1队列中的数据，如果正确解析完整的一帧，返回CAN_EVENT
 并且cmd中保存了一帧的数据， cmd_len保存这帧数据的长度
 ****************************************************************/
-int phase_can1_fifo(void *fifo, char cmd[], int *cmd_len, int fifoClean)
+int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -102,7 +99,7 @@ int phase_can1_fifo(void *fifo, char cmd[], int *cmd_len, int fifoClean)
 	int ret; 
 	struct kfifo *mfifo = (struct kfifo *)fifo;
 	
-	if (fifoClean) state = HEAD1;
+//	if (fifoClean) state = HEAD1;
 
 LOOP:	
 	switch(state) {
@@ -187,7 +184,7 @@ LOOP:
 解析can2队列中的数据，如果正确解析完整的一帧，返回CAN_EVENT
 并且cmd中保存了一帧的数据， cmd_len保存这帧数据的长度
 ****************************************************************/
-int phase_can2_fifo(void *fifo, char cmd[], int *cmd_len, int fifoClean)
+int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -197,7 +194,7 @@ int phase_can2_fifo(void *fifo, char cmd[], int *cmd_len, int fifoClean)
 	int ret; 
 	struct kfifo *mfifo = (struct kfifo *)fifo;
 	
-	if (fifoClean) state = HEAD1;
+//	if (fifoClean) state = HEAD1;
 
 LOOP:	
 	switch(state) {
@@ -286,12 +283,14 @@ void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId)
 {
 	struct car_event* event = (struct car_event*)mymalloc(0, sizeof(struct car_event));
 	if(event == NULL) {
+		//if(kfifo_len(debug_fifo) < DEBUG_KFIFO_LEN/2)
 		printf("%s: mymalloc car_event fail!\r\n", __func__);
 		return;
 	}
 	//event->id = (unsigned long)event;
 	event->data = (char *)mymalloc(0, cmd_len);
 	if(event->data == NULL) {
+		//if(kfifo_len(debug_fifo) < DEBUG_KFIFO_LEN/2)
 		printf("%s: CAN1 mymalloc event->data fail!\r\n", __func__);
 		myfree(0, event);
 		return;
@@ -312,6 +311,38 @@ void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId)
 		event->ID = 0xff00 + *(cmd+CAN_CMD);
 	}
 	add_event_to_list(event);	
+}
+
+/*此函数只给handle_debug_msg_work调用，请勿随便调用！*/
+int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId)
+{
+	struct car_event* event = (struct car_event*)mymalloc(0, sizeof(struct car_event));
+	if(event == NULL) {
+		return -1;
+	}
+	//event->id = (unsigned long)event;
+	event->data = (char *)mymalloc(0, cmd_len);
+	if(event->data == NULL) {
+		myfree(0, event);
+		return -1;
+	}				
+	memcpy(event->data, cmd, cmd_len);				
+	event->data_len = cmd_len;
+	event->tim_count = 1;
+	event->state = result;
+	
+	if(hasId) {
+		event->ID = 0;
+		event->ID |= ((*(cmd+CAN_ID_0)) << 24);  
+		//必须根据协议修改
+		event->ID |= ((*(cmd+CAN_ID_1)) << 16);
+		event->ID |= ((*(cmd+CAN_ID_2)) << 8);
+		event->ID |=  (*(cmd+CAN_ID_3));	
+	} else {
+		event->ID = 0xff00 + *(cmd+CAN_CMD);
+	}
+	add_event_to_list(event);	
+	return 0;
 }
 
 /***************************************************************
@@ -340,41 +371,86 @@ void report_car_event(int result, const char* cmd, int cmd_len)
 				USART_SendData(USART6, cmd[t]);         //向串口6发送数据
 				while(USART_GetFlagStatus(USART6,USART_FLAG_TC)!=SET);//等待发送结束
 			}		
-
-			if(++cmd_sended%500000==0) {
-			//	printf("%ld,%ld, num_can1_IRQ=%ld, can1_report_bytes(%ld), %d\r\n", count_cmd, 
-			//cmd_sended, num_can1_IRQ, can1_report_bytes, kfifo_len(can1_fifo));
-				printf("sended=%ld\r\n", cmd_sended);
-				//printf("\r\n");
-			}
+			
+			numMcuSendedCmdToAndroid++;
 			break;
 		default:
 			break;
 	}	
 }
 
+void decode_can_fifo(struct kfifo *mfifo, char *cmd)
+{
+	int result = 0, len = 0;
+	
+	if(kfifo_len(mfifo) > 0)
+	{	
+		if(mfifo == can1_fifo) {
+			result = parse_can1_fifo(mfifo, cmd, &len);
+		} else if(mfifo == can2_fifo) {
+			result = parse_can2_fifo(mfifo, cmd, &len);
+		}
+		//处理can总线上获得的数据，解析成功后加入链表头
+		if(result == CAN_EVENT) {
+			make_event_to_list(cmd, len, result, 1);
+		} else {
+			printf("%s->r\r\n", __func__);
+		}
+	}		
+}
+
+long mMcuReportRepeatNum=0;
+
+void list_event_to_android(void)
+{
+	if(event_sending == NULL) 
+	{
+		event_sending = get_event_from_list();	
+		if(event_sending != NULL && mAndroidRunning == 1) { //只有android在运行的时候才往uart上报数据。
+			report_car_event(event_sending->state, event_sending->data, event_sending->data_len);		
+		}
+	} 
+	else 
+	{
+		if(event_sending->tim_count%(6) == 0 && mAndroidRunning == 1) {
+			mMcuReportRepeatNum++;
+			event_sending->tim_count++;
+			report_car_event(event_sending->state, event_sending->data, event_sending->data_len);	
+			printf("%s: id=%04x, tim_count=%d\r\n", __func__, event_sending->ID, event_sending->tim_count);	
+		}			
+	}		
+}
+
+void handle_upstream_work(char *cmd1, char *cmd2)
+{
+	decode_can_fifo(can1_fifo, cmd1);
+	decode_can_fifo(can2_fifo, cmd2);
+	list_event_to_android();
+}
+
+
 /********************************************************************
 给上报给android中的数据包struct car_event* event_sending中的tim_count
 字段计数，计数的值代表这个数据有多长时间没有得到android的回复包 ，
 如果超过0.5秒还没回复，就要重新发送这个包
+
+此部分代码的功能已集成到定时器2上，所以在main中不初始化Timer3_Init
 *********************************************************************/
 void TIM3_IRQHandler(void)
 { 		    		  			    
 	if(TIM_GetITStatus(TIM3,TIM_IT_Update)==SET)//溢出中断
 	{
-		if(event_sending != NULL)
-			event_sending->tim_count++;
+		//if(event_sending != NULL)
+		//	event_sending->tim_count++;
 		
 		TIM_SetCounter(TIM3,0);		//清空定时器的CNT
 		TIM_SetAutoreload(TIM3,2000);//恢复原来的设置		  
-		//2000=200ms中断一次   1000=100ms			
+		//2000=200ms中断一次	
 	}			
 	
 	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);  //清除中断标志位    
 }
 
-//使能定时器4,使能中断.
-//Timer3_Init(1000,(u32)sysclk*100-1);//分频,时钟为10K ,100ms中断一次
 void Timer3_Init(u16 arr,u16 psc)
 {
 	NVIC_InitTypeDef   NVIC_InitStructure;

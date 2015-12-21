@@ -11,6 +11,8 @@
 
 #define ACK2 1
 
+#define PACKET_ITEM 3
+
 /**********************************/
 //event type
 //0xaa 0xbb len mCmd d0~d3(id) ide rtr data0 data1 ... check01 check02
@@ -94,12 +96,13 @@
 #define UART_ACK			1
 #define UART_CMD			2
 
-#define CMD_CAN_EVENT  			0x01
-#define CMD_CAN_PERIODIC  	0x02
-#define CMD_RTC  						0x03
-#define CMD_ANDROID_STATE   0x04
-#define CMD_UPDATE_BIN  0x05
-#define CMD_OTHER						0x0f
+#define CMD_CAN_EVENT  				(0x13)
+#define CMD_CAN_PERIODIC  		(0x24)
+#define CMD_RTC  							(0x25)
+#define CMD_ANDROID_STATE   	(0x26)
+#define CMD_UPDATE_BIN      	(0x27)
+#define CMD_DEBUG     				(0x28)
+#define CMD_OTHER							(0x2f)
 /***********************************/
 
 #include "kfifo.h"
@@ -124,22 +127,17 @@ struct msg_periodic {
 	u8 n;  //n*100ms send msg to can. 
 	struct list_head list;
 };
-//return 0: do nothing
 
-//return 1: 接收到上报的命令所返回的确认信号,把发送成功的命令包从链表中去除
-//其中ack就是所上报发送的命令，ack_len就是命令的长度。
-
-//return 2:cmd接收到大屏发送过来的命令,cmd_len命令长度
-//ack为组织好的确认包，ack_len为确认包长度
-//发确认包ACK给大屏，并处理CMD
 
 extern uint32_t periodicNum;
 extern struct list_head periodic_head;
-extern int phase_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len, int fifoClean);
+extern int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len);
 extern int do_uart_cmd(int result, const char* cmd, int cmd_len);
 extern void send_cmd_ack(const char* ack, int ack_len);
-extern void phase_cmd_ack(const char* ack, int ack_len);
+extern void parse_cmd_ack(const char* ack, int ack_len);
 extern unsigned short calculate_crc(unsigned char *p, unsigned short n);
 extern void Timer2_Init(u16 arr,u16 psc);
 extern void list_periodic_msg(void);
+extern void handle_downstream_work(char* cmd, char *ack);
+extern int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId);
 #endif

@@ -5,18 +5,16 @@
 enum {
 	HEAD1 = 0, //MUST 0
 	HEAD2,
-//	HEAD3,
 	LEN,
 	CMD,
 	DATA,
 	CHECK,
-#ifdef CMD_ADD_END
-	END,
-#endif	
 };
 
 #define uint16 unsigned short
 #define uint8  unsigned char
+	
+#define DEBUG_KFIFO_LEN 1024	
 //#define uint32_t unsigned int
 //512  256  128
 #define UART_KFIFO_LEN 1024
@@ -28,6 +26,9 @@ enum {
 #define CMD_LEN 64
 #define is_power_of_2(x) ((x) != 0 && (((x) & ((x) - 1)) == 0))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+
+#define ENABLE_INT()	__set_PRIMASK(0)
+#define DISABLE_INT()	__set_PRIMASK(1)
 
 struct kfifo {
     void         *buffer;     /* the buffer holding the data */
@@ -53,6 +54,6 @@ extern struct kfifo* uart3_fifo;
 extern struct kfifo* uart6_fifo;
 extern struct kfifo* can1_fifo;
 extern struct kfifo* can2_fifo;
-
+extern struct kfifo* debug_fifo;
 #endif
 

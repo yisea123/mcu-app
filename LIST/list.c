@@ -1,5 +1,8 @@
 #include "list.h"
 
+/*
+初始化链表头
+*/
 void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;

@@ -3,13 +3,12 @@
 #include "usart.h"
 #include "malloc.h"
 
+struct kfifo* debug_fifo;
 struct kfifo* uart3_fifo;
 struct kfifo* uart6_fifo;
 struct kfifo* can1_fifo;
 struct kfifo* can2_fifo;
 
-#define ENABLE_INT()	__set_PRIMASK(0)
-#define DISABLE_INT()	__set_PRIMASK(1)
 
 void* memcpy(void *des, const void *src, unsigned int n)  
 {  
@@ -86,16 +85,18 @@ struct kfifo* kfifo_init(void *buffer, uint32_t size, void *f_lock)
  uint32_t __kfifo_get(struct kfifo *ring_buf, void * buffer, uint32_t size)
  {
 	   uint32_t len = 0;
-	
+		 /*用一个临时变量去保存结果，这样可省去关中断的代码*/
+		 uint32_t temp = 0;
+	   temp = ring_buf->in - ring_buf->out;
 	  /*******************************************************************************************************
 			比较size与fifo中存放的字节数哪个多，取最小的那个
 			(ring_buf->out & (ring_buf->size - 1)) 计算ring_buf->out到ring_buf->buffer的偏移量 范围0-ring_buf->size
 			ring_buf->buffer最后一个字节 到 ring_buf->out的距离，此距离与要读取的size比较，看谁小
 	    
 		*********************************************************************************************************/
-		 DISABLE_INT(); //fix bug....
-     size  = min(size, (ring_buf->in - ring_buf->out));  
-		 ENABLE_INT();	 
+		// DISABLE_INT(); //fix bug....
+     size  = min(size, temp);  
+		// ENABLE_INT();	 
 	 
      /* first get the data from fifo->out until the end of the buffer */
      len = min(size, ring_buf->size - (ring_buf->out & (ring_buf->size - 1)));
@@ -140,21 +141,6 @@ struct kfifo* kfifo_init(void *buffer, uint32_t size, void *f_lock)
      uint32_t ret;
  //    pthread_mutex_lock(ring_buf->f_lock);
      ret = __kfifo_get(ring_buf, buffer, size);
-     //buffer\u4e2d\u6ca1\u6709\u6570\u636e
-	   // add && (ring_buf->out > ring_buf->size) to fix bug.
-     if (ring_buf->in == ring_buf->out && (ring_buf->out > 5000*ring_buf->size)) {
-			  //关闭中断   在中断中会修改in的值，所以必须关闭中断
-//			 ring_buf->in = ring_buf->out = 0;
-				DISABLE_INT();
-			  if (ring_buf->in == ring_buf->out) {
-					// 再次检查是否相等
-			    //printf("i=%d o=%d, setZERO.\r\n", ring_buf->in, ring_buf->out);
-					ring_buf->in = ring_buf->out = 0;
-				}
-				ENABLE_INT();
-				//打开中断
-		 }
-			
 		 //if(ret > size) printf("%s->  ret=%d, size=%d, %d\r\n", __func__, ret, size, ring_buf->size);
 //    pthread_mutex_unlock(ring_buf->f_lock);
      return ret;
@@ -197,5 +183,23 @@ void printf_kfifo_info(struct kfifo *ring_buf)
 		 printf("kififo data len = %d", len);
 	   printf("********************");	 
 }
+
+/**
+		 就算in out益处，数据也不会丢失，可用char in, char out, size=128测试
+     if (ring_buf->in == ring_buf->out && (ring_buf->out > 5000*ring_buf->size)) {
+			  //关闭中断   在中断中会修改in的值，所以必须关闭中断
+//			 ring_buf->in = ring_buf->out = 0;
+				DISABLE_INT();
+			  if (ring_buf->in == ring_buf->out) {
+					// 再次检查是否相等
+			    //printf("i=%d o=%d, setZERO.\r\n", ring_buf->in, ring_buf->out);
+					ring_buf->in = ring_buf->out = 0;
+				}
+				ENABLE_INT();
+				//打开中断
+		 }
+
+*/
+
 
 

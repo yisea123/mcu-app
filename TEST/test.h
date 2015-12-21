@@ -6,7 +6,8 @@
 
 extern int send_can_mesg(void);
 extern int send_can_mesg1(uint32_t id);
-extern void report_mesg_to_t8(void);
+//extern void report_mesg_to_t8(void);
+extern void test_func(void);
 
 #endif
 
