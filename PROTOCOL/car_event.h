@@ -6,8 +6,9 @@
 #include "usart.h"
 #include "kfifo.h"
 
-#define CAN_NULL   0
-#define CAN_EVENT  1
+#define CAN_NULL   		0
+#define CAN_EVENT  		1
+#define DEBUG_EVETN		2
 
 struct car_event
 {

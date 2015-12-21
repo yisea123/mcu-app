@@ -565,7 +565,7 @@ int handle_update_bin(const char* packet_data, int len)
 								packets_received ++;
 								
 								if(0X1234 != RTC_ReadBackupRegister(RTC_BKP_DR3) && 
-									(devNum == MCU_NUM || devNum == SCU_NUM)) 
+									(devNum == MCU_NUM || devNum == SCU_NUM1)) 
 								{
 									/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 									printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
@@ -647,7 +647,7 @@ int handle_update_bin(const char* packet_data, int len)
 			//update mcu rom request
 			devNum = packet_data[5];
 			printf("%s: want to update dev num = %d\r\n", __func__, devNum);
-		  if(devNum == MCU_NUM || devNum == SCU_NUM) 
+		  if(devNum == MCU_NUM || devNum == SCU_NUM1) 
 			{
 				/*把需要更新的rom数据保存到不同的位置，根据不同的设备rom!*/
 				if(mScuRomUpdatePending == 0 && mMcuJumpAppPending == 0) 
@@ -696,7 +696,7 @@ int handle_update_bin(const char* packet_data, int len)
 	{
 		u32 src;
 		
-		if((devNum==MCU_NUM) || (devNum==SCU_NUM)) 
+		if((devNum==MCU_NUM) || (devNum==SCU_NUM1)) 
 		{
 			src = APPLICATION_ADDRESS;
 		}
@@ -761,7 +761,7 @@ void report_tmodem_packet0(char C, char C0)
 void check_if_need_to_erase()
 {
 	if(0X1234 != RTC_ReadBackupRegister(RTC_BKP_DR3) && 
-		(devNum == MCU_NUM || devNum == SCU_NUM)) 
+		(devNum == MCU_NUM || devNum == SCU_NUM1)) 
 	{
 		/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 		printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
@@ -779,14 +779,14 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 	{
 		//处理UPDATE 状态
 		case  UD0: 
-							 rand = 3;
-							 mPACKETSIZE = 40+rand*8;
-							 printf("%s: UD0 mPACKETSIZE=%d\r\n",__func__, mPACKETSIZE);
-		
-							 if(mPACKETSIZE > 128) mPACKETSIZE=128;
-							 report_tmodem_packet0(UPDATE, mPACKETSIZE);     
-							 report_tmodem_packet0(ACK, (packets_received & 0xff)); 
-							 report_tmodem_packet(CRC16);break;
+				 rand = 3;
+				 mPACKETSIZE = 40+rand*8;
+				 printf("%s: UD0 mPACKETSIZE=%d\r\n",__func__, mPACKETSIZE);
+
+				 if(mPACKETSIZE > 128) mPACKETSIZE=128;
+				 report_tmodem_packet0(UPDATE, mPACKETSIZE);     
+				 report_tmodem_packet0(ACK, (packets_received & 0xff)); 
+				 report_tmodem_packet(CRC16);break;
 		
 		case  UD1: report_tmodem_packet0(ACK, (packets_received & 0xff)); 
 							 report_tmodem_packet(CRC16); break;
@@ -801,7 +801,7 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 							 if(MCU_NUM == devNum) {
 								 printf("mMcuJumpAppPending=1\r\n");
 								 mMcuJumpAppPending=1; 
-							 } else if(SCU_NUM == devNum) {
+							 } else if(SCU_NUM1 == devNum) {
 								 handle_scu_rom_update();
 							 } else if(BOOTLOADER_NUM == devNum) {
 								 handle_booloader_rom_update();

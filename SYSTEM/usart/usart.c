@@ -3,6 +3,7 @@
 #include "kfifo.h"
 #include "led.h"
 #include "iwdg.h"
+#include "car_event.h"
 
 char mUar4Init=0, mUar1Init = 0, mUar2Init=0;
 /*************************************************************
@@ -39,7 +40,8 @@ int fputc(int ch, FILE *f)
 { 
 	u8 Res = (u8) ch;
 	
-	if((mCh++)%4000==0) {
+	if((mCh++)%4000==0) 
+	{
 		LED1 =!LED1;
 		IWDG_Feed();
 	}
@@ -91,7 +93,7 @@ static int report_debug_msg(unsigned char *mPrintf, unsigned char len)
 	cmd[4+t] = (unsigned char)(checkValue & 0xff);
 	cmd[5+t] = (unsigned char)((checkValue & 0xff00) >> 8);	
 	
-	if(0 != make_event_to_list0(cmd, 6+t, CAN_EVENT, 0)) {
+	if(0 != make_event_to_list0(cmd, 6+t, DEBUG_EVETN, 0)) {
 		kfifo_put(debug_fifo, mPrintf, len);
 		return -1;
 	}	
@@ -110,9 +112,11 @@ void handle_debug_msg_report(void)
 	if(kfifo_len(debug_fifo) > 0)
 	{ 
 		if(t >= 128) t=0;
+		
 		for(; t<128; t++) 
 		{
-			if((mDebugCount++)%4000==0) {
+			if((mDebugCount++)%4000==0) 
+			{
 				LED0 =!LED0;
 				IWDG_Feed();
 			}

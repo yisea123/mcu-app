@@ -363,31 +363,34 @@ LOOP:
 void parse_cmd_ack(const char* ack, int ack_len)
 {
 
-	if(event_sending != NULL) {
-#if ACK2	
-		//0xaa 0xbb 0x03(LEN) 0x80(CMD) c1 c2 check1 check2 -> ack message
-		if(ack_len == ACK_LEN) {
+	if(event_sending != NULL) 
+	{
+		if(ack_len == ACK_LEN) 
+		{
 			if(*(ack+ACK_D0) != event_sending->data[event_sending->data_len-2]
-					|| *(ack+ACK_D1) != event_sending->data[event_sending->data_len-1]) {
+					|| *(ack+ACK_D1) != event_sending->data[event_sending->data_len-1]) 
+			{
 				report_car_event(event_sending->state, 
 						event_sending->data, event_sending->data_len);	
 				//report again right now!
-						printf("%s: Get Error Ack From Android!\r\n", __func__);						
+				printf("%s: Get Error Ack From Android!\r\n", __func__);						
 				return;
 			}
 			del_event_from_list(event_sending);
-			if(event_sending->data != NULL) {
+			if(event_sending->data != NULL) 
+			{
 				myfree(0, event_sending->data);
 				myfree(0, event_sending);
 			}
 			event_sending = NULL;
-		} else {
+		} 
+		else 
+		{
 			printf("%s->ack_len(%d) != ACK_LEN\r\n", __func__, ack_len);
-		}		
-#else
-			
-#endif				
-	}	else {
+		}					
+	}
+	else 
+	{
 		printf("%s: event_sending=null\r\n", __func__);
 	}
 }
@@ -634,9 +637,7 @@ android在开机成功后，会下发指令：AA BB 02 04 01 85 B2
 		default:
 			break;
 	}
-/***********************************************************
-非固件更新状态返回NOMAL 正常模式下
-************************************************************/	
+
 	return NOMAL;
 }
 
@@ -644,24 +645,23 @@ void handle_downstream_work(char* cmd, char *ack)
 {
 	int result, cmd_len, ack_len, ret;
 
-	//do{
 	result = 0;
-	if(kfifo_len(uart6_fifo) > 0) {
+	if(kfifo_len(uart6_fifo) > 0) 
+	{
 		result = parse_uart6_fifo(uart6_fifo, cmd, &cmd_len, ack, &ack_len);
-		//解析uart6 fifo的数据
-		if(result == UART_CMD) {
+		if(result == UART_CMD) 
+		{
 			send_cmd_ack(ack, ack_len);
 			ret = do_uart_cmd(result, cmd, cmd_len);
-			if(ret != NOMAL) 
-				handle_tmodem_result(ret, ack, ack_len);
-		} else if(result == UART_ACK) {
+			
+			if(ret != NOMAL) handle_tmodem_result(ret, ack, ack_len);
+		} 
+		else if(result == UART_ACK) 
+		{
 			parse_cmd_ack(ack, ack_len);
 		}
 	}
-	//}while(result == UART_CMD || result == UART_ACK);
-	//处理大屏send过来的数据，命令包或者应答包
 	
-	//处理定期下发到can的链表  periodic head.
 	list_periodic_msg();
 }
 
