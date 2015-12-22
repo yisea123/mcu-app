@@ -45,10 +45,8 @@ uint16_t cpuGetFlashSize(void)
 {
 
    return (*(__IO u16*)(0x1FFF7A22));
-   // return (*(__IO u32*)(0x1FFF7A20))>>16;
 }
 
-/*RTC_Format_BCD RTC_Format_BIN*/
 void get_sys_time(uint32_t format, RTC_DateTypeDef* date, RTC_TimeTypeDef* time)
 {
 	RTC_GetDate(format, date);
@@ -66,7 +64,6 @@ void report_debug_to_android(void)
 {
 	int tmp;
 	for(tmp=0; tmp <14000; tmp++)
-	/*为了把所有的printf都上传到android*/
 	{
 		handle_debug_msg_report();
 		list_event_to_android();
@@ -81,14 +78,11 @@ void handle_pending_work(void)
 	static char mWriteBootTimesFlag = 1;
 	
 	if(((wd++)%40000) == 0)
-		/*此40000是对应看门狗的6秒，请勿随意修改！*/
 	{
 		IWDG_Feed();
 		LED1 =!LED1;
-		//printf("IWDG_Feed(), wd=%d\r\n", wd);
 	}	
 	
-	/*Android 下发命令超过多少条，就上报MCU数据结构的数据*/
 	if((lastNum != numRecvAndroidCanCmd) && ((numRecvAndroidCanCmd%500000) == 0)) 
 	{
 		lastNum = numRecvAndroidCanCmd;
@@ -149,7 +143,6 @@ void handle_pending_work(void)
 	}
 	
 	if(mWriteBootTimesFlag)
-		/*此处只运行一次*/
 	{
 		unsigned int numBoot=0;
 		RTC_DateTypeDef date;
@@ -200,15 +193,12 @@ void handle_pending_work(void)
 		
 		unsigned int preFlashdestination, mUpdate, tmp;
 	  static unsigned int flashdestination = 0x0800C000;
-		/*0x0800C000+800 记录mcu启动的次数*/
 		
-		/* 扇区3起始地址, 16 Kbytes */
 		FLASH_If_Erase_Sector(flashdestination);
 		
 		mUpdate = 0x5a5a;
 		preFlashdestination = flashdestination;
 		
-		/* 前8个BYTES 保存是否更新ROM的标志， 为0x5a5a， 0xa5a5时更新*/
 		flashdestination = STMFLASH_Write(flashdestination, &mUpdate, 1);
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
 		{
@@ -233,7 +223,6 @@ void handle_pending_work(void)
 			printf("%s: STMFLASH_Write sector 3 mUpdate1 fail !\r\n", __func__);
 		}	
 		
-		/* 接下来4个bytes 保存rom包的大小 */
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, &romSize, 1);
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
@@ -246,7 +235,6 @@ void handle_pending_work(void)
 			printf("%s: STMFLASH_Write sector 3 romSize = %d fail !\r\n", __func__, romSize);
 		}		
 		
-		/* 接下来4个bytes ，保存从android download下来的rom包被 放在flash中的哪个位置*/
 		tmp = APPLICATION_ADDRESS;
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, &tmp, 1);
@@ -260,7 +248,6 @@ void handle_pending_work(void)
 			printf("%s: STMFLASH_Write sector 3 rom addr = %X fail !\r\n", __func__, tmp);
 		}		
 		
-		/*接下来的16个bytes，保存MD5值*/
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, pData, 4);
 		if(flashdestination == preFlashdestination + 4*sizeof(unsigned int)) 
@@ -297,7 +284,6 @@ void handle_pending_work(void)
 			printf("%s:SCU_RESET_Force()\r\n", __func__);
 			report_debug_to_android();	
 			SCU_RESET_Force();
-			/* 重启之前修改标志跟rom大小 ！*/
 		}
 	}	
 }

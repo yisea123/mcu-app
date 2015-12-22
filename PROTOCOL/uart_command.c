@@ -3,7 +3,6 @@
 #include "ioctr.h"
 #include "rtc.h"
 
-//#include "dma.h"
 extern char mDebugUartPrintfEnable;
 extern void report_debug_to_android(void);
 extern void get_sys_time(uint32_t format, RTC_DateTypeDef* date, RTC_TimeTypeDef* time);
@@ -85,9 +84,6 @@ struct msg_periodic * get_msg()
 	return msg;
 }
 
-/*******************************************************************
-遍历周期消息的链表，获得每个消息的结构体，周期发送消息。
-********************************************************************/
 void list_periodic_msg()
 {
 	u8 res;
@@ -135,19 +131,14 @@ void list_periodic_msg()
 	//printf("car event count = %d, count_cmd=%ld\r\n", count, count_cmd);
 }
 
-/*******************************************************************
-根据数据的ID来确定数据是否需要被覆盖
-********************************************************************/
 struct msg_periodic * check_periodic_msg(uint32_t id)
 {
 	struct msg_periodic *msg0=NULL;
 	struct list_head *pos=NULL, *n=NULL;
 	
-//	printf("{\r\n");
 	list_for_each_safe(pos, n, &periodic_head) {
 		msg0 = (struct msg_periodic *)list_entry(pos, struct msg_periodic, list);
 		if(msg0->id == id) {
-			//printf("%s: msg0->id = 0x%04x\r\n", __func__, msg0->id);
 			return msg0;
 		}
 	}		
@@ -168,10 +159,6 @@ unsigned short calculate_crc(unsigned char *p, unsigned short n)
 	return crc;
 }
 
-/********************************************************************
-解析与android系统通讯的串口所收到的数据，如果收到反馈包，返回UART_ACK
-如果收到命令包返回UART_CMD，数据分别保存在ack 和cmd 中。
-*********************************************************************/
 int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len)
 {
 	static unsigned short recvCheck;
@@ -303,8 +290,7 @@ LOOP:
 				{
 					mfifo->acceptCmds++;
 					*cmd_len = state+data_len;
-#if ACK2	
-					//0xaa 0xbb 0x03 0x80 c1 c2 check1 check2 -> ack message
+
 					*(ack+ACK_HEAD1) = 0xaa;
 					*(ack+ACK_HEAD2) = 0xbb;
 					*(ack+ACK_DATA_LEN) = 0x03;
@@ -317,19 +303,7 @@ LOOP:
 					tmp = (unsigned char)((ackCheckValue & 0xff00) >> 8);		
 					*(ack+ACK_CHECK_1) = tmp;
 					*ack_len = ACK_LEN;
-#else
-					for(t=0; t<*cmd_len; t++) {
-						*(ack+t) = *(cmd+t);
-					}
-					
-					*(ack+CMD) |= 0x80; 
-					ackCheckValue = calculate_crc((uint8*)(ack+2), *cmd_len-4);							
-					tmp = (unsigned char)(ackCheckValue & 0xff);			
-					*(ack+*cmd_len-2) = tmp;
-					tmp = (unsigned char)((ackCheckValue & 0xff00) >> 8);		
-					*(ack+*cmd_len-1) = tmp;		
-					*ack_len = *cmd_len;
-#endif					
+				
 					state = HEAD1;
 					return UART_CMD;
 				}
@@ -338,7 +312,6 @@ LOOP:
 				printf("%s:errCmds=%d, isAck =%d, calCheck = %04x, recvCheck = %04x\r\n", 
 				__func__, mfifo->errorCmds, isAck, calCheck, recvCheck);		
 				
-				//printf("len = %d\r\n", (state+data_len));
 				for(t=0; t<(state+data_len); t++) {
 					printf("0X%02X ", *(cmd+t));
 				}				
@@ -356,10 +329,7 @@ LOOP:
 		return UART_NULL;
 }
 
-/***************************************************************
-收到android回复的反馈包，从链表中删除这个反馈中对应的命令包，释放
-内存，同时把event_sending置空。
-****************************************************************/
+
 void parse_cmd_ack(const char* ack, int ack_len)
 {
 
@@ -395,26 +365,17 @@ void parse_cmd_ack(const char* ack, int ack_len)
 	}
 }
 
-/***************************************************************
-								发送反馈包给android
-****************************************************************/
+
 void send_cmd_ack(const char* ack, int ack_len)
 {
 	u8 t;
-	//printf("%s->start\r\n", __func__); 
 	for(t=0;t<ack_len;t++) {
 		USART_ClearFlag(USART6,USART_FLAG_TC); 
-		//add for fix bug.
-		//USART_GetFlagStatus(USART6, USART_FLAG_TC);
-		USART_SendData(USART6, ack[t]);         //向串口6发送数据
-		while(USART_GetFlagStatus(USART6,USART_FLAG_TC)!=SET);//等待发送结束
+		USART_SendData(USART6, ack[t]);
+		while(USART_GetFlagStatus(USART6,USART_FLAG_TC)!=SET);
 	}		
-	//printf("%s->end\r\n", __func__);	
 }
 
-/***************************************************************
-收到android下发的命令包，对命令包进行解析，处理各种请求
-****************************************************************/
 int do_uart_cmd(int result, const char* cmd, int cmd_len)
 {
 	u8 res, len, mCmd, n, canx;
@@ -422,23 +383,8 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 	uint8_t  ide, rtr;
 	struct msg_periodic *msg = NULL;
 
-/*****************************************************************
-	BYTE:  cmd + PACKET_ITEM （低4位 用于区别android下发的命令包）
-	CMD_CAN_EVENT  			0x01
-	CMD_CAN_PERIODIC  	0x02
-	CMD_RTC  						0x03
-	CMD_ANDROID_STATE   0x04
-	CMD_UPDATE_BIN      0x05	
-	
-	1、添加发到can上的单次包
-	2、添加发到can上的（周期性动作）包
-	3、添加操作RTC的命令包，包括读取rtc跟设置rtc
-	4、添加android开机后，下发android完成开机的数据包，关机包
-	5、添加android 更新MCU 固件的数据包
-******************************************************************/
 	mCmd = *(cmd+PACKET_ITEM) & 0x0f;
 	
-	//0xaa 0xbb len mCmd d0~d3(id) ide rtr data0 data1 ... check01 check02
 	switch(mCmd)
 	{
 		case CMD_CAN_EVENT:
@@ -463,11 +409,7 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 			if(res);
 			else ;		
 		break;
-
-/*****************************************************
-android系统下发的周期性命令包
-0xaa 0xbb len mCmd periodic d0~d3(id) ide rtr data0 data1 .... check01 check02 
-******************************************************/							
+					
 		case CMD_CAN_PERIODIC:
 			numRecvAndroidCanCmd++;
 			canx = *(cmd+CAN_CMD_P) >> 4 & 0x03;  //bit4~bit5   (bit6 not use) (bit7 不能使用！)						
@@ -514,11 +456,7 @@ android系统下发的周期性命令包
 				}
 			}				
 		break;
-
-/*****************************************************
-android系统可设置 读取RTC的时间
-0xaa 0xbb len mCmd d0 d1 d2 d3... check01 check02
-******************************************************/				
+	
 		case CMD_RTC:
 			switch(*(cmd+4))
 			{
@@ -579,53 +517,32 @@ android系统可设置 读取RTC的时间
 			
 		break;
 			
-/*****************************************************
-android在开机成功后，会下发指令：AA BB 02 04 01 85 B2
-在关机成功后，会下发指令：AA BB 02 04 00 A4 A2
-******************************************************/
 		case CMD_ANDROID_STATE:
 			if(*(cmd+4)) {
 				printf("%s: android start success!\r\n", __func__);
-				//AA BB 02 04 01 85 B2
 				mAndroidRunning = 1;
-				/*开机之后log默认关闭调试串口的输出*/
-//				mDebugUartPrintfEnable = 0;				
-				
-				/*Android运行后，上传当前MCU ID 及软件版本*/
 				report_mcu_id_version();
 				report_mcu_software_version();
 			} else {
 				printf("%s: android stop!\r\n", __func__);
-				/*在关电前把log都上传到ANDROID*/
 				report_debug_to_android();
-				//AA BB 02 04 00 A4 A2 
 				mAndroidRunning = 0;
-				//关机命令起作用，android已关机，切断android电源。
 				power_android(0); // cut the power
 			}		
 			break;
-
-/***********************************************************
-0xaa 0xbb len 0x05 d0 d1 d2 d3... check01 check02		
-固件更新状态：在更新固件过程中返回TMODEM协议所要求的反馈			
-************************************************************/			
+	
 		case CMD_UPDATE_BIN:
 			
 			return handle_update_bin(cmd, len);
-
-/*用于上传MCU各个数据结构的数据到android中去，便于跟踪代码运行状态，
-		从而实现mcu的log通过android的中转，可上传到服务器的功能*/		
+	
 		case CMD_DEBUG:		
 			if(*(cmd+4) == 0x00) {
-				/*调试信息上传给Android*/
 				mDebugUartPrintfEnable = 0;
 			}
 			else if(*(cmd+4) == 0x01) {
-				/*调试信息输出到调试串口*/
 				mDebugUartPrintfEnable = 1;
 			}	
 			else if(*(cmd+4) == 0x02) {
-				/*上报MCU运行的数据状态*/
 				mReportMcuStatusPending = 1;
 			}
 				
@@ -666,12 +583,6 @@ void handle_downstream_work(char* cmd, char *ack)
 }
 
 
-/********************************************************************
-1、用于周期性命令包的时间记数，所有周期性命令包中的一个字段都指向了
-periodicNum全局变量，这个变量会每100MS自加加一次。
-2、给event_sending的tim_count字段计数
-3、给下载固件中的mTickCount计数
-*********************************************************************/
 void TIM2_IRQHandler(void)
 { 		    		  			    
 	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)//溢出中断
@@ -683,7 +594,6 @@ void TIM2_IRQHandler(void)
 		
 		if(session_begin)
 		{
-			/**41也就是4100毫秒 = 4.1秒，开始传输rom后，4.1秒内没有rom数据，重置tmodem状态*/
 			if(mTickCount++ > 71)	
 			{
 				reset_tmodem_status();
@@ -699,11 +609,7 @@ void TIM2_IRQHandler(void)
 	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);  //清除中断标志位    
 }
 
-/*********************************************************************
-使能定时器4,使能中断.
-Timer3_Init(1000,(u32)sysclk*100-1);//分频,时钟为10K ,100ms中断一次
-用于给全局变量 periodicNum 每100毫秒加一。
-***********************************************************************/
+
 void Timer2_Init(u16 arr,u16 psc)
 {
 	NVIC_InitTypeDef   NVIC_InitStructure;

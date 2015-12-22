@@ -7,89 +7,6 @@
 #include "rsa.h"
 #include "md5.h"
 
-/*****************************************************
-		0xaa 0xbb len mCmd d0 d1 d2 d3... check01 check02
-																									ACK     
-																									C  
-		AA BB 131  0x05 00 FF foo.c 102400 CRC1 CRC2
-																									ACK
-																									C
-		AA BB 131  0x05 01 FE Data[128] CRC1 CRC2
-																									ACK
-		AA BB 131  0x05 02 FD Data[128] CRC1 CRC2		
-																									ACK
-		.....																					
-																									ACK 
-		.....
-																									ACK 		
-		.....
-																									ACK 		
-		.....
-																									ACK 		
-		AA BB 2  0x05 EOT CRC1 CRC2
-																									ACK
-																									NAK
-		AA BB 2  0x05 EOT CRC1 CRC2
-																									ACK
-																									C
-		AA BB 131  cmd 00 FF NULL[128] CRC1 CRC2
-																									ACK
-******************************************************/
-
-
-/**********************************************************************
-		0xaa 0xbb len mCmd d0 d1 d2 d3... check01 check02
-本协议由Ymodem修改而来，适配我们android与MCU通讯时的协议，
-所以命名为Tmodem, 可先了解Ymodem再看此协议。
-
-经过测试，此Tmodem协议传输文件的稳定性很高，目前还没有发现哪种情况会导致                 
-文件丢失而误以为传输成功，要么传输成功，要么传输失败。                                   
-
-1、	android 下发更新rom请求： 更新由android系统触发                                      
-	  AA BB 2 0X05 UPDATE CRC1 CRC2                 ack                                    
-																									UPDATE PS
-																									ACK PR  packets_received=0 packetNum = 1 
-																									2、 mcu上报C命令                       
-																									C                   
-3、 anroid 下发rom的文件名，以及文件大小                              
-		AA BB 131  0x05 00 FF foo.c 102400 CRC1 CRC2                                         
-																									ack                 
-																									ACK PR  packets_received=1  packetNum = 2
-																									4、 mcu上报C命令                       
-																									C                   
-5、 android 连续下发rom文件数据，最后一包不足128bytes时填充0          
-		AA BB 131  0x05 01 FE Data[128] CRC1 CRC2                             	             
-																									ack
-																									ACK PR   packets_received=2  packetNum = 3
-		AA BB 131  0x05 02 FD Data[128] CRC1 CRC2		  							                         
-																									ack
-																									ACK PR   packets_received=3  packetNum = 4
-		.....                                                                                
-																									ack
-	                                                ACK PR   packets_received=4  packetNum = 5
-		.....                                                                                
-																									ack
-																									ACK PR   packets_received=5  packetNum = 6
-																									                                       
-6、 android 连续 下发两条end of transmission（EOT）包									                   
-		AA BB 2  0x05 EOT CRC1 CRC2                      
-																									ack                                    
-																									EOT_ACK    packetNum = 7               
-																									7、 MCU收到第一条EOT包回复NAK命令包		 
-																									NAK                          packetTotal = 4                
-8、 android下发第二条EOT包																						                   
-		AA BB 2  0x05 EOT CRC1 CRC2                      
-																									ack                                    
-																									EOT_ACK    packetNum = 8               
-																									9、 MCU回复C命令包										 
-																									C                                      
-10、android下发rom更新结束包，MCU收到 后更新成功！										                   
-		AA BB 131  cmd 00 FF NULL[128] CRC1 CRC2            
-																									ack		
-																									LAST_ACK    packetNum = 9              
-																									UPDATE_DONE                            
-***********************************************************************/
-
 char mPACKETSIZE = PACKET_SIZE;
 
 extern char mMcuJumpAppPending;
@@ -296,7 +213,7 @@ unsigned int FLASH_If_Erase_Sector(unsigned int StartSector)
 		}
   }
 	
-  FLASH_DataCacheCmd(ENABLE);	//FLASH擦除结束,开启数据缓存
+  FLASH_DataCacheCmd(ENABLE);
 	FLASH_Lock();//上锁 
   return (0);
 }
@@ -347,8 +264,6 @@ void reset_tmodem_status(void)
 	continuity = 0;
 	packets_received = 0;
 	flashdestination = APPLICATION_ADDRESS; 	
-	//在此处删除 session_begin=1时添加的定时器，同时用一个变量去标示此定时器
-	//是否设置，如果设置了，在此处删除此定时器。
 }
 
 static void cac_CA_num(char *num_ca)
@@ -356,7 +271,6 @@ static void cac_CA_num(char *num_ca)
 	if(*num_ca == 0) { 
 		*num_ca = 1, 
 		tmp0 = continuity;
-		//printf("%s: CA!\r\n", __func__);
 	} 
 	if((continuity - tmp0) == 1) {
 		if(*num_ca == 1) *num_ca = 2;
@@ -364,7 +278,6 @@ static void cac_CA_num(char *num_ca)
 	} else if(session_begin) { 
 		*num_ca = 1;
 		tmp0 = continuity;
-		//printf("%s: CA X X X CA !\r\n", __func__);
 	} else {
 		*num_ca = 0;
 	}	
@@ -375,18 +288,15 @@ static int cac_EOT_num(char *num_eot)
 	if(*num_eot == 0) { 
 		*num_eot = 1, 
 		tmp1 = continuity;
-		//printf("EOT!\r\n");
 		return UD3;
 	} 
 	if((continuity - tmp1) == 1) {
 		if(*num_eot == 1) *num_eot = 2;
-		//printf("EOT EOT!\r\n");
 		packets_received = 0;
 		return UD4;						
 	} else if(session_begin) { 
 		*num_eot = 1;
 		tmp1 = continuity;
-		//printf("EOT X X X EOT!\r\n");
 		return UD3;
 	} else {
 		*num_eot = 0;
@@ -499,14 +409,12 @@ int handle_update_bin(const char* packet_data, int len)
       {
 				/* Abort by sender */
 				case -1: //CA包
-					/* 用于计算有连续的两个CA命令从android下发过来*/
 					cac_CA_num(&num_ca);
 					if((num_ca) == 2 || (num_ca == 0))
 						reset_tmodem_status();//连续接受到两包CA停止更新
 					return UDS;
 					/* End of transmission */
 				case 0:	//EOT包				
-					/* 用于计算有连续的两个EOT命令从android下发过来*/
 					return cac_EOT_num(&num_eot);
 							
 					/* Normal packet */
@@ -522,7 +430,6 @@ int handle_update_bin(const char* packet_data, int len)
 						} else {
 							return E6;//ERR_PACKET_INDEX
 						}
-						//返回某个指令，让android停止更新。
 					} 
 					else 
 					{	 	
@@ -533,7 +440,6 @@ int handle_update_bin(const char* packet_data, int len)
 							{
 								if((packet_data[PACKET_SEQNO_INDEX] & 0xff) != 0) return E6;//erro file info! packet num error
 								else ;//printf("%s: file info right.\r\n", __func__);
-								/* Filename packet has valid data */
 								for (i = 0, file_ptr = (unsigned char *)(packet_data + PACKET_HEADER); (*file_ptr != 0) && (i < FILE_NAME_LENGTH);) {
 									FileName[i++] = *file_ptr++; 
 								}
@@ -545,7 +451,6 @@ int handle_update_bin(const char* packet_data, int len)
 								}
 								file_size[i++] = '\0';
 								Str2Int(file_size, &size);
-								/*RSA 脱密后， 真实的bin文件， size 只有一半, 并且最后16bytes为MD5值*/
 								size = size/2-LEN_MD5;
 								mRecvBytes = 0;
 								printf("%s: file size = %d, USE_FLASH_SIZE=%d\r\n",__func__, size, USER_FLASH_SIZE);
@@ -554,12 +459,10 @@ int handle_update_bin(const char* packet_data, int len)
 								if (size > (USER_FLASH_SIZE)) {
 									/* End session */
 									printf("%s: file size > flash size\r\n", __func__);
-									return E4; //rom过大，falsh不够保存 ERR_SIZE_EXT
+									return E4;
 								}
-								/*在此处添加一个定时器，用于计算android 在4秒钟之内是否 还在继续发送rom的packet包，如果没有，调用reset_tmodem_status（）
-								同时用一个变量去标示此定时器, 与uart_command.c中的代码，共用定时器2   TIM2_IRQHandler*/
+
 								mTickCount = 0;
-								/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
 								romSize = size;
 								session_begin = 1;
 								packets_received ++;
@@ -567,7 +470,6 @@ int handle_update_bin(const char* packet_data, int len)
 								if(0X1234 != RTC_ReadBackupRegister(RTC_BKP_DR3) && 
 									(devNum == MCU_NUM || devNum == SCU_NUM1)) 
 								{
-									/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 									printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
 									FLASH_If_Erase_Sector(flashdestination); 
 								}
@@ -581,11 +483,9 @@ int handle_update_bin(const char* packet_data, int len)
 								{
 									printf("%s: reset RTC_BKP_DR3 = 0!\r\n", __func__);
 									RTC_WriteBackupRegister(RTC_BKP_DR3,0x0000);
-									/*如果下载失败，再次进来时，就会进入擦除扇区的分支！*/
 								}
 								
 								targetSector = GetSector(flashdestination);
-								/*必须擦写扇区为0XFFFFFFFF*/
 								return UD1;
 							}     
 						
@@ -605,8 +505,6 @@ int handle_update_bin(const char* packet_data, int len)
 							if(packets_received==1) printf("%s: flash save addr:%x\r\n", __func__, flashdestination);
 							//buf_ptr = (unsigned char*)(packet_data+PACKET_HEADER);
 							buf_ptr = decode_packet((unsigned char*)(packet_data+PACKET_HEADER), packet_length);
-							
-							/*RSA 脱密后，  有效数据只有packet_length的一半*/
 							packet_length = packet_length/2;
 							mRecvBytes+=packet_length;
 							if(mRecvBytes > romSize)
@@ -624,14 +522,13 @@ int handle_update_bin(const char* packet_data, int len)
 									FLASH_If_Erase_Sector(flashdestination); 
 								}
 								mTickCount = 0;
-								/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
 								return UD2;					
 							} else {
 								/* End session */
 								printf("%s: STMFLASH_Write error\r\n", __func__);
 								printf("%s: des=0x%x, preDes=0x%x, packet_length=%d\r\n", __func__, flashdestination,
 											preFlashdestination, packet_length);
-								return E5; //MCU读写flash 出错，停止更新 ERR_FLASH_RW				
+								return E5;			
 							}
 						} else {
 							printf("session_begin=0, but android send rom data...\r\n");
@@ -649,7 +546,6 @@ int handle_update_bin(const char* packet_data, int len)
 			printf("%s: want to update dev num = %d\r\n", __func__, devNum);
 		  if(devNum == MCU_NUM || devNum == SCU_NUM1) 
 			{
-				/*把需要更新的rom数据保存到不同的位置，根据不同的设备rom!*/
 				if(mScuRomUpdatePending == 0 && mMcuJumpAppPending == 0) 
 				{
 					reset_tmodem_status();
@@ -671,18 +567,14 @@ int handle_update_bin(const char* packet_data, int len)
 				} 
 				else
 				{
-					/*上一次bootloader更新数据还没有处理完*/
 					return E7;
 				}
 			}
 			else 
 			{
-				/*APPLICATION_ADDRESS 数据还没被处理，不能更新，请等待。。。*/
 				return E7; 
-				/*后续添加android对E7的处理。 */
 			}
 		case -1:
-			/*传输非协议包 do nothing */
 		printf("%s: ERROR E0\r\n", __func__);
 			return E0;
 		
@@ -763,21 +655,17 @@ void check_if_need_to_erase()
 	if(0X1234 != RTC_ReadBackupRegister(RTC_BKP_DR3) && 
 		(devNum == MCU_NUM || devNum == SCU_NUM1)) 
 	{
-		/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 		printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
 		FLASH_If_Erase_Sector(APPLICATION_ADDRESS); 
 		RTC_WriteBackupRegister(RTC_BKP_DR3, 0x1234);
 	}	
 }
-/**
-处理更新MCU rom的命令包后，所返回的结果，根据Tmodem协议严格回答android， 否则将会导致更新出问题!
-**/
+
 void handle_tmodem_result(int result, const char* ack, int ack_len)
 {
 	int rand;
 	switch(result)
 	{
-		//处理UPDATE 状态
 		case  UD0: 
 				 rand = 3;
 				 mPACKETSIZE = 40+rand*8;
@@ -796,7 +684,6 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 		case  UD2: report_tmodem_packet0(ACK, (packets_received & 0xff)); break;
 		case  UD3: report_tmodem_packet(EOT_ACK); report_tmodem_packet(NAK); break;
 		case  UD5: report_tmodem_packet(LAST_ACK); report_tmodem_packet(UPDATE_DONE); 
-		/*可直接返回update done， 如果还没完成对flash数据的使用，android再次请求update时， 返回E7错误！*/
 							 printf("%s: UD5 devNum=%d\r\n", __func__, devNum);
 							 if(MCU_NUM == devNum) {
 								 printf("mMcuJumpAppPending=1\r\n");
@@ -806,9 +693,8 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 							 } else if(BOOTLOADER_NUM == devNum) {
 								 handle_booloader_rom_update();
 							 }
-							 break;//更新完成，请求重启！
+							 break;
 		
-		//处理错误信息
 		case 	E0:  printf("E0\r\n");
 		case  E1:  printf("E1\r\n");
 		case  E3:  report_tmodem_packet(ACK); printf("E3\r\n"); break;
@@ -826,12 +712,10 @@ void handle_scu_rom_update(void)
 {
 	printf("%s: \r\n", __func__);
 	mScuRomUpdatePending = 1;
-	/*copy APPLICATION_ADDRESS to SCU flash! 处理完之后*/
 	mScuRomUpdatePending = 0;
 	return;
 }
 
-/*bootloader 本应该在这里直接拷贝到0X08000000，为给更新scu做示范，使用一帧一帧更新的处理方式*/
 void handle_booloader_rom_update(void)
 {
 	printf("%s: \r\n", __func__);

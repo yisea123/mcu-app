@@ -7,14 +7,9 @@ extern char mAndroidPowerUpPending;
 extern char mDebugUartPrintfEnable;
 
 char mAndroidPower = 0;
-//此变量用于标示android电源是否供给
 
 char mAndroidRunning = 0;
-//此变量用于标示android系统是否跑起来了
 
-/**************************************************
-init all io which control t8 power
-****************************************************/
 void Init_io_ctrl(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure, GPIO_InitStructure1;
@@ -48,19 +43,11 @@ void Init_io_ctrl(void)
 	UP2TUNER_ANT_ON_OFF = 0;
 }
 
-/***************************************************
-power on or power off t8
-on=1 power on
-on=0 power off
-use power_android(1) in interrupt or recv CAN msg
-****************************************************/
-
 void power_android(uint32_t on)
 {
-	//printf("%s: on=%d\r\n", __func__, on);
 	mAndroidPower = on;
 	
-	if(on) //power on android
+	if(on)
 	{
 		UP2USB_PWR = 1;
 		UP2PS_USB_SYNC = 1;
@@ -70,7 +57,7 @@ void power_android(uint32_t on)
 
 		UP2PS_ENABLE = 1;	
 	}
-	else   //power off android
+	else
 	{
 		UP2PS_ENABLE = 0;	
 		
@@ -81,8 +68,6 @@ void power_android(uint32_t on)
 		UP2PS_3V3_SW_EN = 0;	
 		
 		mAndroidRunning = 0;//power off 	
-		
-		/*Android关机之后，log从调试串口中输出*/
 		mDebugUartPrintfEnable = 1;
 	}
 }
@@ -102,7 +87,6 @@ void handle_shutdown_android_request(void)
 	unsigned short checkValue;
 	
 	if(mAndroidShutDownPending) 
-	//set in interrupt or check shutdown ID comes from CAN 
 	{
 		mAndroidShutDownPending = 0;
 		printf("mAndroidShutDownPending\r\n");
@@ -115,13 +99,10 @@ void handle_shutdown_android_request(void)
 		cmd[5] = (unsigned char)((checkValue & 0xff00) >> 8);	
 		
 		make_event_to_list(cmd, 6, CAN_EVENT, 0);		
-		//插入关机命令
-		//如果关机命令在2.2秒内无作用，则强制断电。
 		Timer5_Init(22000, (u32)84*100-1); 
 	}		
 }
 
-//定时器3中断服务程序	 
 void TIM5_IRQHandler(void)
 { 		    		  	
 	TIM_Cmd(TIM5, DISABLE);		
@@ -134,8 +115,6 @@ void TIM5_IRQHandler(void)
 	TIM_ClearITPendingBit(TIM5,TIM_IT_Update);  //清除中断标志位   
 }
 
-//使能定时器5,使能中断.
-//如果2.2S内android没有回复关机成功的命令，则定时器强制关机
 void Timer5_Init(u16 arr,u16 psc)
 {
 	NVIC_InitTypeDef   NVIC_InitStructure;
