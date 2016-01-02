@@ -11,7 +11,7 @@ uart4 pc10 pc11	用于调试用
 uart6 pc6 pc7 	用于与android通讯
 uart3 PD8 PD9 	用于与4G通讯
 ***************************************************************/
-//如果使用ucos,则包括下面的头文件即可.
+
 #if SYSTEM_SUPPORT_UCOS
 #include "includes.h"					//ucos 使用	  
 #endif

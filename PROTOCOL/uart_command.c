@@ -10,14 +10,13 @@ static int report_rtc_msg(unsigned char *msg, unsigned char len);
 static int report_mcu_version_msg(unsigned char *msg, unsigned char len);
 void report_mcu_software_version(void);
 void report_mcu_id_version(void);
-
 long numRecvAndroidCanCmd = 0;
 uint32_t periodicNum = 0;
 char mReportMcuStatusPending=0;
 struct list_head periodic_head;
 
-static const unsigned short crctable[256]=
-{0x0000 , 0x1021 , 0x2042 , 0x3063 , 0x4084 , 0x50a5 , 0x60c6 , 0x70e7 , 0x8108 , 0x9129 ,
+static const unsigned short crctable[256]= {
+0x0000 , 0x1021 , 0x2042 , 0x3063 , 0x4084 , 0x50a5 , 0x60c6 , 0x70e7 , 0x8108 , 0x9129 ,
 0xa14a , 0xb16b , 0xc18c , 0xd1ad , 0xe1ce , 0xf1ef , 0x1231 , 0x0210 , 0x3273 , 0x2252 ,
 0x52b5 , 0x4294 , 0x72f7 , 0x62d6 , 0x9339 , 0x8318 , 0xb37b , 0xa35a , 0xd3bd , 0xc39c , 
 0xf3ff , 0xe3de , 0x2462 , 0x3443 , 0x0420 , 0x1401 , 0x64e6 , 0x74c7 , 0x44a4 , 0x5485 , 
@@ -42,15 +41,12 @@ static const unsigned short crctable[256]=
 0x0af1 , 0x1ad0 , 0x2ab3 , 0x3a92 , 0xfd2e , 0xed0f , 0xdd6c , 0xcd4d , 0xbdaa , 0xad8b , 
 0x9de8 , 0x8dc9 , 0x7c26 , 0x6c07 , 0x5c64 , 0x4c45 , 0x3ca2 , 0x2c83 , 0x1ce0 , 0x0cc1 , 
 0xef1f , 0xff3e , 0xcf5d , 0xdf7c , 0xaf9b , 0xbfba , 0x8fd9 , 0x9ff8 , 0x6e17 , 0x7e36 , 
-0x4e55 , 0x5e74 , 0x2e93 , 0x3eb2 , 0x0ed1 , 0x1ef0  
-};
+0x4e55 , 0x5e74 , 0x2e93 , 0x3eb2 , 0x0ed1 , 0x1ef0  };
 
 void add_msg_to_list(struct msg_periodic *msg)
 {
-	//list_add(&event->list, &periodic_head);
-	//count_cmd++;
 	if(msg)
-		list_add_tail(&msg->list, &periodic_head); //add to tail
+		list_add_tail(&msg->list, &periodic_head);
 }
 
 void del_msg(struct msg_periodic *msg)
@@ -89,18 +85,16 @@ void list_periodic_msg()
 	u8 res;
 	struct msg_periodic *msg=NULL;
 	struct list_head *pos=NULL, *n=NULL;
-	
-//	printf("{\r\n");
+
 	list_for_each_safe(pos, n, &periodic_head)
 	{
 		msg = (struct msg_periodic *)list_entry(pos, struct msg_periodic, list);
 		
-		if(*(msg->periodic) < msg->update) {//msg->periodic有可能溢出
+		if(*(msg->periodic) < msg->update) {
 			msg->update = *(msg->periodic);
 		}
 		
 		if((*(msg->periodic)- msg->update) >= msg->n) 
-		//周期由n指定，1为100MS
 		{
 			msg->update = *(msg->periodic);
 			if( msg->canx == 1) {
@@ -112,23 +106,10 @@ void list_periodic_msg()
 			}
 			
 			if(res);
-			else ;//printf("CAN1_Send_Msg2 error!\r\n");
-/*			
-			printf("send periodic msg to can.\r\n");
-			printf("msg->id=0x%04X, msg->update=%d:\r\n", msg->id, msg->update);
-			for(res=0; res<msg->len; res++) {
-				printf("0X%02X ", *(msg->msg+res));
-			}
-			printf("\r\n");			
-*/			
+			else ;
 		}
-//		printf("[event->id=%x, event->tim_count=%d]\r\n", event->id, event->tim_count);
-//		for(t=0; t<event->data_len; t++) {
-//			printf("0X%02X ", *(event->data+t));
-//		}		
-//		printf("\r\n");			
+	
 	}	
-	//printf("car event count = %d, count_cmd=%ld\r\n", count, count_cmd);
 }
 
 struct msg_periodic * check_periodic_msg(uint32_t id)
@@ -152,7 +133,7 @@ unsigned short calculate_crc(unsigned char *p, unsigned short n)
 	unsigned char da;
 	while(n--)
 	{
-		da = crc >> 8;		//
+		da = crc >> 8;
 		crc <<= 8;
 		crc ^= crctable[da^*p++];
 	}
@@ -170,7 +151,6 @@ int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_
 	int ret, tag, t;
 	
 	struct kfifo *mfifo = (struct kfifo *)fifo;
-	//if (fifoClean) state = HEAD1;
 
 LOOP:	
 	switch(state) {
@@ -227,12 +207,8 @@ LOOP:
 		case CMD:
 			ret = kfifo_get(mfifo, &data, 1);
 			if(ret == 1) {				
-				*(cmd+state) = data;
-#if ACK2				
+				*(cmd+state) = data;		
 				isAck = (data==0x80?1:0);
-#else
-				isAck = (data>>7) && 0x01;
-#endif
 				state++;
 			} else {
 				break;
@@ -389,7 +365,7 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 	{
 		case CMD_CAN_EVENT:
 			numRecvAndroidCanCmd++;
-			canx = *(cmd+CAN_CMD) >> 4 & 0x03;  //bit4-bit5=canx
+			canx = *(cmd+CAN_CMD) >> 4 & 0x03;
 			len = *(cmd+CAN_DATA_LEN)- (CAN_D0-CAN_CMD);	
 			id |= ((*(cmd+CAN_ID_0)) << 24); 
 			id |= ((*(cmd+CAN_ID_1)) << 16);
@@ -405,14 +381,13 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 			} else {
 				printf("can num error! num = %d\r\n", canx);
 			}
-			//printf("mCmd == 0x01->can num = %d\r\n", canx);
 			if(res);
 			else ;		
 		break;
 					
 		case CMD_CAN_PERIODIC:
 			numRecvAndroidCanCmd++;
-			canx = *(cmd+CAN_CMD_P) >> 4 & 0x03;  //bit4~bit5   (bit6 not use) (bit7 不能使用！)						
+			canx = *(cmd+CAN_CMD_P) >> 4 & 0x03;			
 			len = *(cmd+CAN_DATA_LEN_P)- (CAN_D0_P-CAN_CMD_P);
 			n = *(cmd+CAN_PERIODIC_P);
 			id |= ((*(cmd+CAN_ID_0_P)) << 24); 
@@ -430,7 +405,7 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 					myfree(0, msg->msg);
 					msg->msg = mymalloc(0, len);
 					if(msg->msg == NULL) {
-						//printf("%s: *** msg->msg mymalloc fail!\r\n", __func__);
+						printf("%s: *** msg->msg mymalloc fail!\r\n", __func__);
 						del_msg(msg);
 						myfree(0, msg);
 					} else {					
@@ -480,12 +455,7 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 					timeData[8] = mTime.RTC_H12;
 					len = 9;
 					report_rtc_msg(timeData, len);
-				  /*
-					printf("%02d-%02d-%02d [WEEK=%d]\r\n", mDate.RTC_Year, mDate.RTC_Month,
-									mDate.RTC_Date, mDate.RTC_WeekDay);
-					printf("%02d:%02d:%02d [%s]\r\n", mTime.RTC_Hours, mTime.RTC_Minutes,
-						mTime.RTC_Seconds, mTime.RTC_H12==RTC_H12_AM?"AM":"PM");						
-					*/
+
 					break;
 				
 				case 0x02:
@@ -493,15 +463,10 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 					hour = cmd[9]; min = cmd[10]; sec = cmd[11]; ampm = cmd[12];				
 					RTC_Set_Date(year, month, date, week);
 					RTC_Set_Time(hour, min, sec, ampm);	
-					/*
-					printf("%s: RTC_Set_Date. Y=%d, M=%d, D=%d, W=%d\r\n", 
-									__func__, year, month, date, week);		
-					printf("%s: RTC_Set_Time. h=%d, m=%d, s=%d, a=%d\r\n",
-									__func__, hour, min, sec, ampm);				
-					*/
+
 					break;
 				
-				case 0x03://RTC_Set_AlarmA
+				case 0x03:
 					printf("RTC_Set_AlarmA.\r\n");
 					week = cmd[5]; hour = cmd[6]; min = cmd[7]; sec = cmd[8];
 					RTC_Set_AlarmA(week, hour, min, sec);
@@ -518,12 +483,16 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 		break;
 			
 		case CMD_ANDROID_STATE:
-			if(*(cmd+4)) {
+			if(*(cmd+4)) 
+			{
 				printf("%s: android start success!\r\n", __func__);
 				mAndroidRunning = 1;
+				//mDebugUartPrintfEnable = 0;
 				report_mcu_id_version();
 				report_mcu_software_version();
-			} else {
+			}
+			else 
+			{
 				printf("%s: android stop!\r\n", __func__);
 				report_debug_to_android();
 				mAndroidRunning = 0;
@@ -536,13 +505,16 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 			return handle_update_bin(cmd, len);
 	
 		case CMD_DEBUG:		
-			if(*(cmd+4) == 0x00) {
+			if(*(cmd+4) == 0x00) 
+			{
 				mDebugUartPrintfEnable = 0;
 			}
-			else if(*(cmd+4) == 0x01) {
+			else if(*(cmd+4) == 0x01)
+			{
 				mDebugUartPrintfEnable = 1;
 			}	
-			else if(*(cmd+4) == 0x02) {
+			else if(*(cmd+4) == 0x02) 
+			{
 				mReportMcuStatusPending = 1;
 			}
 				
@@ -600,13 +572,11 @@ void TIM2_IRQHandler(void)
 			}
 		}
 		
-		TIM_SetCounter(TIM2,0);		//清空定时器的CNT
-		TIM_SetAutoreload(TIM2,1000);//恢复原来的设置		  
-		//100ms中断一次		
-		
+		TIM_SetCounter(TIM2,0);
+		TIM_SetAutoreload(TIM2,1000); 		
 	}			
 	
-	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);  //清除中断标志位    
+	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);
 }
 
 
@@ -615,23 +585,23 @@ void Timer2_Init(u16 arr,u16 psc)
 	NVIC_InitTypeDef   NVIC_InitStructure;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,ENABLE);  ///使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,ENABLE);
 
-	TIM_TimeBaseInitStructure.TIM_Prescaler=psc;  //定时器分频
-	TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up; //向上计数模式
-	TIM_TimeBaseInitStructure.TIM_Period=arr;   //自动重装载值
+	TIM_TimeBaseInitStructure.TIM_Prescaler=psc;
+	TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up;
+	TIM_TimeBaseInitStructure.TIM_Period=arr;
 	TIM_TimeBaseInitStructure.TIM_ClockDivision=TIM_CKD_DIV1; 
 	
-	TIM_TimeBaseInit(TIM2,&TIM_TimeBaseInitStructure);//初始化定时器3
+	TIM_TimeBaseInit(TIM2,&TIM_TimeBaseInitStructure);
 	
-	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE); //允许定时器3更新中断
-	TIM_Cmd(TIM2,ENABLE); //使能定时器4
+	TIM_ITConfig(TIM2,TIM_IT_Update,ENABLE);
+	TIM_Cmd(TIM2,ENABLE);
  
-	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;//外部中断3
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;//抢占优先级2
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;//子优先级0
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//使能外部中断通道
-  NVIC_Init(&NVIC_InitStructure);//配置NVIC
+	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
 	 							 
 }
 
@@ -681,17 +651,20 @@ static int report_mcu_version_msg(unsigned char *msg, unsigned char len)
   return 0;	
 }
 
-const char mSoftVer[] = {'X', 'i', 'a', 'o', 'P','e', 'n', 'g', ' ', '2', '0', '1', '5', '-', '1', '2', '-', '1', '2'};
+const char mSoftVer[] = {
+	'X', 'i', 'a', 'o', 'P','e', 'n', 'g', ' ', 
+	'2', '0', '1', '5', '-', '1', '2', '-', '1', '2', '-', 
+	'T', 'E', 'S', 'T'};
 	
 void report_mcu_software_version(void)
 {
-	unsigned char cmd[32], t;
+	unsigned char cmd[64], t;
 	/*软件版本*/
 	cmd[0] = 0x02;
 	
-	for(t=0; t<(sizeof(mSoftVer)/sizeof(char)); t++)
+	for(t=0; t<(sizeof(mSoftVer)/sizeof(char)); t++) {
 		cmd[t+1] = mSoftVer[t];
-	
+	}
 	cmd[t+1] = '\0';
 	printf("%s: mcu software version [%s]\r\n", __func__, cmd+1);
 	
@@ -710,6 +683,7 @@ void report_mcu_id_version(void)
 	memcpy(&cmd[9], &mcuID[2], 4);	
 	printf("%s: mcu ID [0X%X %8X %8X]\r\n", __func__, *((int*)(&cmd[1])), 
 		*((int*)(&cmd[5])), *((int*)(&cmd[9])));
+	
 	report_mcu_version_msg(cmd, 13);
 }
 

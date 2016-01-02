@@ -3,12 +3,12 @@
 ..\obj\uart_command.o: ..\KFIFO\kfifo.h
 ..\obj\uart_command.o: ..\PROTOCOL\uart_command.h
 ..\obj\uart_command.o: ..\SYSTEM\usart\usart.h
-..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\uart_command.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\uart_command.o: ..\USER\stm32f4xx_conf.h
 ..\obj\uart_command.o: ..\FWLIB\inc\stm32f4xx_adc.h
 ..\obj\uart_command.o: ..\USER\stm32f4xx.h
 ..\obj\uart_command.o: ..\CORE\core_cm4.h
-..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\uart_command.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\uart_command.o: ..\CORE\core_cmInstr.h
 ..\obj\uart_command.o: ..\CORE\core_cmFunc.h
 ..\obj\uart_command.o: ..\CORE\core_cm4_simd.h

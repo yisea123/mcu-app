@@ -4,7 +4,6 @@
 "..\obj\system_stm32f4xx.o"
 "..\obj\pending.o"
 "..\obj\led.o"
-"..\obj\beep.o"
 "..\obj\can.o"
 "..\obj\rtc.o"
 "..\obj\ioctr.o"

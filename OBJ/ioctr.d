@@ -3,7 +3,7 @@
 ..\obj\ioctr.o: ..\SYSTEM\sys\sys.h
 ..\obj\ioctr.o: ..\USER\stm32f4xx.h
 ..\obj\ioctr.o: ..\CORE\core_cm4.h
-..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\ioctr.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\ioctr.o: ..\CORE\core_cmInstr.h
 ..\obj\ioctr.o: ..\CORE\core_cmFunc.h
 ..\obj\ioctr.o: ..\CORE\core_cm4_simd.h
@@ -40,7 +40,7 @@
 ..\obj\ioctr.o: ..\LIST\list.h
 ..\obj\ioctr.o: ..\MALLOC\malloc.h
 ..\obj\ioctr.o: ..\SYSTEM\usart\usart.h
-..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\ioctr.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\ioctr.o: ..\KFIFO\kfifo.h
 ..\obj\ioctr.o: ..\PROTOCOL\uart_command.h
 ..\obj\ioctr.o: ..\KFIFO\kfifo.h

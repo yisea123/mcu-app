@@ -10,9 +10,9 @@ static char mStart = 0;
 static uint32_t mId = 0, mNumEvent=0;
 extern char mAndroidShutDownPending, mAndroidPower;
 int num=0;
-
 extern unsigned int flashdestination;
 extern char devNum;
+
 void update(void)
 {
 		flashdestination = APPLICATION_ADDRESS;
@@ -112,6 +112,7 @@ void report_mesg_to_t8()
 */
 char mAndroidPowerBefore = 0;
 extern char mPACKETSIZE;
+extern long numMcuReportToAndroid;
 
 void test_func(void)
 {
@@ -139,7 +140,7 @@ void test_func(void)
 		num = 0;
 		//printf("%s: request update rom.bin.\r\n", __func__);
 		printf("%s:-\r\n", __func__);
-		rand = 3;
+		rand = numMcuReportToAndroid%12;
 		mPACKETSIZE = 40+rand*8;		
 		if(mPACKETSIZE > 128) mPACKETSIZE=128;
 		printf("rand=%d, mPACKETSIZE=%d\r\n", rand, mPACKETSIZE);

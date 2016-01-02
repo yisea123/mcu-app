@@ -4,7 +4,7 @@
 ..\obj\test.o: ..\SYSTEM\sys\sys.h
 ..\obj\test.o: ..\USER\stm32f4xx.h
 ..\obj\test.o: ..\CORE\core_cm4.h
-..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\test.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\test.o: ..\CORE\core_cmInstr.h
 ..\obj\test.o: ..\CORE\core_cmFunc.h
 ..\obj\test.o: ..\CORE\core_cm4_simd.h
@@ -38,7 +38,7 @@
 ..\obj\test.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\test.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\test.o: ..\SYSTEM\usart\usart.h
-..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\test.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\test.o: ..\KFIFO\kfifo.h
 ..\obj\test.o: ..\PROTOCOL\uart_command.h
 ..\obj\test.o: ..\KFIFO\kfifo.h

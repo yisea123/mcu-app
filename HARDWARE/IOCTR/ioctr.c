@@ -54,8 +54,10 @@ void power_android(uint32_t on)
 		UP2PS_8V_SW_EN = 1;
 		UP2PS_5V_SW_EN = 1;
 		UP2PS_3V3_SW_EN = 1;	
-
-		UP2PS_ENABLE = 1;	
+		UP2TUNER_ANT_ON_OFF = 1;
+		
+		UP2PS_ENABLE = 1;
+		//mDebugUartPrintfEnable = 0;
 	}
 	else
 	{
@@ -66,6 +68,7 @@ void power_android(uint32_t on)
 		UP2PS_8V_SW_EN = 0;
 		UP2PS_5V_SW_EN = 0;
 		UP2PS_3V3_SW_EN = 0;	
+		UP2TUNER_ANT_ON_OFF = 0;
 		
 		mAndroidRunning = 0;//power off 	
 		mDebugUartPrintfEnable = 1;

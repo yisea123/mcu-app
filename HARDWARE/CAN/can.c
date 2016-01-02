@@ -3,18 +3,6 @@
 #include "delay.h"
 #include "usart.h"
 #include "uart_command.h"
-//////////////////////////////////////////////////////////////////////////////////	 
-//
-//ALIENTEK STM32F407开发板
-//CAN驱动 代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/7
-//版本：V1.0 
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	 
 
 //CAN初始化
 //tsjw:重新同步跳跃时间单元. @ref CAN_synchronisation_jump_width   范围: ; CAN_SJW_1tq~ CAN_SJW_4tq

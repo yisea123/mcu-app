@@ -4,9 +4,7 @@
 #include "delay.h"
 
 extern char mRequestSoftRestPending;
-
 struct list_head bootloader_event_head;
-
 struct bootloaderUpdateState bootloaderState;
 
 void add_b_event_to_list(struct bootloaderUpdateEvent *event)

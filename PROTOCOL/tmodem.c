@@ -8,18 +8,12 @@
 #include "md5.h"
 
 char mPACKETSIZE = PACKET_SIZE;
-
 extern char mMcuJumpAppPending;
-
 char mScuRomUpdatePending = 0;
-
 char mBootloaderUpdatePending = 0;
-
 char devNum=MCU_NUM,  session_begin=0, mTickCount=0;
-
 unsigned char md5[32];
 unsigned int romSize = 0;
-//static unsigned char buf_1024[1024] = { 0 };
 static char FileName[FILE_NAME_LENGTH], num_eot = 0, num_ca=0;
 static unsigned int packets_received = 0,  continuity=0, tmp0, tmp1;	
 static unsigned int targetSector=0;
@@ -356,6 +350,13 @@ static int phase_packet (const char *data, int len, int *length)
   return 0;
 }
 
+static void printf_md5(unsigned char *md5, int index)
+{
+	printf("%s:%02d--[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", 
+		__func__, index, md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], 
+		md5[9], md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 
+}
+
 static void catch_md5_from_packet(const unsigned char *buf_ptr, const int ps, const int k)
 {
 	static unsigned char *ptr;
@@ -370,26 +371,20 @@ static void catch_md5_from_packet(const unsigned char *buf_ptr, const int ps, co
 	{
 		memcpy(md5, buf_ptr+(ps-k), LEN_MD5);
 		md5[LEN_MD5] = '\0';
-		printf("%s:00--[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
-				md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], md5[9],
-				md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 
+		printf_md5(md5, 0);
 	}
 	else if(k == ps) 
 	{
 		memcpy(md5, buf_ptr, LEN_MD5);
 		md5[LEN_MD5] = '\0';
-		printf("%s:01--[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
-				md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], md5[9],
-				md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 							
+		printf_md5(md5, 1);						
 	}
 	else if(k > ps) 
 	{
 		memcpy(ptr, buf_ptr, LEN_MD5-(k-ps));
 		ptr = md5;
 		md5[LEN_MD5] = '\0';
-		printf("%s:02--[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
-				md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], md5[9],
-				md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 
+		printf_md5(md5, 2);	
 	}
 	else
 		printf("%s:error!\r\n", __func__);
@@ -408,13 +403,13 @@ int handle_update_bin(const char* packet_data, int len)
       switch (packet_length)
       {
 				/* Abort by sender */
-				case -1: //CA包
+				case -1:
 					cac_CA_num(&num_ca);
 					if((num_ca) == 2 || (num_ca == 0))
-						reset_tmodem_status();//连续接受到两包CA停止更新
+						reset_tmodem_status();
 					return UDS;
 					/* End of transmission */
-				case 0:	//EOT包				
+				case 0:		
 					return cac_EOT_num(&num_eot);
 							
 					/* Normal packet */
@@ -428,7 +423,7 @@ int handle_update_bin(const char* packet_data, int len)
 						if((packets_received & 0xff) - (packet_data[PACKET_SEQNO_INDEX] & 0xff) == 1) {
 							return E3;
 						} else {
-							return E6;//ERR_PACKET_INDEX
+							return E6;
 						}
 					} 
 					else 
@@ -661,16 +656,16 @@ void check_if_need_to_erase()
 	}	
 }
 
+extern long numMcuReportToAndroid;
 void handle_tmodem_result(int result, const char* ack, int ack_len)
 {
 	int rand;
 	switch(result)
 	{
 		case  UD0: 
-				 rand = 3;
-				 mPACKETSIZE = 40+rand*8;
+				 rand = numMcuReportToAndroid%12;
+				 mPACKETSIZE = 40+rand*8;	
 				 printf("%s: UD0 mPACKETSIZE=%d\r\n",__func__, mPACKETSIZE);
-
 				 if(mPACKETSIZE > 128) mPACKETSIZE=128;
 				 report_tmodem_packet0(UPDATE, mPACKETSIZE);     
 				 report_tmodem_packet0(ACK, (packets_received & 0xff)); 

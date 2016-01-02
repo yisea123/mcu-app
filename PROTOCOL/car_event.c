@@ -15,7 +15,7 @@ void add_event_to_list(struct car_event *event)
 	numMcuReportToAndroid++;
 
 	if(event)
-		list_add_tail(&event->list, &event_head); //add to tail
+		list_add_tail(&event->list, &event_head);
 }
 
 void del_event_from_list(struct car_event *event)
@@ -29,7 +29,6 @@ void del_event_from_list(struct car_event *event)
 		if(mevent == event && event != NULL) 
 		{ 
 				list_del(pos); 
-				//myfree(0, event); 
 		} 
 	 } 
 }
@@ -65,18 +64,16 @@ struct car_event * check_event(struct car_event *event)
 	struct car_event *event0 = NULL;
 	struct list_head *pos = NULL, *n = NULL;
 	
-//	printf("{\r\n");
 	list_for_each_safe(pos, n, &event_head) {
 		event0 = (struct car_event *)list_entry(pos, struct car_event, list);
 		if(event0->ID == event->ID && event0->data_len == event->data_len ) {
-			//printf("ID= %X\r\n", event0->ID);
 			return event0;
 		}
 	}		
 	return NULL;
 }
 
-int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
+int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -85,8 +82,6 @@ int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 	unsigned short checkValue;
 	int ret; 
 	struct kfifo *mfifo = (struct kfifo *)fifo;
-	
-//	if (fifoClean) state = HEAD1;
 
 LOOP:	
 	switch(state) {
@@ -150,7 +145,6 @@ LOOP:
 			for(i=0; i< data_len; i++) {
 				*(cmd+LEN+1+i) = mData[i];
 			}
-//0xaa 0xbb len mCmd d0~d3 ide rtr data0... check01 check02			
 			checkValue = calculate_crc((uint8*)cmd+LEN, data_len+1);
 			*(cmd+LEN+data_len+1) = (unsigned char)(checkValue & 0xff);
 			*(cmd+LEN+data_len+2) = (unsigned char)((checkValue & 0xff00) >> 8);
@@ -167,7 +161,7 @@ LOOP:
 		return CAN_NULL;
 }
 
-int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
+int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -176,8 +170,6 @@ int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 	unsigned short checkValue;
 	int ret; 
 	struct kfifo *mfifo = (struct kfifo *)fifo;
-	
-//	if (fifoClean) state = HEAD1;
 
 LOOP:	
 	switch(state) {
@@ -241,7 +233,6 @@ LOOP:
 			for(i=0; i< data_len; i++) {
 				*(cmd+LEN+1+i) = mData[i];
 			}
-//0xaa 0xbb len mCmd d0~d3 ide rtr data0... check01 check02			
 			checkValue = calculate_crc((uint8*)cmd+LEN, data_len+1);
 			*(cmd+LEN+data_len+1) = (unsigned char)(checkValue & 0xff);
 			*(cmd+LEN+data_len+2) = (unsigned char)((checkValue & 0xff00) >> 8);
@@ -405,15 +396,14 @@ void handle_upstream_work(char *cmd1, char *cmd2)
 
 void TIM3_IRQHandler(void)
 { 		    		  			    
-	if(TIM_GetITStatus(TIM3,TIM_IT_Update)==SET)//溢出中断
+	if(TIM_GetITStatus(TIM3,TIM_IT_Update)==SET)
 	{
 		
-		TIM_SetCounter(TIM3,0);		//清空定时器的CNT
-		TIM_SetAutoreload(TIM3,2000);//恢复原来的设置		  
-		//2000=200ms中断一次	
+		TIM_SetCounter(TIM3,0);
+		TIM_SetAutoreload(TIM3,2000);	
 	}			
 	
-	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);  //清除中断标志位    
+	TIM_ClearITPendingBit(TIM3,TIM_IT_Update); 
 }
 
 void Timer3_Init(u16 arr,u16 psc)
@@ -421,24 +411,23 @@ void Timer3_Init(u16 arr,u16 psc)
 	NVIC_InitTypeDef   NVIC_InitStructure;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);  ///使能TIM3时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3,ENABLE);
 
-	TIM_TimeBaseInitStructure.TIM_Prescaler=psc;  //定时器分频
-	TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up; //向上计数模式
-	TIM_TimeBaseInitStructure.TIM_Period=arr;   //自动重装载值
+	TIM_TimeBaseInitStructure.TIM_Prescaler=psc;
+	TIM_TimeBaseInitStructure.TIM_CounterMode=TIM_CounterMode_Up;
+	TIM_TimeBaseInitStructure.TIM_Period=arr;
 	TIM_TimeBaseInitStructure.TIM_ClockDivision=TIM_CKD_DIV1; 
 	
-	TIM_TimeBaseInit(TIM3,&TIM_TimeBaseInitStructure);//初始化定时器3
+	TIM_TimeBaseInit(TIM3,&TIM_TimeBaseInitStructure);
 	
-	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE); //允许定时器3更新中断
-	TIM_Cmd(TIM3,ENABLE); //使能定时器4
+	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE);
+	TIM_Cmd(TIM3,ENABLE);
  
-	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;//外部中断3
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;//抢占优先级3
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;//子优先级3
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//使能外部中断通道
-  NVIC_Init(&NVIC_InitStructure);//配置NVIC
-	 							 
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);	 							 
 }
 
 
