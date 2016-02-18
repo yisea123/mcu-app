@@ -3,6 +3,18 @@
 #include "delay.h"
 #include "usart.h"
 #include "uart_command.h"
+//////////////////////////////////////////////////////////////////////////////////	 
+//
+//ALIENTEK STM32F407开发板
+//CAN驱动 代码	   
+//正点原子@ALIENTEK
+//技术论坛:www.openedv.com
+//创建日期:2014/5/7
+//版本：V1.0 
+//版权所有，盗版必究。
+//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
+//All rights reserved									  
+////////////////////////////////////////////////////////////////////////////////// 	 
 
 //CAN初始化
 //tsjw:重新同步跳跃时间单元. @ref CAN_synchronisation_jump_width   范围: ; CAN_SJW_1tq~ CAN_SJW_4tq
@@ -16,6 +28,148 @@
 //返回值:0,初始化OK;
 //    其他,初始化失败;
 
+//示范配置例子，
+//设置滤波的id
+uint16_t Can1IdFiter[]={0x0320,0x0321,0x031D,0x042B,0x0420,0x0318,0x031C,0x03C0,0x0330,
+0x0345, 0x0338, 0x0348, 0x0307, 0x0325, 0x033A, 0x0336, 0x0393, 0x0340, 0x034B, 0x0353,
+0x0352, 0x031E, 0x0428, 0x0265, 0x004D, 0x031F, 0x0436, 
+0x0501,0x0502,0x0503,0x0504,0x0505,0x0506,0x0601,0x0602,0x0603,0x0604,0x0605,0x0606};
+
+uint16_t Can2IdFiter[]={0x0320,0x0321,0x031D,0x042B,0x0420,0x0318,0x031C,0x03C0,0x0330,
+0x0345, 0x0338, 0x0348, 0x0307, 0x0325, 0x033A, 0x0336, 0x0393, 0x0340, 0x034B, 0x0353,
+0x0352, 0x031E, 0x0428, 0x0265, 0x004D, 0x031F, 0x0436, 
+0x0501,0x0502,0x0503,0x0504,0x0505,0x0506,0x0601,0x0602,0x0603,0x0604,0x0605,0x0606};
+
+
+
+Filter_config Fitler_Config={
+         
+  (sizeof(Can1IdFiter)/sizeof(uint16_t)),//过滤can1的id个数，最多不操过4*14=56
+	 Can1IdFiter,//过滤的id号
+	(sizeof(Can2IdFiter)/sizeof(uint16_t)),//过滤can2的id个数，最多不操过4*14=56
+	 Can2IdFiter,
+	 TurnOn//滤波打开
+};
+
+//总共28个滤波器组，0-13分配给fifi0 ，14-27分配给fifi1
+//由于CAN2的滤波设置是根据CAN1来设置，所以初始化的时候滤波只需设置一次
+//滤波正确设置返回0；设置失败返回1；
+uint8_t CAN_FilterSet(Filter_config *fitler_cfg)
+{
+	uint8_t i,j=0;
+	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
+	if(fitler_cfg->filter_switch==TurnOn)//滤波器打开
+	{
+			CAN1->FMR |= 1;//过滤器组工作在初始化模式    
+			CAN1->FMR &= 0xffffc0ff;//can2的过滤器从14开始 
+			CAN1->FMR |= (14<<8); 
+			CAN1->FFA1R = 0x0fffc000;//0--13号过滤组关联到fifi0，14--27关联到fifi1
+			if(fitler_cfg->sum_can1_id<=56&&fitler_cfg->sum_can1_id<=56)
+			{	
+					for(i=0,j=0;i<fitler_cfg->sum_can1_id;i++)
+					{
+							CAN1->FM1R |= (1<<i);//过滤器组i的寄存器组工作在列表模式,一个过滤组设置四个标准幀滤波id  
+																	 //位宽为16位，2个32位分为四个16位寄存器，过滤                                                
+							CAN1->FA1R &= ~(1<<i);//禁用过滤组i
+								
+							CAN1->sFilterRegister[i].FR1 &= 0x00000000;   
+							CAN1->sFilterRegister[i].FR1 =(((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<21)&0xffff0000; 
+							if(++j==fitler_cfg->sum_can1_id)
+							 {
+									CAN1->sFilterRegister[i].FR1 |= ((((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+									CAN1->FA1R |= (1<<i);
+									break;
+							 }//使能过滤器组i			
+							fitler_cfg->can1_id++;
+							CAN1->sFilterRegister[i].FR1 |= ((((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+							if(++j==fitler_cfg->sum_can1_id)	{CAN1->FA1R |= (1<<i);break;}//使能过滤器组i	
+							fitler_cfg->can1_id++;  
+							CAN1->sFilterRegister[i].FR2 &= 0x00000000; 
+							CAN1->sFilterRegister[i].FR2 = (((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<21)&0xffff0000; 
+							if(++j==fitler_cfg->sum_can1_id)	
+							 {
+									 CAN1->sFilterRegister[i].FR2 |= ((((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+									 CAN1->FA1R |= (1<<i);
+									 break;
+							 }//使能过滤器组i	
+							fitler_cfg->can1_id++;    
+							CAN1->sFilterRegister[i].FR2 |= ((((uint32_t)(*fitler_cfg->can1_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+							if(++j==fitler_cfg->sum_can1_id)	{CAN1->FA1R |= (1<<i);break;}//使能过滤器组i						
+							fitler_cfg->can1_id++; 
+							
+							CAN1->FA1R |= (1<<i);//使能过滤器组i   
+					}
+					
+					
+					for(i=14,j=14;i<fitler_cfg->sum_can2_id+14;i++)
+					{
+							CAN1->FM1R |= (1<<i);//过滤器组i的寄存器组工作在列表模式  
+																	 //位宽为16位，2个32位分为四个16位寄存器，过滤                                                
+							CAN1->FA1R &= ~(1<<i);//禁用过滤组i
+								
+							CAN1->sFilterRegister[i].FR1 &= 0x00000000;  
+							CAN1->sFilterRegister[i].FR1 =(((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<21)&0xffff0000;
+							if(++j==fitler_cfg->sum_can2_id+14)	
+							 {
+								 CAN1->sFilterRegister[i].FR1 |= ((((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+								 CAN1->FA1R |= (1<<i);
+								 break;
+							 }//使能过滤器组i			
+							fitler_cfg->can2_id++;
+							CAN1->sFilterRegister[i].FR1 |= ((((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+							if(++j==fitler_cfg->sum_can2_id+14)	{CAN1->FA1R |= (1<<i);break;}//使能过滤器组i	
+							fitler_cfg->can2_id++; 
+							CAN1->sFilterRegister[i].FR2 &= 0x00000000;  					
+							CAN1->sFilterRegister[i].FR2 = (((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<21)&0xffff0000;
+							if(++j==fitler_cfg->sum_can2_id+14)	
+							 {
+									 CAN1->sFilterRegister[i].FR2 |= ((((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+									 CAN1->FA1R |= (1<<i);
+									 break;
+							 }//使能过滤器组i	
+							fitler_cfg->can2_id++;    
+							CAN1->sFilterRegister[i].FR2 |= ((((uint32_t)(*fitler_cfg->can2_id)|CAN_ID_STD|CAN_RTR_DATA)<<5)&0x0000ffff);
+							if(++j==fitler_cfg->sum_can2_id+14)	{CAN1->FA1R |= (1<<i);break;}//使能过滤器组i						
+							fitler_cfg->can2_id++; 
+							
+							CAN1->FA1R |= (1<<i);//使能过滤器组i   
+					}
+
+				}
+				else return 1;
+				
+				CAN1->FMR &= ~1; //过滤器正常工作
+	}	
+	else//接收所有id
+	{	
+		    /* 设置CAN 筛选器0 */
+				CAN_FilterInitStructure.CAN_FilterNumber = 0;		/*  筛选器序号，0-13，共14个滤波器 */
+				CAN_FilterInitStructure.CAN_FilterMode = CAN_FilterMode_IdMask;		/* 筛选器模式，设置ID掩码模式 */
+				CAN_FilterInitStructure.CAN_FilterScale = CAN_FilterScale_32bit;	/* 32位筛选器 */
+				CAN_FilterInitStructure.CAN_FilterIdHigh = 0x0000;					/* 掩码后ID的高16bit */
+				CAN_FilterInitStructure.CAN_FilterIdLow = 0x0000;					/* 掩码后ID的低16bit */
+				CAN_FilterInitStructure.CAN_FilterMaskIdHigh = 0x0000;				/* ID掩码值高16bit */
+				CAN_FilterInitStructure.CAN_FilterMaskIdLow = 0x0000;				/* ID掩码值低16bit */
+				CAN_FilterInitStructure.CAN_FilterFIFOAssignment = CAN_FIFO0;		/* 筛选器绑定FIFO 0 */
+				CAN_FilterInitStructure.CAN_FilterActivation = ENABLE;				/* 使能筛选器 */
+				CAN_FilterInit(&CAN_FilterInitStructure);
+					
+				/* 设置CAN筛选器序号14 ，CAN2筛选器序号 14--27，而CAN1的是0--13*/
+				CAN_FilterInitStructure.CAN_FilterNumber = 16;						/* 筛选器序号，14-27，共14个滤波器 */
+				CAN_FilterInitStructure.CAN_FilterMode = CAN_FilterMode_IdMask;		/* 筛选器模式，设置ID掩码模式 */
+				CAN_FilterInitStructure.CAN_FilterScale = CAN_FilterScale_32bit;	/* 32位筛选器 */
+				CAN_FilterInitStructure.CAN_FilterIdHigh = 0x0000;					/* 掩码后ID的高16bit */
+				CAN_FilterInitStructure.CAN_FilterIdLow = 0x0000;					/* 掩码后ID的低16bit */
+				CAN_FilterInitStructure.CAN_FilterMaskIdHigh = 0x0000;				/* ID掩码值高16bit */
+				CAN_FilterInitStructure.CAN_FilterMaskIdLow = 0x0000;				/* ID掩码值低16bit */
+				CAN_FilterInitStructure.CAN_FilterFIFOAssignment = CAN_FIFO1;		/*  筛选器绑定FIFO 1 */
+				CAN_FilterInitStructure.CAN_FilterActivation = ENABLE;				/* 使能筛选器 */
+				CAN_FilterInit(&CAN_FilterInitStructure);	
+	  }
+    return 0;
+
+}
+
 u16 CAN1_RX_STA=0;
 
 u8 CAN1_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
@@ -23,26 +177,26 @@ u8 CAN1_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
 
   	GPIO_InitTypeDef GPIO_InitStructure; 
 	  CAN_InitTypeDef        CAN_InitStructure;
-  	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
+//  	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
 #if CAN1_RX0_INT_ENABLE 
    	NVIC_InitTypeDef  NVIC_InitStructure;
 #endif
     //使能相关时钟
-	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);//使能PORTA时钟	                   											 
+	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能PORTA时钟	                   											 
 
   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);//使能CAN1时钟	
 	
     //初始化GPIO
-	  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11| GPIO_Pin_12;
+	  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9| GPIO_Pin_8;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
-    GPIO_Init(GPIOA, &GPIO_InitStructure);//初始化PA11,PA12
+    GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化PA11,PA12
 	
 	  //引脚复用映射配置
-	  GPIO_PinAFConfig(GPIOA,GPIO_PinSource11,GPIO_AF_CAN1); //GPIOA11复用为CAN1
-	  GPIO_PinAFConfig(GPIOA,GPIO_PinSource12,GPIO_AF_CAN1); //GPIOA12复用为CAN1
+	  GPIO_PinAFConfig(GPIOB,GPIO_PinSource9,GPIO_AF_CAN1); //GPIOA11复用为CAN1
+	  GPIO_PinAFConfig(GPIOB,GPIO_PinSource8,GPIO_AF_CAN1); //GPIOA12复用为CAN1
 	  
   	//CAN单元设置
 		CAN_DeInit(CAN1); //lex
@@ -60,6 +214,7 @@ u8 CAN1_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
   	CAN_Init(CAN1, &CAN_InitStructure);   // 初始化CAN1 
     
 		//配置过滤器
+/*		
  	  CAN_FilterInitStructure.CAN_FilterNumber=0;	  //过滤器0
   	CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask; 
   	CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_32bit; //32位 
@@ -70,6 +225,8 @@ u8 CAN1_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
    	CAN_FilterInitStructure.CAN_FilterFIFOAssignment=CAN_Filter_FIFO0;//过滤器0关联到FIFO0
   	CAN_FilterInitStructure.CAN_FilterActivation=ENABLE; //激活过滤器0
   	CAN_FilterInit(&CAN_FilterInitStructure);//滤波器初始化
+*/
+		CAN_FilterSet(&Fitler_Config);
 		
 #if CAN1_RX0_INT_ENABLE
 	
@@ -249,7 +406,7 @@ u8 CAN2_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
 
   	GPIO_InitTypeDef GPIO_InitStructure; 
 	  CAN_InitTypeDef        CAN_InitStructure;
-  	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
+//  	CAN_FilterInitTypeDef  CAN_FilterInitStructure;
 #if CAN2_RX0_INT_ENABLE 
    	NVIC_InitTypeDef  NVIC_InitStructure;
 #endif
@@ -260,7 +417,7 @@ u8 CAN2_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
   	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1 | RCC_APB1Periph_CAN2, ENABLE);//使能CAN2时钟	
 	
     //初始化GPIO
-	  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12| GPIO_Pin_13; 
+	  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5| GPIO_Pin_6; 
 	  //GPIO_Pin_5 GPIO_Pin_6| GPIO_Pin_12 GPIO_Pin_13;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//复用功能
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
@@ -269,8 +426,8 @@ u8 CAN2_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
     GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化PA11,PA12
 	
 	  //引脚复用映射配置
-	  GPIO_PinAFConfig(GPIOB, GPIO_PinSource12, GPIO_AF_CAN2); //GPIOA5复用为CAN2
-	  GPIO_PinAFConfig(GPIOB, GPIO_PinSource13, GPIO_AF_CAN2); //GPIOA12复用为CAN2
+	  GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_CAN2); //GPIOA5复用为CAN2
+	  GPIO_PinAFConfig(GPIOB, GPIO_PinSource6, GPIO_AF_CAN2); //GPIOA12复用为CAN2
 	  
   	//CAN单元设置
 		CAN_DeInit(CAN2);
@@ -293,7 +450,7 @@ u8 CAN2_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
 		//配置过滤器 是通过can1来设置的，其他工作模式，波特率等可以各自设置
 		//有两个can控制器，can1主， can2从，每个控制器有三个发送邮箱，两个fifo
 		//每个fifo有三个接收邮箱。
- 	  CAN_FilterInitStructure.CAN_FilterNumber=16;	  //过滤器0   一定要大于14
+/* 	  CAN_FilterInitStructure.CAN_FilterNumber=16;	  //过滤器0   一定要大于14
   	CAN_FilterInitStructure.CAN_FilterMode=CAN_FilterMode_IdMask; 
   	CAN_FilterInitStructure.CAN_FilterScale=CAN_FilterScale_32bit; //32位 
   	CAN_FilterInitStructure.CAN_FilterIdHigh=0x0000;////32位ID  0x0000 lex change
@@ -303,7 +460,7 @@ u8 CAN2_Mode_Init(u8 tsjw,u8 tbs2,u8 tbs1,u16 brp,u8 mode)
    	CAN_FilterInitStructure.CAN_FilterFIFOAssignment=CAN_Filter_FIFO1;//过滤器0关联到FIFO0  //CAN_Filter_FIFO0
   	CAN_FilterInitStructure.CAN_FilterActivation=ENABLE; //激活过滤器0
   	CAN_FilterInit(&CAN_FilterInitStructure);//滤波器初始化
-		
+*/		
 #if CAN2_RX1_INT_ENABLE
 	
 	  CAN_ITConfig(CAN2, CAN_IT_FMP1/*|CAN_IT_FF1|CAN_IT_FOV1*/, ENABLE);//FIFO1消息挂号中断允许.		    //CAN_IT_FMP0 

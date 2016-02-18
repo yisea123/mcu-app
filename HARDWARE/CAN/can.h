@@ -2,6 +2,17 @@
 #define __CAN_H	 
 #include "sys.h"	    
 
+#define TurnOn   0  //滤波器打开
+#define TurnOff  1  //滤波器关闭
+
+typedef struct {
+    uint8_t sum_can1_id;//can1的过滤id总数,最多不操过4*14=56
+	  uint16_t *can1_id;//can1具体的过滤id
+    //都为标准幀
+	  uint16_t sum_can2_id;//can2的过滤id总数,最多不操过4*14=56
+	  uint16_t *can2_id;
+	  uint8_t  filter_switch;//滤波开关
+}Filter_config;
 
 //CAN1接收RX0中断使能
 #define CAN1_RX0_INT_ENABLE	1		//0,不使能;1,使能.								    

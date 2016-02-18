@@ -6,9 +6,8 @@
 #include "usart.h"
 #include "kfifo.h"
 
-#define CAN_NULL   		0
-#define CAN_EVENT  		1
-#define DEBUG_EVETN		2
+#define CAN_NULL   0
+#define CAN_EVENT  1
 
 struct car_event
 {
@@ -31,7 +30,6 @@ extern int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len);
 extern void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId);
 extern void report_car_event(int result, const char* cmd, int cmd_len);
 extern void handle_upstream_work(char *cmd1, char *cmd2);
-extern void Timer3_Init(u16 arr,u16 psc);
 extern struct car_event *event_sending;
 extern long cmd_sended;
 #endif

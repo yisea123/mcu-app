@@ -2,7 +2,7 @@
 ..\obj\main.o: ..\SYSTEM\sys\sys.h
 ..\obj\main.o: ..\USER\stm32f4xx.h
 ..\obj\main.o: ..\CORE\core_cm4.h
-..\obj\main.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\main.o: ..\CORE\core_cmInstr.h
 ..\obj\main.o: ..\CORE\core_cmFunc.h
 ..\obj\main.o: ..\CORE\core_cm4_simd.h
@@ -45,7 +45,7 @@
 ..\obj\main.o: ..\PROTOCOL\uart_command.h
 ..\obj\main.o: ..\KFIFO\kfifo.h
 ..\obj\main.o: ..\SYSTEM\usart\usart.h
-..\obj\main.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\main.o: ..\PROTOCOL\car_event.h
 ..\obj\main.o: ..\MALLOC\malloc.h
 ..\obj\main.o: ..\SYSTEM\delay\delay.h
@@ -58,4 +58,7 @@
 ..\obj\main.o: ..\PROTOCOL\bootloader_update.h
 ..\obj\main.o: ..\PROTOCOL\md5.h
 ..\obj\main.o: pending.h
+..\obj\main.o: ..\PROTOCOL\longsung.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\main.o: ..\PROTOCOL\timer.h
 ..\obj\main.o: ..\TEST\test.h

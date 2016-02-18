@@ -27,7 +27,6 @@ extern void Init_io_ctrl(void);
 extern void power_android(uint32_t on);
 extern void handle_powerup_android_request(void);
 extern void handle_shutdown_android_request(void);
-extern void Timer5_Init(u16 arr,u16 psc);
 
 extern char mAndroidPower;
 extern char mAndroidRunning;

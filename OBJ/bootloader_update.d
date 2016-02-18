@@ -4,7 +4,7 @@
 ..\obj\bootloader_update.o: ..\MALLOC\malloc.h
 ..\obj\bootloader_update.o: ..\USER\stm32f4xx.h
 ..\obj\bootloader_update.o: ..\CORE\core_cm4.h
-..\obj\bootloader_update.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\bootloader_update.o: ..\CORE\core_cmInstr.h
 ..\obj\bootloader_update.o: ..\CORE\core_cmFunc.h
 ..\obj\bootloader_update.o: ..\CORE\core_cm4_simd.h
@@ -38,7 +38,7 @@
 ..\obj\bootloader_update.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\bootloader_update.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\bootloader_update.o: ..\SYSTEM\usart\usart.h
-..\obj\bootloader_update.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\bootloader_update.o: ..\SYSTEM\sys\sys.h
 ..\obj\bootloader_update.o: ..\KFIFO\kfifo.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\uart_command.h

@@ -3,7 +3,6 @@
 #include "kfifo.h"
 #include "led.h"
 #include "iwdg.h"
-#include "car_event.h"
 
 char mUar4Init=0, mUar1Init = 0, mUar2Init=0;
 /*************************************************************
@@ -11,7 +10,7 @@ uart4 pc10 pc11	用于调试用
 uart6 pc6 pc7 	用于与android通讯
 uart3 PD8 PD9 	用于与4G通讯
 ***************************************************************/
-
+//如果使用ucos,则包括下面的头文件即可.
 #if SYSTEM_SUPPORT_UCOS
 #include "includes.h"					//ucos 使用	  
 #endif
@@ -40,8 +39,7 @@ int fputc(int ch, FILE *f)
 { 
 	u8 Res = (u8) ch;
 	
-	if((mCh++)%4000==0) 
-	{
+	if((mCh++)%4000==0) {
 		LED1 =!LED1;
 		IWDG_Feed();
 	}
@@ -93,7 +91,7 @@ static int report_debug_msg(unsigned char *mPrintf, unsigned char len)
 	cmd[4+t] = (unsigned char)(checkValue & 0xff);
 	cmd[5+t] = (unsigned char)((checkValue & 0xff00) >> 8);	
 	
-	if(0 != make_event_to_list0(cmd, 6+t, DEBUG_EVETN, 0)) {
+	if(0 != make_event_to_list0(cmd, 6+t, CAN_EVENT, 0)) {
 		kfifo_put(debug_fifo, mPrintf, len);
 		return -1;
 	}	
@@ -112,11 +110,9 @@ void handle_debug_msg_report(void)
 	if(kfifo_len(debug_fifo) > 0)
 	{ 
 		if(t >= 128) t=0;
-		
 		for(; t<128; t++) 
 		{
-			if((mDebugCount++)%4000==0) 
-			{
+			if((mDebugCount++)%4000==0) {
 				LED0 =!LED0;
 				IWDG_Feed();
 			}
@@ -489,6 +485,7 @@ void USART3_IRQHandler(void)                	//串口1中断服务程序
 		USART_ClearFlag(USART3, USART_IT_RXNE);
 		Res =USART_ReceiveData(USART3);
 		
+		//if(!mAndroidPower) {
 	  ret = kfifo_put(uart3_fifo, &Res, 1);		
     if(ret != 1) 
 		{
@@ -496,6 +493,7 @@ void USART3_IRQHandler(void)                	//串口1中断服务程序
 			mUart3FifoLost = 1;
 		}
   } 
+		//}
 } 
 
 void UART4_IRQHandler(void)                	//串口1中断服务程序

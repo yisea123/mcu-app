@@ -143,7 +143,6 @@ extern int do_uart_cmd(int result, const char* cmd, int cmd_len);
 extern void send_cmd_ack(const char* ack, int ack_len);
 extern void parse_cmd_ack(const char* ack, int ack_len);
 extern unsigned short calculate_crc(unsigned char *p, unsigned short n);
-extern void Timer2_Init(u16 arr,u16 psc);
 extern void list_periodic_msg(void);
 extern void handle_downstream_work(char* cmd, char *ack);
 extern int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId);

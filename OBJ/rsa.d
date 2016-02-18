@@ -3,7 +3,7 @@
 ..\obj\rsa.o: ..\SYSTEM\sys\sys.h
 ..\obj\rsa.o: ..\USER\stm32f4xx.h
 ..\obj\rsa.o: ..\CORE\core_cm4.h
-..\obj\rsa.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\rsa.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\rsa.o: ..\CORE\core_cmInstr.h
 ..\obj\rsa.o: ..\CORE\core_cmFunc.h
 ..\obj\rsa.o: ..\CORE\core_cm4_simd.h

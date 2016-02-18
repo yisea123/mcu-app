@@ -2,7 +2,7 @@
 ..\obj\kfifo.o: ..\SYSTEM\sys\sys.h
 ..\obj\kfifo.o: ..\USER\stm32f4xx.h
 ..\obj\kfifo.o: ..\CORE\core_cm4.h
-..\obj\kfifo.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\kfifo.o: ..\CORE\core_cmInstr.h
 ..\obj\kfifo.o: ..\CORE\core_cmFunc.h
 ..\obj\kfifo.o: ..\CORE\core_cm4_simd.h
@@ -39,7 +39,7 @@
 ..\obj\kfifo.o: ..\PROTOCOL\uart_command.h
 ..\obj\kfifo.o: ..\KFIFO\kfifo.h
 ..\obj\kfifo.o: ..\SYSTEM\usart\usart.h
-..\obj\kfifo.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\kfifo.o: ..\HARDWARE\CAN\can.h
 ..\obj\kfifo.o: ..\PROTOCOL\car_event.h
 ..\obj\kfifo.o: ..\LIST\list.h

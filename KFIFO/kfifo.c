@@ -159,7 +159,8 @@ struct kfifo* kfifo_init(void *buffer, uint32_t size, void *f_lock)
  //    pthread_mutex_lock(ring_buf->f_lock);
      ret = __kfifo_put(ring_buf, buffer, size);
  //    pthread_mutex_unlock(ring_buf->f_lock);
-		 if(ret != size) printf("%s->  ret=%d, size=%d, %d\r\n", __func__, ret, size, ring_buf->size);
+		 //if(ret != size) printf("%s->  ret=%d, size=%d, %d\r\n", __func__, ret, size, ring_buf->size);
+		 if(ret != size) ring_buf->mPrint = 1;
 	 
      return ret;
  }

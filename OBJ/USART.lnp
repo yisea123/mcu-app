@@ -33,6 +33,8 @@
 "..\obj\bootloader_update.o"
 "..\obj\rsa.o"
 "..\obj\md5.o"
+"..\obj\timer.o"
+"..\obj\longsung.o"
 "..\obj\usmart.o"
 "..\obj\usmart_config.o"
 "..\obj\usmart_str.o"

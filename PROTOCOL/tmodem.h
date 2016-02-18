@@ -19,12 +19,8 @@
 //AA BB 131  cmd 00 FF NULL[128] CRC1 CRC2
 //								ACKS
 
-#define MCU_NUM										(5)
-#define SCU_NUM1									(6)
-#define SCU_NUM2									(16)
-#define SCU_NUM3									(26)
-#define SCU_NUM4									(36)
-
+#define MCU_NUM									(5)
+#define SCU_NUM									(6)
 #define BOOTLOADER_NUM					(109)
 
 #define NOMAL										(0)

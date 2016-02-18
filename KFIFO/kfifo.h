@@ -21,7 +21,7 @@ enum {
 //2048
 #define CAN_KFIFO_LEN 2048
 //1024
-
+#define UART_4G_KFIFO_LEN 2048
 //256
 #define CMD_LEN 64
 #define is_power_of_2(x) ((x) != 0 && (((x) & ((x) - 1)) == 0))
@@ -38,6 +38,7 @@ struct kfifo {
 	  unsigned int lostBytes;
 	  unsigned int errorCmds;
 	  unsigned long acceptCmds;
+	  char 				mPrint;
 };
 
 struct kfifo* kfifo_init(void *buffer, unsigned int size, void *f_lock);
