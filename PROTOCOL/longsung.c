@@ -1,6 +1,7 @@
 #include "longsung.h"
 
 DevStatus devStatus[1];
+char check_period = 0, ppp_count = 0, tcp_tick = 0, tcp_connect = 0;
 
 void print_char(USART_TypeDef* USARTx, char ch)
 {
@@ -177,9 +178,20 @@ void service_command_callback(RemoteTokenizer *tzer, Token* tok)
 	print_line_1(UART4, tok[2].p, tok[2].end - tok[2].p);	
 }
 
-void service_connect_callback(RemoteTokenizer *tzer)
+void service_connect_callback(RemoteTokenizer *tzer, Token* tok)
 {
-	printf("%s!\r\n", __func__);
+	//+MIPOPEN=1,1
+	int i, socketId = str2int(tok[0].p+9, tok[0].end);
+	printf("[%s: socketId = %d]\r\n", __func__, socketId);
+	switch(socketId)
+	{
+		case 1:
+		case 2:
+		case 3:
+		case 4: i = socketId - 1; break;
+		default: return;
+	}
+	devStatus->socket_open[i] = socketId;
 }
 
 void service_connect_fail_callback(RemoteTokenizer *tzer)
@@ -187,10 +199,16 @@ void service_connect_fail_callback(RemoteTokenizer *tzer)
 	printf("%s!\r\n", __func__);
 }
 
-void service_disconnect_callback(RemoteTokenizer *tzer)
+void service_disconnect_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//printf("%s!\r\n", __func__);
-	printf("[tcp connect close...tzer->count=%d]]\r\n", tzer->count);		
+	//+MIPCLOSE:2
+	int socketId = str2int(tok[0].p+10, tok[0].end);
+	devStatus->socket_open[socketId-1] = -1;
+	printf("[tcp connect close...socketId=%d]\r\n", socketId);
+	printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
+		, devStatus->socket_open[2], devStatus->socket_open[3]);
+	tcp_connect = 0;
 }
 
 /*******************************************
@@ -307,12 +325,12 @@ void remote_reader_parse( RemoteReader* r )
 		
 	}else if(!memcmp(tok[0].p, "+MIPOPEN=", strlen("+MIPOPEN="))&&(tzer->count>1)) {
 		if(str2int(tok[1].p, tok[1].end)==1) {
-			r->on_connect_success(tzer);
+			r->on_connect_success(tzer, tok);
 		}
 		//+MIPOPEN=1,1
-	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))) {
-		r->on_disconnect(tzer);
-		
+	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
+		r->on_disconnect(tzer, tok);
+		//+MIPCLOSE:1,0,0
 	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
 		r->on_simcard_type(tzer, tok);
 		//+SIMTEST:3; 3
@@ -362,11 +380,11 @@ void handle_4g_uart_msg( void )
 		}
 }
 
-char check_period = 0, ppp_count = 0;
-
 void notify_4g_period(void)
 {
 		check_period = 1;
+		tcp_tick++;
+		tcp_connect = 1;
 		ppp_count = 1;
 }
 
@@ -374,7 +392,8 @@ void handle_4g_setting(void)
 {
 	if(!mAndroidPower) 
 	{
-		static long long mdelay = 0;
+		int i;
+		static long long mdelay = 0, mdelay1 = 0;
 		
 		if(devStatus->reset_request) {
 			devStatus->reset_request = 0;
@@ -384,8 +403,13 @@ void handle_4g_setting(void)
 			devStatus->ppp_status = PPP_DISCONNECT;
 			devStatus->scsq = 0;
 			devStatus->rcsq = 0;
-			devStatus->simcard_type = -1;	
+			devStatus->simcard_type = -1;
 			
+			devStatus->socket_num = 0;
+			devStatus->socket_open[0] = -1;
+			devStatus->socket_open[1] = -1;
+			devStatus->socket_open[2] = -1;
+			devStatus->socket_open[3] = -1;
 			//reset 4g modules by gpio
 			printf("Reset 4G Module.\r\n");
 		}
@@ -440,6 +464,53 @@ void handle_4g_setting(void)
 			}
 		}
 		
+		/*检查活跃的socket个数，保持一个连接*/
+		devStatus->socket_num = 0;
+		
+		for(i=0; i<4; i++) {
+			if(devStatus->socket_open[i] != -1)
+				devStatus->socket_num++;
+		}
+		
+		if(devStatus->socket_num > 1) {
+			for(i=0; i<4; i++) {
+				if(devStatus->socket_open[i] != -1) {
+					switch(devStatus->socket_open[i])
+					{
+						case 1: at("AT+MIPCLOSE=1"); delay_ms(10); break;
+						case 2: at("AT+MIPCLOSE=2"); delay_ms(10); break;
+						case 3: at("AT+MIPCLOSE=3"); delay_ms(10); break;
+						case 4: at("AT+MIPCLOSE=4"); delay_ms(10); break;
+						default: break;
+					}
+				}
+			}
+		}
+			
+		/*连接上远程服务端*/
+		if(devStatus->ppp_status == PPP_CONNECTED && 
+				devStatus->socket_num == 0 && tcp_connect == 1) {
+			printf("enter\r\n");
+			tcp_connect = 0;
+			delay_ms(8);
+			at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
+			delay_ms(8);
+		}
+		
+		/*发送心跳包给服务*/
+		if(devStatus->socket_num == 1 && tcp_tick >= 1) {
+			tcp_tick = 0;
+			mdelay1 = 0;
+			at("AT+MIPSEND=1,\"hello world.\"");
+			//delay_ms(10);
+		}
+		
+		if(mdelay1 <= 500000) mdelay1++;
+		if(devStatus->socket_num == 1 && mdelay1 == 500000) {
+			at("AT+MIPPUSH=1");
+			//delay_ms(3);
+		}
+		
 	}
 	
 	else 
@@ -451,6 +522,7 @@ void handle_4g_setting(void)
 			devStatus->scsq = 0;
 			devStatus->rcsq = 0;
 			devStatus->simcard_type = -1;
+			devStatus->socket_num = 0;
 			devStatus->is_inited = 1;
 			
 			//reset 4g modules by gpio
@@ -485,6 +557,7 @@ void remote_reader_init()
 	devStatus->ppp_status = PPP_DISCONNECT;
 	devStatus->scsq = 0;
 	devStatus->rcsq = 0;
+	devStatus->socket_num = 0;
 	devStatus->simcard_type = -1;
 }
 

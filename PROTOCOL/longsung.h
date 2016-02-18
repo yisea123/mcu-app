@@ -36,8 +36,8 @@ typedef struct {
 typedef void (* command_callback)(RemoteTokenizer *tzer, Token* tok);
 
 typedef void (* connect_err_callback)(RemoteTokenizer *tzer);
-typedef void (* connect_success_callback)(RemoteTokenizer *tzer);
-typedef void (* disconnect_callback)(RemoteTokenizer *tzer);
+typedef void (* connect_success_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* disconnect_callback)(RemoteTokenizer *tzer, Token* tok);
 
 typedef void (* signal_strength_callback)(RemoteTokenizer *tzer, Token* tok);
 
@@ -87,7 +87,8 @@ typedef struct {
 	char mipopen_status;
 	char mippush_status;
 	
-	char socket_open[4];
+	int socket_open[4];
+	char socket_num;
 	
   char scsq;
 	char rcsq;

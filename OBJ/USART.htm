@@ -3,7 +3,7 @@
 <title>Static Call Graph - [..\OBJ\USART.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\OBJ\USART.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Thu Feb 18 17:31:19 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Thu Feb 18 20:01:42 2016
 <BR><P>
 <H3>Maximum Stack Usage =        712 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -3232,6 +3232,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;remote_reader_parse
 <LI><a href="#[1a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_simcard_type_callback
 <LI><a href="#[19e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;on_signal_strength_callback
+<LI><a href="#[19d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;service_disconnect_callback
+<LI><a href="#[19b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;service_connect_callback
 <LI><a href="#[199]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;service_command_callback
 </UL>
 
@@ -3259,11 +3261,12 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[19b]"></a>service_connect_callback</STRONG> (Thumb, 14 bytes, Stack size 8 bytes, longsung.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152 + Unknown Stack Size
+<P><STRONG><a name="[19b]"></a>service_connect_callback</STRONG> (Thumb, 76 bytes, Stack size 24 bytes, longsung.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 168 + Unknown Stack Size
 <LI>Call Chain = service_connect_callback &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;str2int
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
@@ -3275,25 +3278,26 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[19d]"></a>service_disconnect_callback</STRONG> (Thumb, 14 bytes, Stack size 8 bytes, longsung.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 152 + Unknown Stack Size
+<P><STRONG><a name="[19d]"></a>service_disconnect_callback</STRONG> (Thumb, 72 bytes, Stack size 24 bytes, longsung.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 168 + Unknown Stack Size
 <LI>Call Chain = service_disconnect_callback &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
+<LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;str2int
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[19e]"></a>on_signal_strength_callback</STRONG> (Thumb, 54 bytes, Stack size 20 bytes, longsung.o(.text))
+<P><STRONG><a name="[19e]"></a>on_signal_strength_callback</STRONG> (Thumb, 62 bytes, Stack size 20 bytes, longsung.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = on_signal_strength_callback &rArr; str2int
 </UL>
 <BR>[Calls]<UL><LI><a href="#[19a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;str2int
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[1a6]"></a>on_request_ip_success_callback</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, longsung.o(.text))
+<P><STRONG><a name="[1a6]"></a>on_request_ip_success_callback</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, longsung.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[1a7]"></a>on_request_ip_fail_callback</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, longsung.o(.text))
+<P><STRONG><a name="[1a7]"></a>on_request_ip_fail_callback</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, longsung.o(.text))
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
 <P><STRONG><a name="[1a8]"></a>on_at_command_callback</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, longsung.o(.text))
@@ -3310,7 +3314,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[1a0]"></a>on_simcard_type_callback</STRONG> (Thumb, 34 bytes, Stack size 16 bytes, longsung.o(.text))
+<P><STRONG><a name="[1a0]"></a>on_simcard_type_callback</STRONG> (Thumb, 36 bytes, Stack size 16 bytes, longsung.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160 + Unknown Stack Size
 <LI>Call Chain = on_simcard_type_callback &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -3319,7 +3323,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> longsung.o(.text)
 </UL>
-<P><STRONG><a name="[1a1]"></a>remote_reader_parse</STRONG> (Thumb, 376 bytes, Stack size 192 bytes, longsung.o(.text))
+<P><STRONG><a name="[1a1]"></a>remote_reader_parse</STRONG> (Thumb, 734 bytes, Stack size 192 bytes, longsung.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 336 + Unknown Stack Size
 <LI>Call Chain = remote_reader_parse &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -3335,7 +3339,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1a4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;remote_reader_addc
 </UL>
 
-<P><STRONG><a name="[1a4]"></a>remote_reader_addc</STRONG> (Thumb, 412 bytes, Stack size 16 bytes, longsung.o(.text))
+<P><STRONG><a name="[1a4]"></a>remote_reader_addc</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, longsung.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 352 + Unknown Stack Size
 <LI>Call Chain = remote_reader_addc &rArr; remote_reader_parse &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -3357,11 +3361,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[191]"></a>notify_4g_period</STRONG> (Thumb, 12 bytes, Stack size 0 bytes, longsung.o(.text))
+<P><STRONG><a name="[191]"></a>notify_4g_period</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, longsung.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[42]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;TIM2_IRQHandler
 </UL>
 
-<P><STRONG><a name="[af]"></a>handle_4g_setting</STRONG> (Thumb, 372 bytes, Stack size 8 bytes, longsung.o(.text))
+<P><STRONG><a name="[af]"></a>handle_4g_setting</STRONG> (Thumb, 1124 bytes, Stack size 8 bytes, longsung.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 152 + Unknown Stack Size
 <LI>Call Chain = handle_4g_setting &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -3372,7 +3376,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[a3]"></a>remote_reader_init</STRONG> (Thumb, 100 bytes, Stack size 0 bytes, longsung.o(.text))
+<P><STRONG><a name="[a3]"></a>remote_reader_init</STRONG> (Thumb, 108 bytes, Stack size 0 bytes, longsung.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;init_work
 </UL>
 
