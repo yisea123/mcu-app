@@ -1,7 +1,7 @@
 #include "longsung.h"
 
-DevStatus devStatus[1];
-char check_period = 0, ppp_count = 0, tcp_tick = 0, tcp_connect = 0;
+static DevStatus dev[1];
+static RemoteReader reader[1];
 
 void print_char(USART_TypeDef* USARTx, char ch)
 {
@@ -167,6 +167,25 @@ Token remote_tokenizer_get( RemoteTokenizer* t, int index )
     return tok;
 }
 
+/*******************************************
++MIPCALL:1,10.154.27.94		
+********************************************/
+void on_request_ip_success_callback(RemoteTokenizer *tzer, Token* tok)
+{
+	//printf("%s!\r\n", __func__);
+	//printf("[get ip success...tzer->count=%d]], ip = \r\n", tzer->count);	
+	//print_line_1(UART4, tok[1].p, tok[1].end - tok[1].p);
+	dev->ppp_status = PPP_CONNECTED;
+}
+
+void on_request_ip_fail_callback(RemoteTokenizer *tzer)
+{
+	//printf("%s!\r\n", __func__);
+	//printf("[get ip fail...tzer->count=%d]]\r\n", tzer->count);
+	dev->ppp_status = PPP_DISCONNECT;
+	/*获取IP失败，重新获取*/		
+}
+
 void service_command_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	int len;
@@ -182,7 +201,7 @@ void service_connect_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//+MIPOPEN=1,1
 	int i, socketId = str2int(tok[0].p+9, tok[0].end);
-	printf("[%s: socketId = %d]\r\n", __func__, socketId);
+	//printf("[%s: socketId = %d]\r\n", __func__, socketId);
 	switch(socketId)
 	{
 		case 1:
@@ -191,12 +210,13 @@ void service_connect_callback(RemoteTokenizer *tzer, Token* tok)
 		case 4: i = socketId - 1; break;
 		default: return;
 	}
-	devStatus->socket_open[i] = socketId;
+	dev->socket_open[i] = socketId;
 }
 
 void service_connect_fail_callback(RemoteTokenizer *tzer)
 {
-	printf("%s!\r\n", __func__);
+	//+MIP:ERROR
+	//printf("[%s, remote service error.]\r\n", __func__);
 }
 
 void service_disconnect_callback(RemoteTokenizer *tzer, Token* tok)
@@ -204,11 +224,11 @@ void service_disconnect_callback(RemoteTokenizer *tzer, Token* tok)
 	//printf("%s!\r\n", __func__);
 	//+MIPCLOSE:2
 	int socketId = str2int(tok[0].p+10, tok[0].end);
-	devStatus->socket_open[socketId-1] = -1;
-	printf("[tcp connect close...socketId=%d]\r\n", socketId);
-	printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
-		, devStatus->socket_open[2], devStatus->socket_open[3]);
-	tcp_connect = 0;
+	dev->socket_open[socketId-1] = -1;
+	//printf("[tcp connect close...socketId=%d]\r\n", socketId);
+	//printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
+	//	, devStatus->socket_open[2], devStatus->socket_open[3]);
+	dev->connect_flag = 0;
 }
 
 /*******************************************
@@ -221,58 +241,60 @@ void on_signal_strength_callback(RemoteTokenizer *tzer, Token* tok)
 	signal[0] = str2int(tok[0].p+6, tok[0].end);
 	signal[1] = str2int(tok[1].p, tok[1].end);
 
-	devStatus->boot_status = 1;
-	devStatus->rcsq++;
-	devStatus->singal[0] = signal[0];
-	devStatus->singal[1] = signal[1];
+	dev->boot_status = 1;
+	dev->rcsq++;
+	dev->singal[0] = signal[0];
+	dev->singal[1] = signal[1];
 	//printf("[(%d)(%d), tzer->count=%d]\r\n", signal[0], signal[1], tzer->count);	
 }
 
-/*******************************************
-+MIPCALL:1,10.154.27.94		
-********************************************/
-void on_request_ip_success_callback(RemoteTokenizer *tzer, Token* tok)
-{
-	//printf("%s!\r\n", __func__);
-	//printf("[get ip success...tzer->count=%d]], ip = \r\n", tzer->count);	
-	//print_line_1(UART4, tok[1].p, tok[1].end - tok[1].p);
-	devStatus->ppp_status = PPP_CONNECTED;
-}
-
-void on_request_ip_fail_callback(RemoteTokenizer *tzer)
-{
-	//printf("%s!\r\n", __func__);
-	//printf("[get ip fail...tzer->count=%d]]\r\n", tzer->count);
-	devStatus->ppp_status = PPP_DISCONNECT;
-	/*获取IP失败，重新获取*/		
-}
+char at_sending[64];
 
 void on_at_command_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//printf("%s!\r\n", __func__);
 	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
 	//print_line_1(UART4, tok[0].p, tok[0].end - tok[0].p);
+	memset(at_sending, '\0', sizeof(at_sending));
+	if(strlen(tok[0].p) > sizeof(at_sending)) return;
+	
+	if( tzer->count == 1 ) {
+		memcpy(at_sending, tok[0].p, tok[0].end - tok[0].p);
+	} else {
+	  strcat(at_sending, tok[0].p);
+	}
+	
+	//printf("at_sending=%s, len=%d\r\n", at_sending, strlen(at_sending));
 }
 
 void on_at_cmd_success_callback(RemoteTokenizer *tzer)
 {
 	//printf("%s!\r\n", __func__);
-	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);	
+	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
+	if( !memcmp(at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) {
+		printf("[AT:%s, result: OK]\r\n", at_sending);
+	}
 }
 
 void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 {
 	//printf("%s!\r\n", __func__);
-	printf("[at command error...tzer->count=%d]\r\n", tzer->count);	
+	if( !memcmp(at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) {
+		dev->socket_close = 1;
+		printf("[AT:%s, result: ERROR]\r\n", at_sending);
+	} else if(!memcmp(at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) {
+		//AT+MIPOPEN=1,0,"
+		printf("[TCP CONNECT FAIL! AT: %s", at_sending);
+	}
 }
 
 void on_simcard_type_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//+SIMTEST:3; 3
-	devStatus->simcard_type = str2int(tok[0].p+9, tok[0].p+10);
+	dev->simcard_type = str2int(tok[0].p+9, tok[0].p+10);
 	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
 	//print_line_1(UART4, tok[0].p, tok[0].end - tok[0].p);
-	printf("simcard_type=%d\r\n", devStatus->simcard_type);
+	//printf("simcard_type=%d\r\n", devStatus->simcard_type);
 }
 
 void remote_reader_parse( RemoteReader* r )
@@ -330,7 +352,7 @@ void remote_reader_parse( RemoteReader* r )
 		//+MIPOPEN=1,1
 	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
 		r->on_disconnect(tzer, tok);
-		//+MIPCLOSE:1,0,0
+		//+MIPCLOSE:1,12,0,0
 	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
 		r->on_simcard_type(tzer, tok);
 		//+SIMTEST:3; 3
@@ -359,10 +381,10 @@ void remote_reader_addc( RemoteReader* r, int c )
 		if(c == '\n' /*|| c == '\0'*/) {
 			remote_reader_parse(r);
 			r->pos = 0;
+			/*for fix bug. must memset r->in*/
+			memset(r->in, '\0', sizeof(r->in));
 		}
 }
-
-static RemoteReader reader[1];
 
 void handle_4g_uart_msg( void )
 {
@@ -382,80 +404,100 @@ void handle_4g_uart_msg( void )
 
 void notify_4g_period(void)
 {
-		check_period = 1;
-		tcp_tick++;
-		tcp_connect = 1;
-		ppp_count = 1;
+		dev->heartbeat_tick++;	
+		dev->period_tick = 1;
+		dev->connect_flag = 1;
+		dev->ppp_flag = 1;
+}
+
+void init_longsung_status(char flag)
+{
+  int i;
+	
+	dev->boot_status = 0;
+	dev->ppp_status = PPP_DISCONNECT;
+	dev->scsq = 0;
+	dev->rcsq = 0;
+	dev->simcard_type = -1;
+
+	dev->socket_close = 0;
+	dev->socket_num = 0;
+
+	dev->ppp_flag = 0;
+	dev->connect_flag = 0;
+	dev->heartbeat_tick = 0;
+	dev->period_tick = 0;	
+	
+	if(flag) {
+		dev->reset_request = 1;
+		dev->is_inited = 1;		
+	} else {
+		dev->reset_request = 0;
+		dev->is_inited = 0;		
+	}
+	
+	for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+		dev->socket_open[i] = -1;
+	}		
 }
 
 void handle_4g_setting(void)
 {
-	if(!mAndroidPower) 
-	{
+	if( !mAndroidPower ) {
 		int i;
-		static long long mdelay = 0, mdelay1 = 0;
+		static long long mdelay[3] = { 0, 0 ,0 };
 		
-		if(devStatus->reset_request) {
-			devStatus->reset_request = 0;
-			devStatus->is_inited = 0;
-			
-			devStatus->boot_status = 0;
-			devStatus->ppp_status = PPP_DISCONNECT;
-			devStatus->scsq = 0;
-			devStatus->rcsq = 0;
-			devStatus->simcard_type = -1;
-			
-			devStatus->socket_num = 0;
-			devStatus->socket_open[0] = -1;
-			devStatus->socket_open[1] = -1;
-			devStatus->socket_open[2] = -1;
-			devStatus->socket_open[3] = -1;
+		/*android关闭，重启4G模块*/
+		if( dev->reset_request ) {	
+			init_longsung_status(0);
+								
 			//reset 4g modules by gpio
 			printf("Reset 4G Module.\r\n");
 		}
 		
-		if(check_period) {
-			check_period = 0;
-			mdelay = 0;
+		if( dev->period_tick ) {
+			dev->period_tick = 0;
+			mdelay[0] = 0;
 			
 			/*查询信号强度*/
 			at("AT+CSQ");
 			
-			if(devStatus->boot_status) {
-				devStatus->scsq++;
-				if((devStatus->scsq)-(devStatus->rcsq) > 3) {
-					devStatus->reset_request = 1;
-					printf("!!!!!scsq-rcsq=%d\r\n", devStatus->scsq-devStatus->rcsq);
+			if( dev->boot_status ) {
+				dev->scsq++;
+				if( (dev->scsq)-(dev->rcsq) > 3 ) {
+					dev->reset_request = 1;
+					dev->socket_close = 1;
+					printf("scsq-rcsq=%d! error.\r\n", dev->scsq-dev->rcsq);
 				}
 				
 				/*无SIM卡，等待用户插入，2分钟左右会重启4G模块*/
-				if(devStatus->simcard_type == 0 && devStatus->scsq > 4) {
-					devStatus->reset_request = 1;
+				if( dev->simcard_type == 0 && dev->scsq > 4 ) {
+					dev->reset_request = 1;
 					printf("sim card no exit!\r\n");
 				}
 			}
 		}
 
-		if(mdelay <= 1000000) mdelay++;
+		if( mdelay[0] <= 2000000 ) mdelay[0]++;
 		
 		/*查询SIM卡是否插入*/
-		if(devStatus->boot_status && mdelay == 200000 && 
-				devStatus->simcard_type == -1) {
+		if( dev->simcard_type == -1 && 
+				dev->boot_status && mdelay[0] == 500000 ) {
 			at("AT+SIMTEST?");
 		}
 		
 		/*查询IP*/
-		if(devStatus->boot_status && mdelay == 1000000) {
+		if( mdelay[0] == 2000000 && dev->boot_status ) {
 			at("AT+MIPCALL?");
 		}
 		
 		/*PPP连接获取IP*/		
-		if(devStatus->boot_status && devStatus->simcard_type != -1 &&
-				devStatus->simcard_type != 0) {
-			if(devStatus->ppp_status == PPP_DISCONNECT && ppp_count == 1) {
-				ppp_count = 0;
-				devStatus->ppp_status = PPP_CONNECTING;
-				delay_ms(5);
+		if( dev->simcard_type != 0 && 
+				dev->simcard_type != -1 && dev->boot_status ) {
+			if( dev->ppp_flag == 1 && dev->ppp_status == PPP_DISCONNECT ) {
+				dev->ppp_flag = 0;
+				dev->ppp_status = PPP_CONNECTING;
+				delay_ms(10);
 				at("AT+MIPCALL=0");
 				delay_ms(10);
 				at("AT+MIPPROFILE=1,\"3GNET\"");
@@ -465,65 +507,71 @@ void handle_4g_setting(void)
 		}
 		
 		/*检查活跃的socket个数，保持一个连接*/
-		devStatus->socket_num = 0;
+		dev->socket_num = 0;
 		
-		for(i=0; i<4; i++) {
-			if(devStatus->socket_open[i] != -1)
-				devStatus->socket_num++;
+		for( i=0; i<4; i++ ) {
+			if(dev->socket_open[i] != -1)
+				dev->socket_num++;
 		}
 		
-		if(devStatus->socket_num > 1) {
-			for(i=0; i<4; i++) {
-				if(devStatus->socket_open[i] != -1) {
-					switch(devStatus->socket_open[i])
+		/*若发现socket大于1，关闭所有socket,重新建立连接*/
+		if( dev->socket_num > 1 || dev->socket_close == 1) {
+			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+				if( dev->socket_open[i] != -1 ) {
+					switch( dev->socket_open[i] )
 					{
-						case 1: at("AT+MIPCLOSE=1"); delay_ms(10); break;
-						case 2: at("AT+MIPCLOSE=2"); delay_ms(10); break;
-						case 3: at("AT+MIPCLOSE=3"); delay_ms(10); break;
-						case 4: at("AT+MIPCLOSE=4"); delay_ms(10); break;
+						case 1: delay_ms(4); at("AT+MIPCLOSE=1"); delay_ms(6); break;
+						case 2: delay_ms(4); at("AT+MIPCLOSE=2"); delay_ms(6); break;
+						case 3: delay_ms(4); at("AT+MIPCLOSE=3"); delay_ms(6); break;
+						case 4: delay_ms(4); at("AT+MIPCLOSE=4"); delay_ms(6); break;
 						default: break;
 					}
 				}
 			}
+					
+		  dev->socket_close = 0;
 		}
 			
 		/*连接上远程服务端*/
-		if(devStatus->ppp_status == PPP_CONNECTED && 
-				devStatus->socket_num == 0 && tcp_connect == 1) {
-			printf("enter\r\n");
-			tcp_connect = 0;
-			delay_ms(8);
-			at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
-			delay_ms(8);
+		if( dev->ppp_status == PPP_CONNECTED && 
+				dev->socket_num == 0 && dev->connect_flag == 1 ) {
+					
+			dev->connect_flag = 0;
+			mdelay[1] = 0;
 		}
+		
+		if( mdelay[1] <= 1000000 ) mdelay[1]++;
+		
+		if( dev->ppp_status == PPP_CONNECTED && 
+					dev->socket_num == 0 && mdelay[1] == 900000 ) {
+						
+			at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
+			//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
+			dev->heartbeat_tick = 0;
+		}
+		/*连接上远程服务端*/
 		
 		/*发送心跳包给服务*/
-		if(devStatus->socket_num == 1 && tcp_tick >= 1) {
-			tcp_tick = 0;
-			mdelay1 = 0;
+		if( dev->socket_num == 1 && dev->heartbeat_tick >= 3 ) {
+			dev->heartbeat_tick = 0;
+			mdelay[2] = 0;
+		}
+		
+		if( mdelay[2] <= 1500000 ) mdelay[2]++;
+		
+		if( dev->socket_num == 1 && mdelay[2] == 1200000 ) {
 			at("AT+MIPSEND=1,\"hello world.\"");
-			//delay_ms(10);
-		}
+		}	
 		
-		if(mdelay1 <= 500000) mdelay1++;
-		if(devStatus->socket_num == 1 && mdelay1 == 500000) {
+		if( dev->socket_num == 1 && mdelay[2] == 1400000 ) {
 			at("AT+MIPPUSH=1");
-			//delay_ms(3);
 		}
+		/*发送心跳包给服务*/
 		
-	}
-	
-	else 
-	{
-		if(!devStatus->is_inited) {
-			devStatus->reset_request = 1;
-			devStatus->boot_status = 0;
-			devStatus->ppp_status = PPP_DISCONNECT;
-			devStatus->scsq = 0;
-			devStatus->rcsq = 0;
-			devStatus->simcard_type = -1;
-			devStatus->socket_num = 0;
-			devStatus->is_inited = 1;
+		
+	} else {
+		if( !dev->is_inited ) {	
+			init_longsung_status(1);
 			
 			//reset 4g modules by gpio
 			printf("android power on, reset 4G module\r\n");
@@ -531,7 +579,7 @@ void handle_4g_setting(void)
 	}
 }
 
-void remote_reader_init()
+void init_remote_reader(void) 
 {
 	reader->inited = 1;
 	reader->pos = 0;
@@ -550,17 +598,14 @@ void remote_reader_init()
 	reader->on_at_success = on_at_cmd_success_callback;
 	reader->on_at_fail = on_at_cmd_fail_callback;
 	
-	reader->on_simcard_type = on_simcard_type_callback;
-	
-	devStatus->reset_request = 1;
-	devStatus->boot_status = 0;
-	devStatus->ppp_status = PPP_DISCONNECT;
-	devStatus->scsq = 0;
-	devStatus->rcsq = 0;
-	devStatus->socket_num = 0;
-	devStatus->simcard_type = -1;
+	reader->on_simcard_type = on_simcard_type_callback;	
 }
 
+void longsung_init()
+{
+	init_remote_reader();
+	init_longsung_status(1);
+}
 
 
 

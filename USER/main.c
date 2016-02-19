@@ -190,7 +190,7 @@ static int init_work(void)
 	/* 溢出时间为6s	代码需要定时喂狗！ 此6S是经过测试的数据，请勿随意更改
 	否则会导致看门狗重启，当数据量大时*/
 	
-	remote_reader_init();
+	longsung_init();
 	/*初始化4G串口相关的数据结构*/
 	
 	if(can1_fifo==NULL || can2_fifo==NULL  || debug_fifo == NULL ||

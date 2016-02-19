@@ -308,7 +308,7 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8040000</StartAddress>
+                <StartAddress>0x8000000</StartAddress>
                 <Size>0xd0000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
@@ -436,11 +436,6 @@
               <FileName>led.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\LED\led.c</FilePath>
-            </File>
-            <File>
-              <FileName>beep.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\HARDWARE\BEEP\beep.c</FilePath>
             </File>
             <File>
               <FileName>can.c</FileName>
