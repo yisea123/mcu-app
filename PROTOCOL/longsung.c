@@ -342,7 +342,7 @@ void on_sm_check_callback(RemoteTokenizer *tzer, Token* tok)
 			dev->sm_num = 1;
 			dev->sm_index[0] = str2int(tok[0].p+8, tok[0].end-1);
 		}
-		for(; i<20; i++) {
+		for(; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
 			dev->sm_index[i] = -1;
 		}
 	} else if(tzer->count > 2) {
@@ -693,17 +693,16 @@ void handle_4g_setting(void)
 		/*查询SM短信未读index*/
 		
 		/*读取sim卡中的短信*/
-		if( dev->sm_num > 0 && dev->sm_read_count == 0 ) {
-			at("AT+CPMS=\"SM\"");
+		if(dev->sm_num > 0) {
+			if( dev->sm_read_count == 0 )
+				at("AT+CPMS=\"SM\"");
+			if( dev->sm_read_count == 100000 )
+				at("AT+CMGF=1");
+			if( dev->sm_read_count == 200000 )
+				do_read_sm(dev->sm_index[0]);
+			if( dev->sm_read_count <= 300000) 
+				dev->sm_read_count++;
 		}
-		if( dev->sm_num > 0 && dev->sm_read_count == 100000 ) {
-			at("AT+CMGF=1");
-		}
-		if( dev->sm_num > 0 && dev->sm_read_count == 200000 ) {
-			do_read_sm(dev->sm_index[0]);
-		}
-		
-		if(dev->sm_num > 0 && dev->sm_read_count <= 300000) dev->sm_read_count++;
 		/*读取sim卡中的短信*/
 		
 		/*删除sim卡中的短信*/
