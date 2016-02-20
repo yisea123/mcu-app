@@ -13,7 +13,8 @@ void print_char(USART_TypeDef* USARTx, char ch)
 void print_line(USART_TypeDef* USARTx, const char* data, int len)
 {
 
-	u8 t;
+	int t;
+	/*for fix bug, t must be int type*/
 	for(t=0;t<len;t++) 
 	{
 		USART_ClearFlag(USARTx, USART_FLAG_TC); 
@@ -26,7 +27,7 @@ void print_line(USART_TypeDef* USARTx, const char* data, int len)
 void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
 {
 
-	u8 t;
+	int t;
 	for(t=0;t<len;t++) 
 	{
 		USART_ClearFlag(USARTx, USART_FLAG_TC); 
@@ -48,8 +49,8 @@ void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
 /*send AT commnad to 4G*/
 void send_at_command(const char* ack, int ack_len)
 {
-	u8 t;
-	for(t=0;t<ack_len;t++) 
+	int t;
+	for(t=0; t<ack_len; t++) 
 	{
 		USART_ClearFlag(USART3, USART_FLAG_TC); 
 		USART_SendData(USART3, ack[t]);
@@ -273,6 +274,31 @@ void on_at_cmd_success_callback(RemoteTokenizer *tzer)
 	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
 	if( !memcmp(at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) {
 		printf("[AT:%s, result: OK]\r\n", at_sending);
+		
+	} else if( !memcmp(at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) {
+		if( !memcmp(at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
+		printf("[AT:%s, result: OK]\r\n", at_sending);		
+		dev->sm_index_delete = -1;
+		dev->sm_delete_count = 0;
+		dev->sm_read_count = 0;
+		/*删除短信成功之后才能读取下一条短信，如果不成功，可以永远都不会再读取*/
+		if(dev->sm_num > 0) {
+			int i;
+			
+			for(i=0; i<dev->sm_num-1; i++) {
+				dev->sm_index[i] = dev->sm_index[i+1];
+			}
+			dev->sm_index[i] = -1;
+			dev->sm_num--;
+
+			printf("UPDATE sm_num=%d, sm_index={ ", dev->sm_num);
+			for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
+				printf("%d, ", dev->sm_index[i]);
+			}
+			printf("}\r\n");				
+		}
+		/*删除短信成功，读取下一条短信*/
+		
 	}
 }
 
@@ -285,6 +311,10 @@ void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 	} else if(!memcmp(at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) {
 		//AT+MIPOPEN=1,0,"
 		printf("[TCP CONNECT FAIL! AT: %s", at_sending);
+	} else if( !memcmp(at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) {
+		printf("[AT:%s, result: ERROR]\r\n", at_sending);
+		dev->sm_delete_count = 0;
+		/*重新执行删除短信工作*/
 	}
 }
 
@@ -297,6 +327,90 @@ void on_simcard_type_callback(RemoteTokenizer *tzer, Token* tok)
 	//printf("simcard_type=%d\r\n", devStatus->simcard_type);
 }
 
+void on_sm_check_callback(RemoteTokenizer *tzer, Token* tok)
+{
+	int i;
+	
+	if(tzer->count == 2) {
+		/*+CMGD: (),(0-4)*/
+		/*+CMGD: (0),(0-4)*/
+		if(!memcmp(tok[0].p, "+CMGD: ()", strlen("+CMGD: ()"))) {
+			i = 0;
+			dev->sm_num = 0;
+		} else {
+			i = 1;
+			dev->sm_num = 1;
+			dev->sm_index[0] = str2int(tok[0].p+8, tok[0].end-1);
+		}
+		for(; i<20; i++) {
+			dev->sm_index[i] = -1;
+		}
+	} else if(tzer->count > 2) {
+		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
+		dev->sm_num = tzer->count - 1;
+		if(dev->sm_num > sizeof(dev->sm_index)/sizeof(dev->sm_index[0])) {
+			dev->sm_num = sizeof(dev->sm_index)/sizeof(dev->sm_index[0]);
+		}
+		
+		for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
+			if( i < dev->sm_num ) {
+				if( i==0 ) 
+					dev->sm_index[i] = str2int(tok[i].p+8, tok[i].end);
+				else if( i== (dev->sm_num -1) )
+					dev->sm_index[i] = str2int(tok[i].p, tok[i].end-1);
+				else 
+					dev->sm_index[i] = str2int(tok[i].p, tok[i].end);
+			} else {
+				dev->sm_index[i] = -1;
+			}
+		}
+	}
+	
+	printf("sm_num=%d, sm_index={ ", dev->sm_num);
+	for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
+		printf("%d, ", dev->sm_index[i]);
+	}
+	printf("}\r\n");
+}
+
+void on_sm_read_callback(RemoteTokenizer *tzer, Token* tok)
+{
+	printf("SM read, index=%d\r\n", dev->sm_index_read);
+	dev->sm_flag = 1;
+}
+
+void on_sm_data_callback(RemoteTokenizer *tzer, Token* tok, int index)
+{
+	printf("SM data, index=%d\r\n", index);
+	printf("DATA:%s", tok[0].p);
+	/*只可读出一行，因此，短信内容不能有\n分行！*/
+	dev->sm_index_delete = index;
+	/*读取到短信内容，删除之*/
+}
+
+void on_sm_notify_callback(RemoteTokenizer *tzer, Token* tok)
+{
+	/*+CMTI: "SM",1*/
+	int i, index;
+	
+	index = str2int(tok[1].p, tok[1].end);
+	printf("SM notify: index=%d\r\n", index);
+	
+	if(index != -1) {
+		if(dev->sm_num >= sizeof(dev->sm_index)/sizeof(dev->sm_index[0]))
+			return;
+
+		dev->sm_index[dev->sm_num] = index;
+		dev->sm_num++;
+		
+		printf("sm_num=%d, sm_index={ ", dev->sm_num);
+		for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
+			printf("%d, ", dev->sm_index[i]);
+		}
+		printf("}\r\n");		
+	}
+}
+
 void remote_reader_parse( RemoteReader* r )
 {
 	int i;	
@@ -304,6 +418,7 @@ void remote_reader_parse( RemoteReader* r )
 
 	RemoteTokenizer tzer[1];
 	
+	//printf("r->pos=%d\r\n", r->pos);	
 	print_line(UART4, r->in, r->pos);
 	/*打印4G的所有串口消息*/
 	
@@ -319,6 +434,11 @@ void remote_reader_parse( RemoteReader* r )
 	
 	for(i=0; i<tzer->count; i++) {
 		tok[i] = remote_tokenizer_get(tzer, i);
+	}
+	
+	if(dev->sm_flag) {
+		dev->sm_flag = 0;
+		r->on_sm_data(tzer, tok, dev->sm_index_read);
 	}
 	
 	if(!memcmp(tok[0].p, "OK", strlen("OK"))) {
@@ -357,6 +477,16 @@ void remote_reader_parse( RemoteReader* r )
 		r->on_simcard_type(tzer, tok);
 		//+SIMTEST:3; 3
 		//+SIMTEST:0;
+	} else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) {
+		r->on_sm_check(tzer, tok);
+		//+CMGD: (0,1,2,4,5,6),(0-4)
+	} else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
+		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) {
+		r->on_sm_read(tzer, tok);
+		//+CMGR: "REC READ"	
+	} else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) {
+		r->on_sm_notify(tzer, tok);
+		//+CMTI: "SM",0
 	}
 	
 	myfree(0, tok);	
@@ -428,6 +558,11 @@ void init_longsung_status(char flag)
 	dev->heartbeat_tick = 0;
 	dev->period_tick = 0;	
 	
+	dev->sm_num = 0;
+	dev->sm_flag = 0;
+	dev->sm_read_count = 0;
+	dev->sm_index_delete = -1;
+	
 	if(flag) {
 		dev->reset_request = 1;
 		dev->is_inited = 1;		
@@ -438,7 +573,69 @@ void init_longsung_status(char flag)
 	
 	for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
 		dev->socket_open[i] = -1;
-	}		
+	}
+	
+	for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
+		dev->sm_index[i] = -1;
+	}
+}
+
+void do_read_sm(int index)
+{
+	dev->sm_index_read = index;
+	
+	switch(index)
+	{
+		case 0: at("AT+CMGR=0"); break;
+		case 1: at("AT+CMGR=1"); break;
+		case 2: at("AT+CMGR=2"); break;
+		case 3: at("AT+CMGR=3"); break;
+		case 4: at("AT+CMGR=4"); break;
+		case 5: at("AT+CMGR=5"); break;
+		case 6: at("AT+CMGR=6"); break;
+		case 7: at("AT+CMGR=7"); break;		
+		case 8: at("AT+CMGR=8"); break;
+		case 9: at("AT+CMGR=9"); break;
+		case 10: at("AT+CMGR=10"); break;
+		case 11: at("AT+CMGR=11"); break;
+		case 12: at("AT+CMGR=12"); break;
+		case 13: at("AT+CMGR=13"); break;
+		case 14: at("AT+CMGR=14"); break;
+		case 15: at("AT+CMGR=15"); break;
+		case 16: at("AT+CMGR=16"); break;
+		case 17: at("AT+CMGR=17"); break;		
+		case 18: at("AT+CMGR=18"); break;
+		case 19: at("AT+CMGR=19"); break;
+		default: break;
+	}
+}
+
+void do_delete_sm(int index)
+{
+	switch(index)
+	{
+		case 0: at("AT+CMGD=0"); break;
+		case 1: at("AT+CMGD=1"); break;
+		case 2: at("AT+CMGD=2"); break;
+		case 3: at("AT+CMGD=3"); break;
+		case 4: at("AT+CMGD=4"); break;
+		case 5: at("AT+CMGD=5"); break;
+		case 6: at("AT+CMGD=6"); break;
+		case 7: at("AT+CMGD=7"); break;		
+		case 8: at("AT+CMGD=8"); break;
+		case 9: at("AT+CMGD=9"); break;
+		case 10: at("AT+CMGD=10"); break;
+		case 11: at("AT+CMGD=11"); break;
+		case 12: at("AT+CMGD=12"); break;
+		case 13: at("AT+CMGD=13"); break;
+		case 14: at("AT+CMGD=14"); break;
+		case 15: at("AT+CMGD=15"); break;
+		case 16: at("AT+CMGD=16"); break;
+		case 17: at("AT+CMGD=17"); break;		
+		case 18: at("AT+CMGD=18"); break;
+		case 19: at("AT+CMGD=19"); break;
+		default: break;
+	}	
 }
 
 void handle_4g_setting(void)
@@ -478,16 +675,52 @@ void handle_4g_setting(void)
 			}
 		}
 
-		if( mdelay[0] <= 2000000 ) mdelay[0]++;
+		if( mdelay[0] <= 2500000 ) mdelay[0]++;
 		
 		/*查询SIM卡是否插入*/
 		if( dev->simcard_type == -1 && 
 				dev->boot_status && mdelay[0] == 500000 ) {
 			at("AT+SIMTEST?");
 		}
+
+		/*查询SM短信未读index*/
+		if( mdelay[0] == 1600000 && dev->boot_status ) {
+			at("AT+CPMS=\"SM\"");
+		}
+		if( mdelay[0] == 1700000 && dev->boot_status ) {
+			at("AT+CMGD=?");
+		}
+		/*查询SM短信未读index*/
+		
+		/*读取sim卡中的短信*/
+		if( dev->sm_num > 0 && dev->sm_read_count == 0 ) {
+			at("AT+CPMS=\"SM\"");
+		}
+		if( dev->sm_num > 0 && dev->sm_read_count == 100000 ) {
+			at("AT+CMGF=1");
+		}
+		if( dev->sm_num > 0 && dev->sm_read_count == 200000 ) {
+			do_read_sm(dev->sm_index[0]);
+		}
+		
+		if(dev->sm_num > 0 && dev->sm_read_count <= 300000) dev->sm_read_count++;
+		/*读取sim卡中的短信*/
+		
+		/*删除sim卡中的短信*/
+		if(dev->sm_index_delete != -1 && dev->sm_delete_count == 0) {
+			at("AT+CPMS=\"SM\"");
+		}
+		if(dev->sm_index_delete != -1 && dev->sm_delete_count == 100000) {
+			do_delete_sm(dev->sm_index_delete);
+			//dev->sm_index_delete = -1;
+		}		
+		
+		if(dev->sm_index_delete != -1 && dev->sm_delete_count <= 200000)
+			dev->sm_delete_count++;
+		/*删除sim卡中的短信*/
 		
 		/*查询IP*/
-		if( mdelay[0] == 2000000 && dev->boot_status ) {
+		if( mdelay[0] == 2500000 && dev->boot_status ) {
 			at("AT+MIPCALL?");
 		}
 		
@@ -599,6 +832,11 @@ void init_remote_reader(void)
 	reader->on_at_fail = on_at_cmd_fail_callback;
 	
 	reader->on_simcard_type = on_simcard_type_callback;	
+	
+	reader->on_sm_check = on_sm_check_callback;
+	reader->on_sm_read = on_sm_read_callback;
+	reader->on_sm_data = on_sm_data_callback;
+	reader->on_sm_notify = on_sm_notify_callback;
 }
 
 void longsung_init()

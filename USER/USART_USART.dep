@@ -1,5 +1,5 @@
 Dependencies for Project 'USART', Target 'USART': (DO NOT MODIFY !)
-F (.\main.c)(0x56C6901C)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
+F (.\main.c)(0x56C7DDA0)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -57,7 +57,7 @@ I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
 I (..\PROTOCOL\bootloader_update.h)(0x5671272C)
 I (..\PROTOCOL\md5.h)(0x5671272C)
 I (pending.h)(0x5671272C)
-I (..\PROTOCOL\longsung.h)(0x56C69013)
+I (..\PROTOCOL\longsung.h)(0x56C80489)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\TEST\test.h)(0x5671272C)
@@ -360,7 +360,7 @@ I (..\HARDWARE\CAN\can.h)(0x568CF297)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x5671272C)
-I (..\PROTOCOL\longsung.h)(0x56C69013)
+I (..\PROTOCOL\longsung.h)(0x56C80489)
 I (..\HARDWARE\IWDG\iwdg.h)(0x53991073)
 I (..\SYSTEM\delay\delay.h)(0x53B7797E)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1389,13 +1389,13 @@ I (..\LIST\list.h)(0x562F530E)
 I (..\MALLOC\malloc.h)(0x5667BCFD)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\tmodem.h)(0x5671272C)
-I (..\PROTOCOL\longsung.h)(0x56C69013)
+I (..\PROTOCOL\longsung.h)(0x56C80489)
 I (..\HARDWARE\IWDG\iwdg.h)(0x53991073)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56C52F00)
 I (..\SYSTEM\delay\delay.h)(0x53B7797E)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-F (..\PROTOCOL\longsung.c)(0x56C6AE3D)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
-I (..\PROTOCOL\longsung.h)(0x56C69013)
+F (..\PROTOCOL\longsung.c)(0x56C80560)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
+I (..\PROTOCOL\longsung.h)(0x56C80489)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)

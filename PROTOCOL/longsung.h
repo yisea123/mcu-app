@@ -50,6 +50,11 @@ typedef void (* at_command_fail_callback)(RemoteTokenizer *tzer);
 
 typedef void (* check_simcard_type_callback)(RemoteTokenizer *tzer, Token* tok);
 
+typedef void (* check_sm_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* read_sm_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* sm_data_callback)(RemoteTokenizer *tzer, Token* tok, int index);
+typedef void (* sm_notify_callback)(RemoteTokenizer *tzer, Token* tok);
+
 typedef struct {
 	char inited;
 	
@@ -71,6 +76,11 @@ typedef struct {
 	at_command_fail_callback	on_at_fail;
 	check_simcard_type_callback on_simcard_type;
 	
+	check_sm_callback on_sm_check;
+	read_sm_callback on_sm_read;
+	sm_data_callback on_sm_data;
+	sm_notify_callback on_sm_notify;
+	
 	char in[MAX_LINE_LEN];
 }RemoteReader;
 
@@ -90,6 +100,14 @@ typedef struct {
 	char socket_close;
 	int socket_open[4];
 	char socket_num;
+	
+	int sm_index[20];
+	char sm_num;
+	int sm_index_read;
+	long sm_read_count;
+	int sm_index_delete;
+	long sm_delete_count;
+	char sm_flag;
 	
   char scsq;
 	char rcsq;
