@@ -642,7 +642,7 @@ void handle_4g_setting(void)
 {
 	if( !mAndroidPower ) {
 		int i;
-		static long long mdelay[3] = { 0, 0 ,0 };
+		static long mdelay[3] = { 0, 0 ,0 };
 		
 		/*android关闭，重启4G模块*/
 		if( dev->reset_request ) {	
@@ -653,13 +653,17 @@ void handle_4g_setting(void)
 		}
 		
 		if( dev->period_tick ) {
-			dev->period_tick = 0;
 			mdelay[0] = 0;
+			dev->period_tick = 0;
 			
 			/*查询信号强度*/
 			at("AT+CSQ");
-			
-			if( dev->boot_status ) {
+		}
+
+		if( mdelay[0] <= 2500000 ) mdelay[0]++;
+		
+		if( dev->boot_status ) {
+			if( mdelay[0] == 1) {
 				dev->scsq++;
 				if( (dev->scsq)-(dev->rcsq) > 3 ) {
 					dev->reset_request = 1;
@@ -671,62 +675,31 @@ void handle_4g_setting(void)
 				if( dev->simcard_type == 0 && dev->scsq > 4 ) {
 					dev->reset_request = 1;
 					printf("sim card no exit!\r\n");
-				}
+				}				
 			}
-		}
+			
+			/*查询SIM卡是否插入*/
+			if( dev->simcard_type == -1 && mdelay[0] == 500000 ) {
+				at("AT+SIMTEST?");
+			}
 
-		if( mdelay[0] <= 2500000 ) mdelay[0]++;
-		
-		/*查询SIM卡是否插入*/
-		if( dev->simcard_type == -1 && 
-				dev->boot_status && mdelay[0] == 500000 ) {
-			at("AT+SIMTEST?");
-		}
-
-		/*查询SM短信未读index*/
-		if( mdelay[0] == 1600000 && dev->boot_status ) {
-			at("AT+CPMS=\"SM\"");
-		}
-		if( mdelay[0] == 1700000 && dev->boot_status ) {
-			at("AT+CMGD=?");
-		}
-		/*查询SM短信未读index*/
-		
-		/*读取sim卡中的短信*/
-		if(dev->sm_num > 0) {
-			if( dev->sm_read_count == 0 )
+			/*查询SM短信未读index*/
+			if( mdelay[0] == 1600000 ) {
 				at("AT+CPMS=\"SM\"");
-			if( dev->sm_read_count == 100000 )
-				at("AT+CMGF=1");
-			if( dev->sm_read_count == 200000 )
-				do_read_sm(dev->sm_index[0]);
-			if( dev->sm_read_count <= 300000) 
-				dev->sm_read_count++;
-		}
-		/*读取sim卡中的短信*/
-		
-		/*删除sim卡中的短信*/
-		if(dev->sm_index_delete != -1 && dev->sm_delete_count == 0) {
-			at("AT+CPMS=\"SM\"");
-		}
-		if(dev->sm_index_delete != -1 && dev->sm_delete_count == 100000) {
-			do_delete_sm(dev->sm_index_delete);
-			//dev->sm_index_delete = -1;
-		}		
-		
-		if(dev->sm_index_delete != -1 && dev->sm_delete_count <= 200000)
-			dev->sm_delete_count++;
-		/*删除sim卡中的短信*/
-		
-		/*查询IP*/
-		if( mdelay[0] == 2500000 && dev->boot_status ) {
-			at("AT+MIPCALL?");
-		}
-		
-		/*PPP连接获取IP*/		
-		if( dev->simcard_type != 0 && 
-				dev->simcard_type != -1 && dev->boot_status ) {
-			if( dev->ppp_flag == 1 && dev->ppp_status == PPP_DISCONNECT ) {
+			}
+			if( mdelay[0] == 1700000 ) {
+				at("AT+CMGD=?");
+			}
+			/*查询SM短信未读index*/
+			
+			/*查询IP*/
+			if( mdelay[0] == 2500000 ) {
+				at("AT+MIPCALL?");
+			}
+			
+			/*PPP连接获取IP*/		
+			if( dev->simcard_type != 0 && dev->simcard_type != -1 &&
+						dev->ppp_flag == 1 && dev->ppp_status == PPP_DISCONNECT ) {
 				dev->ppp_flag = 0;
 				dev->ppp_status = PPP_CONNECTING;
 				delay_ms(10);
@@ -736,12 +709,13 @@ void handle_4g_setting(void)
 				delay_ms(10);
 				at("AT+MIPCALL=1");
 			}
+			
 		}
 		
 		/*检查活跃的socket个数，保持一个连接*/
 		dev->socket_num = 0;
 		
-		for( i=0; i<4; i++ ) {
+		for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
 			if(dev->socket_open[i] != -1)
 				dev->socket_num++;
 		}
@@ -760,8 +734,8 @@ void handle_4g_setting(void)
 					}
 				}
 			}
-					
-		  dev->socket_close = 0;
+			
+			if(dev->socket_close == 1) dev->socket_close = 0;
 		}
 			
 		/*连接上远程服务端*/
@@ -784,21 +758,50 @@ void handle_4g_setting(void)
 		/*连接上远程服务端*/
 		
 		/*发送心跳包给服务*/
-		if( dev->socket_num == 1 && dev->heartbeat_tick >= 3 ) {
-			dev->heartbeat_tick = 0;
-			mdelay[2] = 0;
-		}
+		if( dev->socket_num == 1 && dev->ppp_status == PPP_CONNECTED) {
+			if( dev->heartbeat_tick >= 3 ) {
+				dev->heartbeat_tick = 0;
+				mdelay[2] = 0;
+			}
+			if( mdelay[2] <= 1500000 ) mdelay[2]++;
 		
-		if( mdelay[2] <= 1500000 ) mdelay[2]++;
-		
-		if( dev->socket_num == 1 && mdelay[2] == 1200000 ) {
-			at("AT+MIPSEND=1,\"hello world.\"");
-		}	
-		
-		if( dev->socket_num == 1 && mdelay[2] == 1400000 ) {
-			at("AT+MIPPUSH=1");
+			if( mdelay[2] == 1200000 ) {
+				at("AT+MIPSEND=1,\"hello world.\"");
+			}	
+			if( mdelay[2] == 1400000 ) {
+				at("AT+MIPPUSH=1");
+			}
 		}
 		/*发送心跳包给服务*/
+
+		/*读取sim卡中的短信*/
+		if( dev->sm_num > 0 ) {
+			if( dev->sm_read_count == 0 )
+				at("AT+CPMS=\"SM\"");
+			if( dev->sm_read_count == 100000 )
+				at("AT+CMGF=1");
+			if( dev->sm_read_count == 200000 )
+				do_read_sm(dev->sm_index[0]);
+			
+			if( dev->sm_read_count <= 300000) 
+				dev->sm_read_count++;
+		}
+		/*读取sim卡中的短信*/
+		
+		/*删除sim卡中的短信*/
+		if( dev->sm_index_delete != -1 ) {
+			if( dev->sm_delete_count == 0 ) {
+				at("AT+CPMS=\"SM\"");
+			}
+			if( dev->sm_delete_count == 100000 ) {
+				do_delete_sm(dev->sm_index_delete);
+				//dev->sm_index_delete = -1;
+			}		
+			
+			if( dev->sm_delete_count <= 200000 )
+				dev->sm_delete_count++;
+		}
+		/*删除sim卡中的短信*/
 		
 		
 	} else {
