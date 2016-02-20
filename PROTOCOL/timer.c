@@ -119,7 +119,7 @@ void TIM2_IRQHandler(void)
 		/*40m*/
 		if(++m4gCount > 400) {
 			m4gCount = 0;
-			notify_4g_period();
+			notify_longsung_period();
 		}
 		
 		TIM_SetCounter(TIM2,0);		//清空定时器的CNT

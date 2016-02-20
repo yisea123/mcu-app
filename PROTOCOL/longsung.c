@@ -118,7 +118,7 @@ Fail:
     return -1;
 }
 
-int remote_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
+int longsung_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
 {
     int count = 0;
 		
@@ -154,7 +154,7 @@ int remote_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
     return count;		
 }
 
-Token remote_tokenizer_get( RemoteTokenizer* t, int index )
+Token longsung_tokenizer_get( RemoteTokenizer* t, int index )
 {
     Token  tok;
     static const char*  dummy = "";
@@ -187,7 +187,7 @@ void on_request_ip_fail_callback(RemoteTokenizer *tzer)
 	/*获取IP失败，重新获取*/		
 }
 
-void service_command_callback(RemoteTokenizer *tzer, Token* tok)
+void on_remote_command_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	int len;
 	
@@ -198,7 +198,7 @@ void service_command_callback(RemoteTokenizer *tzer, Token* tok)
 	print_line_1(UART4, tok[2].p, tok[2].end - tok[2].p);	
 }
 
-void service_connect_callback(RemoteTokenizer *tzer, Token* tok)
+void on_connect_service_success_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//+MIPOPEN=1,1
 	int i, socketId = str2int(tok[0].p+9, tok[0].end);
@@ -214,13 +214,13 @@ void service_connect_callback(RemoteTokenizer *tzer, Token* tok)
 	dev->socket_open[i] = socketId;
 }
 
-void service_connect_fail_callback(RemoteTokenizer *tzer)
+void on_connect_service_fail_callback(RemoteTokenizer *tzer)
 {
 	//+MIP:ERROR
 	//printf("[%s, remote service error.]\r\n", __func__);
 }
 
-void service_disconnect_callback(RemoteTokenizer *tzer, Token* tok)
+void on_disconnect_service_callback(RemoteTokenizer *tzer, Token* tok)
 {
 	//printf("%s!\r\n", __func__);
 	//+MIPCLOSE:2
@@ -306,7 +306,7 @@ void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 {
 	//printf("%s!\r\n", __func__);
 	if( !memcmp(at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) {
-		dev->socket_close = 1;
+		dev->socket_close_flag = 1;
 		printf("[AT:%s, result: ERROR]\r\n", at_sending);
 	} else if(!memcmp(at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) {
 		//AT+MIPOPEN=1,0,"
@@ -411,7 +411,7 @@ void on_sm_notify_callback(RemoteTokenizer *tzer, Token* tok)
 	}
 }
 
-void remote_reader_parse( RemoteReader* r )
+void longsung_reader_parse( RemoteReader* r )
 {
 	int i;	
 	Token* tok;
@@ -422,7 +422,7 @@ void remote_reader_parse( RemoteReader* r )
 	print_line(UART4, r->in, r->pos);
 	/*打印4G的所有串口消息*/
 	
-	remote_tokenizer_init(tzer, r->in, r->in+r->pos);
+	longsung_tokenizer_init(tzer, r->in, r->in+r->pos);
 	
 	if(tzer->count == 0) return;
 	
@@ -433,7 +433,7 @@ void remote_reader_parse( RemoteReader* r )
 	}
 	
 	for(i=0; i<tzer->count; i++) {
-		tok[i] = remote_tokenizer_get(tzer, i);
+		tok[i] = longsung_tokenizer_get(tzer, i);
 	}
 	
 	if(dev->sm_flag) {
@@ -492,7 +492,7 @@ void remote_reader_parse( RemoteReader* r )
 	myfree(0, tok);	
 }
 
-void remote_reader_addc( RemoteReader* r, int c )
+void longsung_reader_addc( RemoteReader* r, int c )
 {
     if (r->overflow) {
         r->overflow = (c != '\n');
@@ -509,14 +509,14 @@ void remote_reader_addc( RemoteReader* r, int c )
     r->pos += 1;
 
 		if(c == '\n' /*|| c == '\0'*/) {
-			remote_reader_parse(r);
+			longsung_reader_parse(r);
 			r->pos = 0;
 			/*for fix bug. must memset r->in*/
 			memset(r->in, '\0', sizeof(r->in));
 		}
 }
 
-void handle_4g_uart_msg( void )
+void handle_longsung_uart_msg( void )
 {
 		int i = 0;
 		long long j = 0;
@@ -527,12 +527,12 @@ void handle_4g_uart_msg( void )
 				if(j++%20==0) IWDG_Feed();	
 				kfifo_get(uart3_fifo, &ch, 1);
 				
-				remote_reader_addc(reader, ch);
+				longsung_reader_addc(reader, ch);
 			}	
 		}
 }
 
-void notify_4g_period(void)
+void notify_longsung_period(void)
 {
 		dev->heartbeat_tick++;	
 		dev->period_tick = 1;
@@ -550,7 +550,7 @@ void init_longsung_status(char flag)
 	dev->rcsq = 0;
 	dev->simcard_type = -1;
 
-	dev->socket_close = 0;
+	dev->socket_close_flag = 0;
 	dev->socket_num = 0;
 
 	dev->ppp_flag = 0;
@@ -638,7 +638,7 @@ void do_delete_sm(int index)
 	}	
 }
 
-void handle_4g_setting(void)
+void handle_longsung_setting(void)
 {
 	if( !mAndroidPower ) {
 		int i;
@@ -656,18 +656,19 @@ void handle_4g_setting(void)
 			mdelay[0] = 0;
 			dev->period_tick = 0;
 			
-			/*查询信号强度*/
+			/*查询信号强度，每40秒遍历一次*/
 			at("AT+CSQ");
 		}
 
 		if( mdelay[0] <= 2500000 ) mdelay[0]++;
 		
 		if( dev->boot_status ) {
+			/*表示4G已启动完成*/
 			if( mdelay[0] == 1) {
 				dev->scsq++;
 				if( (dev->scsq)-(dev->rcsq) > 3 ) {
 					dev->reset_request = 1;
-					dev->socket_close = 1;
+					dev->socket_close_flag = 1;
 					printf("scsq-rcsq=%d! error.\r\n", dev->scsq-dev->rcsq);
 				}
 				
@@ -684,11 +685,13 @@ void handle_4g_setting(void)
 			}
 
 			/*查询SM短信未读index*/
-			if( mdelay[0] == 1600000 ) {
-				at("AT+CPMS=\"SM\"");
-			}
-			if( mdelay[0] == 1700000 ) {
-				at("AT+CMGD=?");
+			if( dev->simcard_type != 0 ) {
+				if( mdelay[0] == 1600000 ) {
+					at("AT+CPMS=\"SM\"");
+				}
+				if( mdelay[0] == 1700000 ) {
+					at("AT+CMGD=?");
+				}
 			}
 			/*查询SM短信未读index*/
 			
@@ -721,7 +724,7 @@ void handle_4g_setting(void)
 		}
 		
 		/*若发现socket大于1，关闭所有socket,重新建立连接*/
-		if( dev->socket_num > 1 || dev->socket_close == 1) {
+		if( dev->socket_num > 1 || dev->socket_close_flag == 1) {
 			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
 				if( dev->socket_open[i] != -1 ) {
 					switch( dev->socket_open[i] )
@@ -735,7 +738,7 @@ void handle_4g_setting(void)
 				}
 			}
 			
-			if(dev->socket_close == 1) dev->socket_close = 0;
+			if(dev->socket_close_flag == 1) dev->socket_close_flag = 0;
 		}
 			
 		/*连接上远程服务端*/
@@ -814,16 +817,16 @@ void handle_4g_setting(void)
 	}
 }
 
-void init_remote_reader(void) 
+void init_longsung_reader(void) 
 {
 	reader->inited = 1;
 	reader->pos = 0;
 	reader->overflow = 0;
-	reader->on_command = service_command_callback;
+	reader->on_command = on_remote_command_callback;
 	
-	reader->on_connect_fail = service_connect_fail_callback;
-	reader->on_connect_success = service_connect_callback;
-	reader->on_disconnect = service_disconnect_callback;
+	reader->on_connect_fail = on_connect_service_fail_callback;
+	reader->on_connect_success = on_connect_service_success_callback;
+	reader->on_disconnect = on_disconnect_service_callback;
 	
 	reader->on_signal_strength	= on_signal_strength_callback;
 	reader->on_ip_success = on_request_ip_success_callback;
@@ -843,7 +846,7 @@ void init_remote_reader(void)
 
 void longsung_init()
 {
-	init_remote_reader();
+	init_longsung_reader();
 	init_longsung_status(1);
 }
 

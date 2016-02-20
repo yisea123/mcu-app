@@ -99,10 +99,10 @@ int main(void)
 		handle_bootloader_update_work();
 		/*处理BOOTLOADER的烧录请求*/
 		
-		handle_4g_uart_msg();
+		handle_longsung_uart_msg();
 		/*当android系统关机时，开始遍历4G的串口消息*/
 		
-		handle_4g_setting();
+		handle_longsung_setting();
 		/*设置4G的网络、连接服务器等状态*/
 		
 		handle_pending_work();

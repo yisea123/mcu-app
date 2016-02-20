@@ -267,7 +267,7 @@ Section Cross References
     timer.o(.text) refers to misc.o(.text) for NVIC_Init
     timer.o(.text) refers to ioctr.o(.text) for power_android
     timer.o(.text) refers to tmodem.o(.text) for reset_tmodem_status
-    timer.o(.text) refers to longsung.o(.text) for notify_4g_period
+    timer.o(.text) refers to longsung.o(.text) for notify_longsung_period
     timer.o(.text) refers to ioctr.o(.data) for mAndroidPower
     timer.o(.text) refers to uart_command.o(.data) for periodicNum
     timer.o(.text) refers to car_event.o(.data) for event_sending
@@ -877,96 +877,96 @@ Image Symbol Table
     .text                                    0x08049418   Section        0  md5.o(.text)
     .text                                    0x08049e78   Section        0  timer.o(.text)
     .text                                    0x0804a078   Section        0  longsung.o(.text)
-    .text                                    0x0804b600   Section        0  usmart.o(.text)
-    .text                                    0x0804bf94   Section        0  usmart_str.o(.text)
-    .text                                    0x0804c4bc   Section        0  list.o(.text)
-    .text                                    0x0804c550   Section        0  test.o(.text)
-    .text                                    0x0804c898   Section        2  use_no_semi_2.o(.text)
-    .text                                    0x0804c89a   Section      238  lludivv7m.o(.text)
-    .text                                    0x0804c988   Section       72  llsdiv.o(.text)
-    .text                                    0x0804c9d0   Section        0  noretval__2printf.o(.text)
-    .text                                    0x0804c9e8   Section        0  _printf_pad.o(.text)
-    .text                                    0x0804ca36   Section        0  _printf_str.o(.text)
-    .text                                    0x0804ca88   Section        0  _printf_dec.o(.text)
-    .text                                    0x0804cafc   Section        0  _printf_hex_int.o(.text)
-    .text                                    0x0804cb54   Section        0  __printf_flags_ss_wp.o(.text)
-    .text                                    0x0804ccdc   Section        0  memcmp.o(.text)
-    .text                                    0x0804cd34   Section        0  strlen.o(.text)
-    .text                                    0x0804cd72   Section        0  memchr.o(.text)
-    .text                                    0x0804cd86   Section        0  strcat.o(.text)
-    .text                                    0x0804cd9e   Section      138  rt_memcpy_v6.o(.text)
-    .text                                    0x0804ce28   Section       78  rt_memclr_w.o(.text)
-    .text                                    0x0804ce76   Section        0  heapauxi.o(.text)
-    .text                                    0x0804ce7c   Section        2  use_no_semi.o(.text)
-    .text                                    0x0804ce7e   Section        0  _printf_intcommon.o(.text)
-    .text                                    0x0804cf30   Section        0  _printf_char.o(.text)
-    .text                                    0x0804cf5c   Section        0  _printf_char_file.o(.text)
-    .text                                    0x0804cf80   Section      100  rt_memcpy_w.o(.text)
-    .text                                    0x0804cfe4   Section        0  _printf_char_common.o(.text)
-    _printf_input_char                       0x0804cfe5   Thumb Code    10  _printf_char_common.o(.text)
-    .text                                    0x0804d014   Section        0  ferror.o(.text)
-    .text                                    0x0804d01c   Section       74  sys_stackheap_outer.o(.text)
-    .text                                    0x0804d066   Section        0  exit.o(.text)
-    .text                                    0x0804d074   Section        8  libspace.o(.text)
-    i._is_digit                              0x0804d07c   Section        0  __printf_wp.o(i._is_digit)
-    x$fpl$fpinit                             0x0804d08a   Section       10  fpinit.o(x$fpl$fpinit)
-    $v0                                      0x0804d08a   Number         0  fpinit.o(x$fpl$fpinit)
-    .constdata                               0x0804d094   Section       10  main.o(.constdata)
-    __func__                                 0x0804d094   Data          10  main.o(.constdata)
-    .constdata                               0x0804d09e   Section       20  pending.o(.constdata)
-    __func__                                 0x0804d09e   Data          20  pending.o(.constdata)
-    .constdata                               0x0804d0b4   Section       36  malloc.o(.constdata)
-    .constdata                               0x0804d0d8   Section      624  uart_command.o(.constdata)
-    crctable                                 0x0804d0d8   Data         512  uart_command.o(.constdata)
-    __func__                                 0x0804d2eb   Data          17  uart_command.o(.constdata)
-    __func__                                 0x0804d2fc   Data          14  uart_command.o(.constdata)
-    __func__                                 0x0804d30a   Data          12  uart_command.o(.constdata)
-    __func__                                 0x0804d316   Data          28  uart_command.o(.constdata)
-    __func__                                 0x0804d332   Data          22  uart_command.o(.constdata)
-    .constdata                               0x0804d348   Section       89  car_event.o(.constdata)
-    __func__                                 0x0804d348   Data          16  car_event.o(.constdata)
-    __func__                                 0x0804d358   Data          16  car_event.o(.constdata)
-    __func__                                 0x0804d368   Data          19  car_event.o(.constdata)
-    __func__                                 0x0804d37b   Data          16  car_event.o(.constdata)
-    __func__                                 0x0804d38b   Data          22  car_event.o(.constdata)
-    .constdata                               0x0804d3a1   Section      200  tmodem.o(.constdata)
-    __func__                                 0x0804d3a1   Data          22  tmodem.o(.constdata)
-    __func__                                 0x0804d3b7   Data          20  tmodem.o(.constdata)
-    __func__                                 0x0804d3cb   Data          11  tmodem.o(.constdata)
-    __func__                                 0x0804d3d6   Data          13  tmodem.o(.constdata)
-    __func__                                 0x0804d3e3   Data          22  tmodem.o(.constdata)
-    __func__                                 0x0804d3f9   Data          18  tmodem.o(.constdata)
-    __func__                                 0x0804d40b   Data          23  tmodem.o(.constdata)
-    __func__                                 0x0804d422   Data          21  tmodem.o(.constdata)
-    __func__                                 0x0804d437   Data          22  tmodem.o(.constdata)
-    __func__                                 0x0804d44d   Data          28  tmodem.o(.constdata)
-    .constdata                               0x0804d469   Section       98  bootloader_update.o(.constdata)
-    __func__                                 0x0804d469   Data          27  bootloader_update.o(.constdata)
-    __func__                                 0x0804d484   Data          28  bootloader_update.o(.constdata)
-    __func__                                 0x0804d4a0   Data          21  bootloader_update.o(.constdata)
-    __func__                                 0x0804d4b5   Data          22  bootloader_update.o(.constdata)
-    .constdata                               0x0804d4cb   Section       10  md5.o(.constdata)
-    __func__                                 0x0804d4cb   Data          10  md5.o(.constdata)
-    .constdata                               0x0804d4d5   Section       20  longsung.o(.constdata)
-    __func__                                 0x0804d4d5   Data          20  longsung.o(.constdata)
-    .constdata                               0x0804d4e9   Section       12  usmart.o(.constdata)
-    __func__                                 0x0804d4e9   Data          12  usmart.o(.constdata)
-    .constdata                               0x0804d4f5   Section       26  test.o(.constdata)
-    __func__                                 0x0804d4f5   Data          16  test.o(.constdata)
-    __func__                                 0x0804d505   Data          10  test.o(.constdata)
-    .constdata                               0x0804d50f   Section       40  _printf_hex_int.o(.constdata)
-    uc_hextab                                0x0804d50f   Data          20  _printf_hex_int.o(.constdata)
-    lc_hextab                                0x0804d523   Data          20  _printf_hex_int.o(.constdata)
-    .constdata                               0x0804d537   Section       17  __printf_flags_ss_wp.o(.constdata)
-    maptable                                 0x0804d537   Data          17  __printf_flags_ss_wp.o(.constdata)
-    .conststring                             0x0804d548   Section      147  main.o(.conststring)
-    .conststring                             0x0804d5dc   Section      522  pending.o(.conststring)
-    .conststring                             0x0804d7e8   Section      228  tmodem.o(.conststring)
-    .conststring                             0x0804d8cc   Section       82  bootloader_update.o(.conststring)
-    .conststring                             0x0804d920   Section       72  md5.o(.conststring)
-    .conststring                             0x0804d968   Section        1  longsung.o(.conststring)
-    .conststring                             0x0804d96c   Section      104  usmart.o(.conststring)
-    .conststring                             0x0804d9d4   Section      802  usmart_config.o(.conststring)
+    .text                                    0x0804b604   Section        0  usmart.o(.text)
+    .text                                    0x0804bf98   Section        0  usmart_str.o(.text)
+    .text                                    0x0804c4c0   Section        0  list.o(.text)
+    .text                                    0x0804c554   Section        0  test.o(.text)
+    .text                                    0x0804c89c   Section        2  use_no_semi_2.o(.text)
+    .text                                    0x0804c89e   Section      238  lludivv7m.o(.text)
+    .text                                    0x0804c98c   Section       72  llsdiv.o(.text)
+    .text                                    0x0804c9d4   Section        0  noretval__2printf.o(.text)
+    .text                                    0x0804c9ec   Section        0  _printf_pad.o(.text)
+    .text                                    0x0804ca3a   Section        0  _printf_str.o(.text)
+    .text                                    0x0804ca8c   Section        0  _printf_dec.o(.text)
+    .text                                    0x0804cb00   Section        0  _printf_hex_int.o(.text)
+    .text                                    0x0804cb58   Section        0  __printf_flags_ss_wp.o(.text)
+    .text                                    0x0804cce0   Section        0  memcmp.o(.text)
+    .text                                    0x0804cd38   Section        0  strlen.o(.text)
+    .text                                    0x0804cd76   Section        0  memchr.o(.text)
+    .text                                    0x0804cd8a   Section        0  strcat.o(.text)
+    .text                                    0x0804cda2   Section      138  rt_memcpy_v6.o(.text)
+    .text                                    0x0804ce2c   Section       78  rt_memclr_w.o(.text)
+    .text                                    0x0804ce7a   Section        0  heapauxi.o(.text)
+    .text                                    0x0804ce80   Section        2  use_no_semi.o(.text)
+    .text                                    0x0804ce82   Section        0  _printf_intcommon.o(.text)
+    .text                                    0x0804cf34   Section        0  _printf_char.o(.text)
+    .text                                    0x0804cf60   Section        0  _printf_char_file.o(.text)
+    .text                                    0x0804cf84   Section      100  rt_memcpy_w.o(.text)
+    .text                                    0x0804cfe8   Section        0  _printf_char_common.o(.text)
+    _printf_input_char                       0x0804cfe9   Thumb Code    10  _printf_char_common.o(.text)
+    .text                                    0x0804d018   Section        0  ferror.o(.text)
+    .text                                    0x0804d020   Section       74  sys_stackheap_outer.o(.text)
+    .text                                    0x0804d06a   Section        0  exit.o(.text)
+    .text                                    0x0804d078   Section        8  libspace.o(.text)
+    i._is_digit                              0x0804d080   Section        0  __printf_wp.o(i._is_digit)
+    x$fpl$fpinit                             0x0804d08e   Section       10  fpinit.o(x$fpl$fpinit)
+    $v0                                      0x0804d08e   Number         0  fpinit.o(x$fpl$fpinit)
+    .constdata                               0x0804d098   Section       10  main.o(.constdata)
+    __func__                                 0x0804d098   Data          10  main.o(.constdata)
+    .constdata                               0x0804d0a2   Section       20  pending.o(.constdata)
+    __func__                                 0x0804d0a2   Data          20  pending.o(.constdata)
+    .constdata                               0x0804d0b8   Section       36  malloc.o(.constdata)
+    .constdata                               0x0804d0dc   Section      624  uart_command.o(.constdata)
+    crctable                                 0x0804d0dc   Data         512  uart_command.o(.constdata)
+    __func__                                 0x0804d2ef   Data          17  uart_command.o(.constdata)
+    __func__                                 0x0804d300   Data          14  uart_command.o(.constdata)
+    __func__                                 0x0804d30e   Data          12  uart_command.o(.constdata)
+    __func__                                 0x0804d31a   Data          28  uart_command.o(.constdata)
+    __func__                                 0x0804d336   Data          22  uart_command.o(.constdata)
+    .constdata                               0x0804d34c   Section       89  car_event.o(.constdata)
+    __func__                                 0x0804d34c   Data          16  car_event.o(.constdata)
+    __func__                                 0x0804d35c   Data          16  car_event.o(.constdata)
+    __func__                                 0x0804d36c   Data          19  car_event.o(.constdata)
+    __func__                                 0x0804d37f   Data          16  car_event.o(.constdata)
+    __func__                                 0x0804d38f   Data          22  car_event.o(.constdata)
+    .constdata                               0x0804d3a5   Section      200  tmodem.o(.constdata)
+    __func__                                 0x0804d3a5   Data          22  tmodem.o(.constdata)
+    __func__                                 0x0804d3bb   Data          20  tmodem.o(.constdata)
+    __func__                                 0x0804d3cf   Data          11  tmodem.o(.constdata)
+    __func__                                 0x0804d3da   Data          13  tmodem.o(.constdata)
+    __func__                                 0x0804d3e7   Data          22  tmodem.o(.constdata)
+    __func__                                 0x0804d3fd   Data          18  tmodem.o(.constdata)
+    __func__                                 0x0804d40f   Data          23  tmodem.o(.constdata)
+    __func__                                 0x0804d426   Data          21  tmodem.o(.constdata)
+    __func__                                 0x0804d43b   Data          22  tmodem.o(.constdata)
+    __func__                                 0x0804d451   Data          28  tmodem.o(.constdata)
+    .constdata                               0x0804d46d   Section       98  bootloader_update.o(.constdata)
+    __func__                                 0x0804d46d   Data          27  bootloader_update.o(.constdata)
+    __func__                                 0x0804d488   Data          28  bootloader_update.o(.constdata)
+    __func__                                 0x0804d4a4   Data          21  bootloader_update.o(.constdata)
+    __func__                                 0x0804d4b9   Data          22  bootloader_update.o(.constdata)
+    .constdata                               0x0804d4cf   Section       10  md5.o(.constdata)
+    __func__                                 0x0804d4cf   Data          10  md5.o(.constdata)
+    .constdata                               0x0804d4d9   Section       22  longsung.o(.constdata)
+    __func__                                 0x0804d4d9   Data          22  longsung.o(.constdata)
+    .constdata                               0x0804d4ef   Section       12  usmart.o(.constdata)
+    __func__                                 0x0804d4ef   Data          12  usmart.o(.constdata)
+    .constdata                               0x0804d4fb   Section       26  test.o(.constdata)
+    __func__                                 0x0804d4fb   Data          16  test.o(.constdata)
+    __func__                                 0x0804d50b   Data          10  test.o(.constdata)
+    .constdata                               0x0804d515   Section       40  _printf_hex_int.o(.constdata)
+    uc_hextab                                0x0804d515   Data          20  _printf_hex_int.o(.constdata)
+    lc_hextab                                0x0804d529   Data          20  _printf_hex_int.o(.constdata)
+    .constdata                               0x0804d53d   Section       17  __printf_flags_ss_wp.o(.constdata)
+    maptable                                 0x0804d53d   Data          17  __printf_flags_ss_wp.o(.constdata)
+    .conststring                             0x0804d550   Section      147  main.o(.conststring)
+    .conststring                             0x0804d5e4   Section      522  pending.o(.conststring)
+    .conststring                             0x0804d7f0   Section      228  tmodem.o(.conststring)
+    .conststring                             0x0804d8d4   Section       82  bootloader_update.o(.conststring)
+    .conststring                             0x0804d928   Section       72  md5.o(.conststring)
+    .conststring                             0x0804d970   Section        1  longsung.o(.conststring)
+    .conststring                             0x0804d974   Section      104  usmart.o(.conststring)
+    .conststring                             0x0804d9dc   Section      802  usmart_config.o(.conststring)
     .ARM.__AT_0x10000000                     0x10000000   Section    61440  malloc.o(.ARM.__AT_0x10000000)
     .ARM.__AT_0x1000F000                     0x1000f000   Section     3840  malloc.o(.ARM.__AT_0x1000F000)
     .data                                    0x20000000   Section        4  main.o(.data)
@@ -1727,14 +1727,14 @@ Image Symbol Table
     memchr_x                                 0x0804a1ab   Thumb Code    36  longsung.o(.text)
     memcmp_x                                 0x0804a1cf   Thumb Code    44  longsung.o(.text)
     str2int                                  0x0804a1fb   Thumb Code    54  longsung.o(.text)
-    remote_tokenizer_init                    0x0804a231   Thumb Code   108  longsung.o(.text)
-    remote_tokenizer_get                     0x0804a29d   Thumb Code    44  longsung.o(.text)
+    longsung_tokenizer_init                  0x0804a231   Thumb Code   108  longsung.o(.text)
+    longsung_tokenizer_get                   0x0804a29d   Thumb Code    44  longsung.o(.text)
     on_request_ip_success_callback           0x0804a2c9   Thumb Code     8  longsung.o(.text)
     on_request_ip_fail_callback              0x0804a2d1   Thumb Code     8  longsung.o(.text)
-    service_command_callback                 0x0804a2d9   Thumb Code    42  longsung.o(.text)
-    service_connect_callback                 0x0804a303   Thumb Code    64  longsung.o(.text)
-    service_connect_fail_callback            0x0804a343   Thumb Code     2  longsung.o(.text)
-    service_disconnect_callback              0x0804a345   Thumb Code    44  longsung.o(.text)
+    on_remote_command_callback               0x0804a2d9   Thumb Code    42  longsung.o(.text)
+    on_connect_service_success_callback      0x0804a303   Thumb Code    64  longsung.o(.text)
+    on_connect_service_fail_callback         0x0804a343   Thumb Code     2  longsung.o(.text)
+    on_disconnect_service_callback           0x0804a345   Thumb Code    44  longsung.o(.text)
     on_signal_strength_callback              0x0804a371   Thumb Code    58  longsung.o(.text)
     on_at_command_callback                   0x0804a3ab   Thumb Code    60  longsung.o(.text)
     on_at_cmd_success_callback               0x0804a3e7   Thumb Code   198  longsung.o(.text)
@@ -1744,113 +1744,113 @@ Image Symbol Table
     on_sm_read_callback                      0x0804a753   Thumb Code    28  longsung.o(.text)
     on_sm_data_callback                      0x0804a76f   Thumb Code    32  longsung.o(.text)
     on_sm_notify_callback                    0x0804a78f   Thumb Code   122  longsung.o(.text)
-    remote_reader_parse                      0x0804a809   Thumb Code   494  longsung.o(.text)
-    remote_reader_addc                       0x0804a9f7   Thumb Code   402  longsung.o(.text)
-    handle_4g_uart_msg                       0x0804ab89   Thumb Code    94  longsung.o(.text)
-    notify_4g_period                         0x0804abe7   Thumb Code    30  longsung.o(.text)
+    longsung_reader_parse                    0x0804a809   Thumb Code   494  longsung.o(.text)
+    longsung_reader_addc                     0x0804a9f7   Thumb Code   402  longsung.o(.text)
+    handle_longsung_uart_msg                 0x0804ab89   Thumb Code    94  longsung.o(.text)
+    notify_longsung_period                   0x0804abe7   Thumb Code    30  longsung.o(.text)
     init_longsung_status                     0x0804ac05   Thumb Code   128  longsung.o(.text)
     do_read_sm                               0x0804ac85   Thumb Code   204  longsung.o(.text)
     do_delete_sm                             0x0804ad51   Thumb Code   198  longsung.o(.text)
-    handle_4g_setting                        0x0804ae17   Thumb Code  1666  longsung.o(.text)
-    init_remote_reader                       0x0804b499   Thumb Code    84  longsung.o(.text)
-    longsung_init                            0x0804b4ed   Thumb Code    14  longsung.o(.text)
-    usmart_sys_cmd_exe                       0x0804b601   Thumb Code   596  usmart.o(.text)
-    usmart_reset_runtime                     0x0804b855   Thumb Code    38  usmart.o(.text)
-    usmart_get_runtime                       0x0804b87b   Thumb Code    60  usmart.o(.text)
-    TIM4_IRQHandler                          0x0804b8b7   Thumb Code    48  usmart.o(.text)
-    Timer4_Init                              0x0804b8e7   Thumb Code   658  usmart.o(.text)
-    usmart_init                              0x0804bb79   Thumb Code    36  usmart.o(.text)
-    usmart_cmd_rec                           0x0804bb9d   Thumb Code   170  usmart.o(.text)
-    usmart_exe                               0x0804bc47   Thumb Code   550  usmart.o(.text)
-    usmart_scan                              0x0804be6d   Thumb Code   130  usmart.o(.text)
-    read_addr                                0x0804beef   Thumb Code     6  usmart.o(.text)
-    write_addr                               0x0804bef5   Thumb Code     4  usmart.o(.text)
-    usmart_strcmp                            0x0804bf95   Thumb Code    34  usmart_str.o(.text)
-    usmart_strcopy                           0x0804bfb7   Thumb Code    22  usmart_str.o(.text)
-    usmart_strlen                            0x0804bfcd   Thumb Code    24  usmart_str.o(.text)
-    usmart_pow                               0x0804bfe5   Thumb Code    22  usmart_str.o(.text)
-    usmart_str2num                           0x0804bffb   Thumb Code   202  usmart_str.o(.text)
-    usmart_get_cmdname                       0x0804c0c5   Thumb Code    54  usmart_str.o(.text)
-    usmart_search_nextc                      0x0804c0fb   Thumb Code    22  usmart_str.o(.text)
-    usmart_get_fname                         0x0804c111   Thumb Code   440  usmart_str.o(.text)
-    usmart_get_aparm                         0x0804c2c9   Thumb Code   200  usmart_str.o(.text)
-    usmart_get_parmpos                       0x0804c391   Thumb Code    26  usmart_str.o(.text)
-    usmart_get_fparam                        0x0804c3ab   Thumb Code   262  usmart_str.o(.text)
-    INIT_LIST_HEAD                           0x0804c4bd   Thumb Code     6  list.o(.text)
-    __list_add                               0x0804c4c3   Thumb Code    10  list.o(.text)
-    list_add                                 0x0804c4cd   Thumb Code    18  list.o(.text)
-    list_add_tail                            0x0804c4df   Thumb Code    18  list.o(.text)
-    __list_del                               0x0804c4f1   Thumb Code     6  list.o(.text)
-    __list_del_entry                         0x0804c4f7   Thumb Code    14  list.o(.text)
-    list_del                                 0x0804c505   Thumb Code    14  list.o(.text)
-    list_move                                0x0804c513   Thumb Code    22  list.o(.text)
-    list_move_tail                           0x0804c529   Thumb Code    22  list.o(.text)
-    list_empty                               0x0804c53f   Thumb Code    16  list.o(.text)
-    update                                   0x0804c551   Thumb Code    20  test.o(.text)
-    updateb                                  0x0804c565   Thumb Code    20  test.o(.text)
-    android_down                             0x0804c579   Thumb Code     8  test.o(.text)
-    send_can_mesg                            0x0804c581   Thumb Code    54  test.o(.text)
-    send_can1_mesg1                          0x0804c5b7   Thumb Code    98  test.o(.text)
-    send_can2_mesg1                          0x0804c619   Thumb Code    84  test.o(.text)
-    test_func                                0x0804c66d   Thumb Code   276  test.o(.text)
-    set_can_num_event                        0x0804c781   Thumb Code    44  test.o(.text)
-    report_mcu_status                        0x0804c7ad   Thumb Code     8  test.o(.text)
-    enable_debug_tx                          0x0804c7b5   Thumb Code     6  test.o(.text)
-    __use_no_semihosting                     0x0804c899   Thumb Code     2  use_no_semi_2.o(.text)
-    __aeabi_uldivmod                         0x0804c89b   Thumb Code     0  lludivv7m.o(.text)
-    _ll_udiv                                 0x0804c89b   Thumb Code   238  lludivv7m.o(.text)
-    __aeabi_ldivmod                          0x0804c989   Thumb Code     0  llsdiv.o(.text)
-    _ll_sdiv                                 0x0804c989   Thumb Code    72  llsdiv.o(.text)
-    __2printf                                0x0804c9d1   Thumb Code    20  noretval__2printf.o(.text)
-    _printf_pre_padding                      0x0804c9e9   Thumb Code    44  _printf_pad.o(.text)
-    _printf_post_padding                     0x0804ca15   Thumb Code    34  _printf_pad.o(.text)
-    _printf_str                              0x0804ca37   Thumb Code    82  _printf_str.o(.text)
-    _printf_int_dec                          0x0804ca89   Thumb Code   100  _printf_dec.o(.text)
-    _printf_int_hex                          0x0804cafd   Thumb Code    84  _printf_hex_int.o(.text)
-    _printf_longlong_hex                     0x0804cafd   Thumb Code     0  _printf_hex_int.o(.text)
-    __printf                                 0x0804cb55   Thumb Code   388  __printf_flags_ss_wp.o(.text)
-    memcmp                                   0x0804ccdd   Thumb Code    88  memcmp.o(.text)
-    strlen                                   0x0804cd35   Thumb Code    62  strlen.o(.text)
-    memchr                                   0x0804cd73   Thumb Code    20  memchr.o(.text)
-    strcat                                   0x0804cd87   Thumb Code    24  strcat.o(.text)
-    __aeabi_memcpy                           0x0804cd9f   Thumb Code     0  rt_memcpy_v6.o(.text)
-    __rt_memcpy                              0x0804cd9f   Thumb Code   138  rt_memcpy_v6.o(.text)
-    _memcpy_lastbytes                        0x0804ce05   Thumb Code     0  rt_memcpy_v6.o(.text)
-    __aeabi_memclr4                          0x0804ce29   Thumb Code     0  rt_memclr_w.o(.text)
-    __aeabi_memclr8                          0x0804ce29   Thumb Code     0  rt_memclr_w.o(.text)
-    __rt_memclr_w                            0x0804ce29   Thumb Code    78  rt_memclr_w.o(.text)
-    _memset_w                                0x0804ce2d   Thumb Code     0  rt_memclr_w.o(.text)
-    __use_two_region_memory                  0x0804ce77   Thumb Code     2  heapauxi.o(.text)
-    __rt_heap_escrow$2region                 0x0804ce79   Thumb Code     2  heapauxi.o(.text)
-    __rt_heap_expand$2region                 0x0804ce7b   Thumb Code     2  heapauxi.o(.text)
-    __I$use$semihosting                      0x0804ce7d   Thumb Code     0  use_no_semi.o(.text)
-    __use_no_semihosting_swi                 0x0804ce7d   Thumb Code     2  use_no_semi.o(.text)
-    _printf_int_common                       0x0804ce7f   Thumb Code   178  _printf_intcommon.o(.text)
-    _printf_cs_common                        0x0804cf31   Thumb Code    20  _printf_char.o(.text)
-    _printf_char                             0x0804cf45   Thumb Code    16  _printf_char.o(.text)
-    _printf_string                           0x0804cf55   Thumb Code     8  _printf_char.o(.text)
-    _printf_char_file                        0x0804cf5d   Thumb Code    32  _printf_char_file.o(.text)
-    __aeabi_memcpy4                          0x0804cf81   Thumb Code     0  rt_memcpy_w.o(.text)
-    __aeabi_memcpy8                          0x0804cf81   Thumb Code     0  rt_memcpy_w.o(.text)
-    __rt_memcpy_w                            0x0804cf81   Thumb Code   100  rt_memcpy_w.o(.text)
-    _memcpy_lastbytes_aligned                0x0804cfc9   Thumb Code     0  rt_memcpy_w.o(.text)
-    _printf_char_common                      0x0804cfef   Thumb Code    32  _printf_char_common.o(.text)
-    ferror                                   0x0804d015   Thumb Code     8  ferror.o(.text)
-    __user_setup_stackheap                   0x0804d01d   Thumb Code    74  sys_stackheap_outer.o(.text)
-    exit                                     0x0804d067   Thumb Code    12  exit.o(.text)
-    __user_libspace                          0x0804d075   Thumb Code     8  libspace.o(.text)
-    __user_perproc_libspace                  0x0804d075   Thumb Code     0  libspace.o(.text)
-    __user_perthread_libspace                0x0804d075   Thumb Code     0  libspace.o(.text)
-    _is_digit                                0x0804d07d   Thumb Code    14  __printf_wp.o(i._is_digit)
-    _fp_init                                 0x0804d08b   Thumb Code    10  fpinit.o(x$fpl$fpinit)
-    __fplib_config_fpu_vfp                   0x0804d093   Thumb Code     0  fpinit.o(x$fpl$fpinit)
-    __fplib_config_pureend_doubles           0x0804d093   Thumb Code     0  fpinit.o(x$fpl$fpinit)
-    memtblsize                               0x0804d0b4   Data          12  malloc.o(.constdata)
-    memblksize                               0x0804d0c0   Data          12  malloc.o(.constdata)
-    memsize                                  0x0804d0cc   Data          12  malloc.o(.constdata)
-    mSoftVer                                 0x0804d2d8   Data          19  uart_command.o(.constdata)
-    Region$$Table$$Base                      0x0804dcf8   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x0804dd18   Number         0  anon$$obj.o(Region$$Table)
+    handle_longsung_setting                  0x0804ae17   Thumb Code  1670  longsung.o(.text)
+    init_longsung_reader                     0x0804b49d   Thumb Code    84  longsung.o(.text)
+    longsung_init                            0x0804b4f1   Thumb Code    14  longsung.o(.text)
+    usmart_sys_cmd_exe                       0x0804b605   Thumb Code   596  usmart.o(.text)
+    usmart_reset_runtime                     0x0804b859   Thumb Code    38  usmart.o(.text)
+    usmart_get_runtime                       0x0804b87f   Thumb Code    60  usmart.o(.text)
+    TIM4_IRQHandler                          0x0804b8bb   Thumb Code    48  usmart.o(.text)
+    Timer4_Init                              0x0804b8eb   Thumb Code   658  usmart.o(.text)
+    usmart_init                              0x0804bb7d   Thumb Code    36  usmart.o(.text)
+    usmart_cmd_rec                           0x0804bba1   Thumb Code   170  usmart.o(.text)
+    usmart_exe                               0x0804bc4b   Thumb Code   550  usmart.o(.text)
+    usmart_scan                              0x0804be71   Thumb Code   130  usmart.o(.text)
+    read_addr                                0x0804bef3   Thumb Code     6  usmart.o(.text)
+    write_addr                               0x0804bef9   Thumb Code     4  usmart.o(.text)
+    usmart_strcmp                            0x0804bf99   Thumb Code    34  usmart_str.o(.text)
+    usmart_strcopy                           0x0804bfbb   Thumb Code    22  usmart_str.o(.text)
+    usmart_strlen                            0x0804bfd1   Thumb Code    24  usmart_str.o(.text)
+    usmart_pow                               0x0804bfe9   Thumb Code    22  usmart_str.o(.text)
+    usmart_str2num                           0x0804bfff   Thumb Code   202  usmart_str.o(.text)
+    usmart_get_cmdname                       0x0804c0c9   Thumb Code    54  usmart_str.o(.text)
+    usmart_search_nextc                      0x0804c0ff   Thumb Code    22  usmart_str.o(.text)
+    usmart_get_fname                         0x0804c115   Thumb Code   440  usmart_str.o(.text)
+    usmart_get_aparm                         0x0804c2cd   Thumb Code   200  usmart_str.o(.text)
+    usmart_get_parmpos                       0x0804c395   Thumb Code    26  usmart_str.o(.text)
+    usmart_get_fparam                        0x0804c3af   Thumb Code   262  usmart_str.o(.text)
+    INIT_LIST_HEAD                           0x0804c4c1   Thumb Code     6  list.o(.text)
+    __list_add                               0x0804c4c7   Thumb Code    10  list.o(.text)
+    list_add                                 0x0804c4d1   Thumb Code    18  list.o(.text)
+    list_add_tail                            0x0804c4e3   Thumb Code    18  list.o(.text)
+    __list_del                               0x0804c4f5   Thumb Code     6  list.o(.text)
+    __list_del_entry                         0x0804c4fb   Thumb Code    14  list.o(.text)
+    list_del                                 0x0804c509   Thumb Code    14  list.o(.text)
+    list_move                                0x0804c517   Thumb Code    22  list.o(.text)
+    list_move_tail                           0x0804c52d   Thumb Code    22  list.o(.text)
+    list_empty                               0x0804c543   Thumb Code    16  list.o(.text)
+    update                                   0x0804c555   Thumb Code    20  test.o(.text)
+    updateb                                  0x0804c569   Thumb Code    20  test.o(.text)
+    android_down                             0x0804c57d   Thumb Code     8  test.o(.text)
+    send_can_mesg                            0x0804c585   Thumb Code    54  test.o(.text)
+    send_can1_mesg1                          0x0804c5bb   Thumb Code    98  test.o(.text)
+    send_can2_mesg1                          0x0804c61d   Thumb Code    84  test.o(.text)
+    test_func                                0x0804c671   Thumb Code   276  test.o(.text)
+    set_can_num_event                        0x0804c785   Thumb Code    44  test.o(.text)
+    report_mcu_status                        0x0804c7b1   Thumb Code     8  test.o(.text)
+    enable_debug_tx                          0x0804c7b9   Thumb Code     6  test.o(.text)
+    __use_no_semihosting                     0x0804c89d   Thumb Code     2  use_no_semi_2.o(.text)
+    __aeabi_uldivmod                         0x0804c89f   Thumb Code     0  lludivv7m.o(.text)
+    _ll_udiv                                 0x0804c89f   Thumb Code   238  lludivv7m.o(.text)
+    __aeabi_ldivmod                          0x0804c98d   Thumb Code     0  llsdiv.o(.text)
+    _ll_sdiv                                 0x0804c98d   Thumb Code    72  llsdiv.o(.text)
+    __2printf                                0x0804c9d5   Thumb Code    20  noretval__2printf.o(.text)
+    _printf_pre_padding                      0x0804c9ed   Thumb Code    44  _printf_pad.o(.text)
+    _printf_post_padding                     0x0804ca19   Thumb Code    34  _printf_pad.o(.text)
+    _printf_str                              0x0804ca3b   Thumb Code    82  _printf_str.o(.text)
+    _printf_int_dec                          0x0804ca8d   Thumb Code   100  _printf_dec.o(.text)
+    _printf_int_hex                          0x0804cb01   Thumb Code    84  _printf_hex_int.o(.text)
+    _printf_longlong_hex                     0x0804cb01   Thumb Code     0  _printf_hex_int.o(.text)
+    __printf                                 0x0804cb59   Thumb Code   388  __printf_flags_ss_wp.o(.text)
+    memcmp                                   0x0804cce1   Thumb Code    88  memcmp.o(.text)
+    strlen                                   0x0804cd39   Thumb Code    62  strlen.o(.text)
+    memchr                                   0x0804cd77   Thumb Code    20  memchr.o(.text)
+    strcat                                   0x0804cd8b   Thumb Code    24  strcat.o(.text)
+    __aeabi_memcpy                           0x0804cda3   Thumb Code     0  rt_memcpy_v6.o(.text)
+    __rt_memcpy                              0x0804cda3   Thumb Code   138  rt_memcpy_v6.o(.text)
+    _memcpy_lastbytes                        0x0804ce09   Thumb Code     0  rt_memcpy_v6.o(.text)
+    __aeabi_memclr4                          0x0804ce2d   Thumb Code     0  rt_memclr_w.o(.text)
+    __aeabi_memclr8                          0x0804ce2d   Thumb Code     0  rt_memclr_w.o(.text)
+    __rt_memclr_w                            0x0804ce2d   Thumb Code    78  rt_memclr_w.o(.text)
+    _memset_w                                0x0804ce31   Thumb Code     0  rt_memclr_w.o(.text)
+    __use_two_region_memory                  0x0804ce7b   Thumb Code     2  heapauxi.o(.text)
+    __rt_heap_escrow$2region                 0x0804ce7d   Thumb Code     2  heapauxi.o(.text)
+    __rt_heap_expand$2region                 0x0804ce7f   Thumb Code     2  heapauxi.o(.text)
+    __I$use$semihosting                      0x0804ce81   Thumb Code     0  use_no_semi.o(.text)
+    __use_no_semihosting_swi                 0x0804ce81   Thumb Code     2  use_no_semi.o(.text)
+    _printf_int_common                       0x0804ce83   Thumb Code   178  _printf_intcommon.o(.text)
+    _printf_cs_common                        0x0804cf35   Thumb Code    20  _printf_char.o(.text)
+    _printf_char                             0x0804cf49   Thumb Code    16  _printf_char.o(.text)
+    _printf_string                           0x0804cf59   Thumb Code     8  _printf_char.o(.text)
+    _printf_char_file                        0x0804cf61   Thumb Code    32  _printf_char_file.o(.text)
+    __aeabi_memcpy4                          0x0804cf85   Thumb Code     0  rt_memcpy_w.o(.text)
+    __aeabi_memcpy8                          0x0804cf85   Thumb Code     0  rt_memcpy_w.o(.text)
+    __rt_memcpy_w                            0x0804cf85   Thumb Code   100  rt_memcpy_w.o(.text)
+    _memcpy_lastbytes_aligned                0x0804cfcd   Thumb Code     0  rt_memcpy_w.o(.text)
+    _printf_char_common                      0x0804cff3   Thumb Code    32  _printf_char_common.o(.text)
+    ferror                                   0x0804d019   Thumb Code     8  ferror.o(.text)
+    __user_setup_stackheap                   0x0804d021   Thumb Code    74  sys_stackheap_outer.o(.text)
+    exit                                     0x0804d06b   Thumb Code    12  exit.o(.text)
+    __user_libspace                          0x0804d079   Thumb Code     8  libspace.o(.text)
+    __user_perproc_libspace                  0x0804d079   Thumb Code     0  libspace.o(.text)
+    __user_perthread_libspace                0x0804d079   Thumb Code     0  libspace.o(.text)
+    _is_digit                                0x0804d081   Thumb Code    14  __printf_wp.o(i._is_digit)
+    _fp_init                                 0x0804d08f   Thumb Code    10  fpinit.o(x$fpl$fpinit)
+    __fplib_config_fpu_vfp                   0x0804d097   Thumb Code     0  fpinit.o(x$fpl$fpinit)
+    __fplib_config_pureend_doubles           0x0804d097   Thumb Code     0  fpinit.o(x$fpl$fpinit)
+    memtblsize                               0x0804d0b8   Data          12  malloc.o(.constdata)
+    memblksize                               0x0804d0c4   Data          12  malloc.o(.constdata)
+    memsize                                  0x0804d0d0   Data          12  malloc.o(.constdata)
+    mSoftVer                                 0x0804d2dc   Data          19  uart_command.o(.constdata)
+    Region$$Table$$Base                      0x0804dd00   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x0804dd20   Number         0  anon$$obj.o(Region$$Table)
     mem3base                                 0x10000000   Data       61440  malloc.o(.ARM.__AT_0x10000000)
     mem3mapbase                              0x1000f000   Data        3840  malloc.o(.ARM.__AT_0x1000F000)
     mAndroidShutDownPending                  0x20000000   Data           1  main.o(.data)
@@ -1933,9 +1933,9 @@ Memory Map of the image
 
   Image Entry point : 0x08040189
 
-  Load Region LR_IROM1 (Base: 0x08040000, Size: 0x0000e11c, Max: 0x000d0000, ABSOLUTE, COMPRESSED[0x0000de78])
+  Load Region LR_IROM1 (Base: 0x08040000, Size: 0x0000e124, Max: 0x000d0000, ABSOLUTE, COMPRESSED[0x0000de80])
 
-    Execution Region ER_IROM1 (Base: 0x08040000, Size: 0x0000dd18, Max: 0x000d0000, ABSOLUTE)
+    Execution Region ER_IROM1 (Base: 0x08040000, Size: 0x0000dd20, Max: 0x000d0000, ABSOLUTE)
 
     Base Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -2027,69 +2027,70 @@ Memory Map of the image
     0x08049398   0x00000080   Code   RO          968    .text               rsa.o
     0x08049418   0x00000a60   Code   RO          992    .text               md5.o
     0x08049e78   0x00000200   Code   RO         1016    .text               timer.o
-    0x0804a078   0x00001588   Code   RO         1039    .text               longsung.o
-    0x0804b600   0x00000994   Code   RO         1065    .text               usmart.o
-    0x0804bf94   0x00000528   Code   RO         1111    .text               usmart_str.o
-    0x0804c4bc   0x00000092   Code   RO         1129    .text               list.o
-    0x0804c54e   0x00000002   PAD
-    0x0804c550   0x00000348   Code   RO         1143    .text               test.o
-    0x0804c898   0x00000002   Code   RO         1168    .text               c_w.l(use_no_semi_2.o)
-    0x0804c89a   0x000000ee   Code   RO         1170    .text               c_w.l(lludivv7m.o)
-    0x0804c988   0x00000048   Code   RO         1172    .text               c_w.l(llsdiv.o)
-    0x0804c9d0   0x00000018   Code   RO         1176    .text               c_w.l(noretval__2printf.o)
-    0x0804c9e8   0x0000004e   Code   RO         1180    .text               c_w.l(_printf_pad.o)
-    0x0804ca36   0x00000052   Code   RO         1182    .text               c_w.l(_printf_str.o)
-    0x0804ca88   0x00000074   Code   RO         1184    .text               c_w.l(_printf_dec.o)
-    0x0804cafc   0x00000058   Code   RO         1189    .text               c_w.l(_printf_hex_int.o)
-    0x0804cb54   0x00000188   Code   RO         1224    .text               c_w.l(__printf_flags_ss_wp.o)
-    0x0804ccdc   0x00000058   Code   RO         1232    .text               c_w.l(memcmp.o)
-    0x0804cd34   0x0000003e   Code   RO         1234    .text               c_w.l(strlen.o)
-    0x0804cd72   0x00000014   Code   RO         1236    .text               c_w.l(memchr.o)
-    0x0804cd86   0x00000018   Code   RO         1238    .text               c_w.l(strcat.o)
-    0x0804cd9e   0x0000008a   Code   RO         1240    .text               c_w.l(rt_memcpy_v6.o)
-    0x0804ce28   0x0000004e   Code   RO         1242    .text               c_w.l(rt_memclr_w.o)
-    0x0804ce76   0x00000006   Code   RO         1244    .text               c_w.l(heapauxi.o)
-    0x0804ce7c   0x00000002   Code   RO         1248    .text               c_w.l(use_no_semi.o)
-    0x0804ce7e   0x000000b2   Code   RO         1255    .text               c_w.l(_printf_intcommon.o)
-    0x0804cf30   0x0000002c   Code   RO         1257    .text               c_w.l(_printf_char.o)
-    0x0804cf5c   0x00000024   Code   RO         1259    .text               c_w.l(_printf_char_file.o)
-    0x0804cf80   0x00000064   Code   RO         1262    .text               c_w.l(rt_memcpy_w.o)
-    0x0804cfe4   0x00000030   Code   RO         1281    .text               c_w.l(_printf_char_common.o)
-    0x0804d014   0x00000008   Code   RO         1283    .text               c_w.l(ferror.o)
-    0x0804d01c   0x0000004a   Code   RO         1287    .text               c_w.l(sys_stackheap_outer.o)
-    0x0804d066   0x0000000c   Code   RO         1291    .text               c_w.l(exit.o)
-    0x0804d072   0x00000002   PAD
-    0x0804d074   0x00000008   Code   RO         1303    .text               c_w.l(libspace.o)
-    0x0804d07c   0x0000000e   Code   RO         1217    i._is_digit         c_w.l(__printf_wp.o)
-    0x0804d08a   0x0000000a   Code   RO         1370    x$fpl$fpinit        fz_wm.l(fpinit.o)
-    0x0804d094   0x0000000a   Data   RO            5    .constdata          main.o
-    0x0804d09e   0x00000014   Data   RO          305    .constdata          pending.o
-    0x0804d0b2   0x00000002   PAD
-    0x0804d0b4   0x00000024   Data   RO          796    .constdata          malloc.o
-    0x0804d0d8   0x00000270   Data   RO          849    .constdata          uart_command.o
-    0x0804d348   0x00000059   Data   RO          877    .constdata          car_event.o
-    0x0804d3a1   0x000000c8   Data   RO          907    .constdata          tmodem.o
-    0x0804d469   0x00000062   Data   RO          940    .constdata          bootloader_update.o
-    0x0804d4cb   0x0000000a   Data   RO          993    .constdata          md5.o
-    0x0804d4d5   0x00000014   Data   RO         1041    .constdata          longsung.o
-    0x0804d4e9   0x0000000c   Data   RO         1066    .constdata          usmart.o
-    0x0804d4f5   0x0000001a   Data   RO         1144    .constdata          test.o
-    0x0804d50f   0x00000028   Data   RO         1190    .constdata          c_w.l(_printf_hex_int.o)
-    0x0804d537   0x00000011   Data   RO         1225    .constdata          c_w.l(__printf_flags_ss_wp.o)
-    0x0804d548   0x00000093   Data   RO            6    .conststring        main.o
-    0x0804d5db   0x00000001   PAD
-    0x0804d5dc   0x0000020a   Data   RO          306    .conststring        pending.o
-    0x0804d7e6   0x00000002   PAD
-    0x0804d7e8   0x000000e4   Data   RO          908    .conststring        tmodem.o
-    0x0804d8cc   0x00000052   Data   RO          941    .conststring        bootloader_update.o
-    0x0804d91e   0x00000002   PAD
-    0x0804d920   0x00000048   Data   RO          994    .conststring        md5.o
-    0x0804d968   0x00000001   Data   RO         1042    .conststring        longsung.o
-    0x0804d969   0x00000003   PAD
-    0x0804d96c   0x00000068   Data   RO         1067    .conststring        usmart.o
-    0x0804d9d4   0x00000322   Data   RO         1090    .conststring        usmart_config.o
-    0x0804dcf6   0x00000002   PAD
-    0x0804dcf8   0x00000020   Data   RO         1423    Region$$Table       anon$$obj.o
+    0x0804a078   0x0000158c   Code   RO         1039    .text               longsung.o
+    0x0804b604   0x00000994   Code   RO         1065    .text               usmart.o
+    0x0804bf98   0x00000528   Code   RO         1111    .text               usmart_str.o
+    0x0804c4c0   0x00000092   Code   RO         1129    .text               list.o
+    0x0804c552   0x00000002   PAD
+    0x0804c554   0x00000348   Code   RO         1143    .text               test.o
+    0x0804c89c   0x00000002   Code   RO         1168    .text               c_w.l(use_no_semi_2.o)
+    0x0804c89e   0x000000ee   Code   RO         1170    .text               c_w.l(lludivv7m.o)
+    0x0804c98c   0x00000048   Code   RO         1172    .text               c_w.l(llsdiv.o)
+    0x0804c9d4   0x00000018   Code   RO         1176    .text               c_w.l(noretval__2printf.o)
+    0x0804c9ec   0x0000004e   Code   RO         1180    .text               c_w.l(_printf_pad.o)
+    0x0804ca3a   0x00000052   Code   RO         1182    .text               c_w.l(_printf_str.o)
+    0x0804ca8c   0x00000074   Code   RO         1184    .text               c_w.l(_printf_dec.o)
+    0x0804cb00   0x00000058   Code   RO         1189    .text               c_w.l(_printf_hex_int.o)
+    0x0804cb58   0x00000188   Code   RO         1224    .text               c_w.l(__printf_flags_ss_wp.o)
+    0x0804cce0   0x00000058   Code   RO         1232    .text               c_w.l(memcmp.o)
+    0x0804cd38   0x0000003e   Code   RO         1234    .text               c_w.l(strlen.o)
+    0x0804cd76   0x00000014   Code   RO         1236    .text               c_w.l(memchr.o)
+    0x0804cd8a   0x00000018   Code   RO         1238    .text               c_w.l(strcat.o)
+    0x0804cda2   0x0000008a   Code   RO         1240    .text               c_w.l(rt_memcpy_v6.o)
+    0x0804ce2c   0x0000004e   Code   RO         1242    .text               c_w.l(rt_memclr_w.o)
+    0x0804ce7a   0x00000006   Code   RO         1244    .text               c_w.l(heapauxi.o)
+    0x0804ce80   0x00000002   Code   RO         1248    .text               c_w.l(use_no_semi.o)
+    0x0804ce82   0x000000b2   Code   RO         1255    .text               c_w.l(_printf_intcommon.o)
+    0x0804cf34   0x0000002c   Code   RO         1257    .text               c_w.l(_printf_char.o)
+    0x0804cf60   0x00000024   Code   RO         1259    .text               c_w.l(_printf_char_file.o)
+    0x0804cf84   0x00000064   Code   RO         1262    .text               c_w.l(rt_memcpy_w.o)
+    0x0804cfe8   0x00000030   Code   RO         1281    .text               c_w.l(_printf_char_common.o)
+    0x0804d018   0x00000008   Code   RO         1283    .text               c_w.l(ferror.o)
+    0x0804d020   0x0000004a   Code   RO         1287    .text               c_w.l(sys_stackheap_outer.o)
+    0x0804d06a   0x0000000c   Code   RO         1291    .text               c_w.l(exit.o)
+    0x0804d076   0x00000002   PAD
+    0x0804d078   0x00000008   Code   RO         1303    .text               c_w.l(libspace.o)
+    0x0804d080   0x0000000e   Code   RO         1217    i._is_digit         c_w.l(__printf_wp.o)
+    0x0804d08e   0x0000000a   Code   RO         1370    x$fpl$fpinit        fz_wm.l(fpinit.o)
+    0x0804d098   0x0000000a   Data   RO            5    .constdata          main.o
+    0x0804d0a2   0x00000014   Data   RO          305    .constdata          pending.o
+    0x0804d0b6   0x00000002   PAD
+    0x0804d0b8   0x00000024   Data   RO          796    .constdata          malloc.o
+    0x0804d0dc   0x00000270   Data   RO          849    .constdata          uart_command.o
+    0x0804d34c   0x00000059   Data   RO          877    .constdata          car_event.o
+    0x0804d3a5   0x000000c8   Data   RO          907    .constdata          tmodem.o
+    0x0804d46d   0x00000062   Data   RO          940    .constdata          bootloader_update.o
+    0x0804d4cf   0x0000000a   Data   RO          993    .constdata          md5.o
+    0x0804d4d9   0x00000016   Data   RO         1041    .constdata          longsung.o
+    0x0804d4ef   0x0000000c   Data   RO         1066    .constdata          usmart.o
+    0x0804d4fb   0x0000001a   Data   RO         1144    .constdata          test.o
+    0x0804d515   0x00000028   Data   RO         1190    .constdata          c_w.l(_printf_hex_int.o)
+    0x0804d53d   0x00000011   Data   RO         1225    .constdata          c_w.l(__printf_flags_ss_wp.o)
+    0x0804d54e   0x00000002   PAD
+    0x0804d550   0x00000093   Data   RO            6    .conststring        main.o
+    0x0804d5e3   0x00000001   PAD
+    0x0804d5e4   0x0000020a   Data   RO          306    .conststring        pending.o
+    0x0804d7ee   0x00000002   PAD
+    0x0804d7f0   0x000000e4   Data   RO          908    .conststring        tmodem.o
+    0x0804d8d4   0x00000052   Data   RO          941    .conststring        bootloader_update.o
+    0x0804d926   0x00000002   PAD
+    0x0804d928   0x00000048   Data   RO          994    .conststring        md5.o
+    0x0804d970   0x00000001   Data   RO         1042    .conststring        longsung.o
+    0x0804d971   0x00000003   PAD
+    0x0804d974   0x00000068   Data   RO         1067    .conststring        usmart.o
+    0x0804d9dc   0x00000322   Data   RO         1090    .conststring        usmart_config.o
+    0x0804dcfe   0x00000002   PAD
+    0x0804dd00   0x00000020   Data   RO         1423    Region$$Table       anon$$obj.o
 
 
     Execution Region RW_IRAM1 (Base: 0x20000000, Size: 0x0001ba28, Max: 0x00020000, ABSOLUTE, COMPRESSED[0x00000160])
@@ -2189,8 +2190,8 @@ Image component sizes
        808        210          0         20          0       5301   kfifo.o
         64          4          0          0          0        499   led.o
        146          0          0          0          0       2584   list.o
-      5512       1580         21          4        812      11406   longsung.o
-       568        170        157          4        346     322652   main.o
+      5516       1578         23          4        812      11509   longsung.o
+       568        170        157          4        346     322660   main.o
        556         18         36         36    1218560       4741   malloc.o
       2656        308         82         64          0       4786   md5.o
        224         20          0          0          0       1765   misc.o
@@ -2221,7 +2222,7 @@ Image component sizes
       1320         12          0          0          0       5113   usmart_str.o
 
     ----------------------------------------------------------------------
-     50708       7312       3539       1028    1221828     518042   Object Totals
+     50712       7310       3541       1028    1221828     518153   Object Totals
          0          0         32          0          0          0   (incl. Generated)
          6          0         12          3         26          0   (incl. Padding)
 
@@ -2278,8 +2279,8 @@ Image component sizes
         10          0          0          0          0        116   fpinit.o
 
     ----------------------------------------------------------------------
-      2296         50         57          0         96       2436   Library Totals
-         6          0          0          0          0          0   (incl. Padding)
+      2296         50         59          0         96       2436   Library Totals
+         6          0          2          0          0          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
@@ -2289,7 +2290,7 @@ Image component sizes
         10          0          0          0          0        116   fz_wm.l
 
     ----------------------------------------------------------------------
-      2296         50         57          0         96       2436   Library Totals
+      2296         50         59          0         96       2436   Library Totals
 
     ----------------------------------------------------------------------
 
@@ -2298,15 +2299,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     53004       7362       3596       1028    1221924     510030   Grand Totals
-     53004       7362       3596        352    1221924     510030   ELF Image Totals (compressed)
-     53004       7362       3596        352          0          0   ROM Totals
+     53008       7360       3600       1028    1221924     510141   Grand Totals
+     53008       7360       3600        352    1221924     510141   ELF Image Totals (compressed)
+     53008       7360       3600        352          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                56600 (  55.27kB)
+    Total RO  Size (Code + RO Data)                56608 (  55.28kB)
     Total RW  Size (RW Data + ZI Data)           1222952 (1194.29kB)
-    Total ROM Size (Code + RO Data + RW Data)      56952 (  55.62kB)
+    Total ROM Size (Code + RO Data + RW Data)      56960 (  55.63kB)
 
 ==============================================================================
 

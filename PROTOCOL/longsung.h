@@ -97,7 +97,7 @@ typedef struct {
 	char mipopen_status;
 	char mippush_status;
 	
-	char socket_close;
+	char socket_close_flag;
 	int socket_open[4];
 	char socket_num;
 	
@@ -120,10 +120,10 @@ typedef struct {
 
 extern void remote_reader_addc( RemoteReader* r, int c);
 extern void longsung_init(void);
-extern void handle_4g_uart_msg(void);
+extern void handle_longsung_uart_msg(void);
 extern int str2int(const char* p, const char* end);
-extern void notify_4g_period(void);
-extern void handle_4g_setting(void);
+extern void notify_longsung_period(void);
+extern void handle_longsung_setting(void);
 
 #endif
 
