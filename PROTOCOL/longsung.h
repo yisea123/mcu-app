@@ -82,7 +82,7 @@ typedef struct {
 	sm_notify_callback on_sm_notify;
 	
 	char in[MAX_LINE_LEN];
-}RemoteReader;
+}UartReader;
 
 typedef struct {
 	char is_inited;
@@ -118,7 +118,7 @@ typedef struct {
 	char period_tick;
 }DevStatus;
 
-extern void remote_reader_addc( RemoteReader* r, int c);
+//extern void remote_reader_addc( UartReader* r, int c);
 extern void longsung_init(void);
 extern void handle_longsung_uart_msg(void);
 extern int str2int(const char* p, const char* end);

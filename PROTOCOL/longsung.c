@@ -1,7 +1,7 @@
 #include "longsung.h"
 
 static DevStatus dev[1];
-static RemoteReader reader[1];
+static UartReader reader[1];
 
 void print_char(USART_TypeDef* USARTx, char ch)
 {
@@ -411,7 +411,7 @@ void on_sm_notify_callback(RemoteTokenizer *tzer, Token* tok)
 	}
 }
 
-void longsung_reader_parse( RemoteReader* r )
+void longsung_reader_parse( UartReader* r )
 {
 	int i;	
 	Token* tok;
@@ -492,7 +492,7 @@ void longsung_reader_parse( RemoteReader* r )
 	myfree(0, tok);	
 }
 
-void longsung_reader_addc( RemoteReader* r, int c )
+void longsung_reader_addc( UartReader* r, int c )
 {
     if (r->overflow) {
         r->overflow = (c != '\n');
@@ -693,7 +693,7 @@ void handle_longsung_setting(void)
 					at("AT+CMGD=?");
 				}
 			}
-			/*查询SM短信未读index*/
+			/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
 			
 			/*查询IP*/
 			if( mdelay[0] == 2500000 ) {
@@ -822,8 +822,10 @@ void init_longsung_reader(void)
 	reader->inited = 1;
 	reader->pos = 0;
 	reader->overflow = 0;
-	reader->on_command = on_remote_command_callback;
 	
+	reader->on_simcard_type = on_simcard_type_callback;	
+	
+	reader->on_command = on_remote_command_callback;
 	reader->on_connect_fail = on_connect_service_fail_callback;
 	reader->on_connect_success = on_connect_service_success_callback;
 	reader->on_disconnect = on_disconnect_service_callback;
@@ -835,8 +837,6 @@ void init_longsung_reader(void)
 	reader->on_at_command = on_at_command_callback;
 	reader->on_at_success = on_at_cmd_success_callback;
 	reader->on_at_fail = on_at_cmd_fail_callback;
-	
-	reader->on_simcard_type = on_simcard_type_callback;	
 	
 	reader->on_sm_check = on_sm_check_callback;
 	reader->on_sm_read = on_sm_read_callback;

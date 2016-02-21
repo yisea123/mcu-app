@@ -29,6 +29,7 @@ extern char data0[CMD_UART_LEN], data3[CMD_LEN];
 extern long numRecvAndroidCanCmd;
 extern unsigned char md5[32];
 
+/*硬件问题导致无法重启*/
 __asm void SCU_RESET_Force(void)
 {
  MOV R0, #1           //; 
@@ -39,6 +40,12 @@ __asm void SCU_RESET_Force(void)
  
 deadloop
 		B deadloop        //; deadloop
+}
+
+/*利用看门狗功能进行重启*/
+void enter_loop_module(void)
+{
+		while(1);
 }
 
 uint16_t cpuGetFlashSize(void)
@@ -188,7 +195,8 @@ void handle_pending_work(void)
 		printf("soft reset...\r\n");
 		//delay_ms(100);
 		report_debug_to_android();
-		SCU_RESET_Force();
+		//SCU_RESET_Force();
+		enter_loop_module();
 	}
 	
 	if( mMcuJumpAppPending == 1 && list_event() == 0 && kfifo_len(uart6_fifo) == 0 && 
@@ -297,7 +305,8 @@ void handle_pending_work(void)
 			mMcuJumpAppPending = 0;
 			printf("%s:SCU_RESET_Force()\r\n", __func__);
 			report_debug_to_android();	
-			SCU_RESET_Force();
+			//SCU_RESET_Force();
+			enter_loop_module();
 			/* 重启之前修改标志跟rom大小 ！*/
 		}
 	}	

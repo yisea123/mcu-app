@@ -3,7 +3,7 @@
 <title>Static Call Graph - [..\OBJ\USART.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image ..\OBJ\USART.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Sun Feb 21 00:34:53 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Sun Feb 21 10:10:42 2016
 <BR><P>
 <H3>Maximum Stack Usage =        712 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -329,10 +329,6 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[9d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_sys_exit
 </UL>
 
-<P><STRONG><a name="[c6]"></a>SCU_RESET_Force</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, pending.o(.emb_text))
-<BR><BR>[Called By]<UL><LI><a href="#[b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;handle_pending_work
-</UL>
-
 <P><STRONG><a name="[98]"></a>main</STRONG> (Thumb, 112 bytes, Stack size 0 bytes, main.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 712 + Unknown Stack Size
 <LI>Call Chain = main &rArr; handle_pending_work &rArr; report_debug_to_android &rArr; handle_downstream_work &rArr; do_uart_cmd &rArr;  report_debug_to_android (Cycle)
@@ -390,6 +386,10 @@ Global Symbols
 </UL>
 <P><STRONG><a name="[201]"></a>SystemCoreClockUpdate</STRONG> (Thumb, 174 bytes, Stack size 16 bytes, system_stm32f4xx.o(.text), UNUSED)
 
+<P><STRONG><a name="[c6]"></a>enter_loop_module</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, pending.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;handle_pending_work
+</UL>
+
 <P><STRONG><a name="[b0]"></a>cpuGetFlashSize</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, pending.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
@@ -434,7 +434,7 @@ Global Symbols
 <LI><a href="#[c7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FLASH_If_Erase_Sector
 <LI><a href="#[be]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;report_debug_to_android
 <LI><a href="#[bb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;get_sys_time
-<LI><a href="#[c6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;SCU_RESET_Force
+<LI><a href="#[c6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;enter_loop_module
 <LI><a href="#[ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Called By]<UL><LI><a href="#[98]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
