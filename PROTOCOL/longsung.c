@@ -118,7 +118,7 @@ Fail:
     return -1;
 }
 
-int longsung_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
+static int longsung_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
 {
     int count = 0;
 		
@@ -154,7 +154,7 @@ int longsung_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end 
     return count;		
 }
 
-Token longsung_tokenizer_get( RemoteTokenizer* t, int index )
+static Token longsung_tokenizer_get( RemoteTokenizer* t, int index )
 {
     Token  tok;
     static const char*  dummy = "";
@@ -277,11 +277,13 @@ void on_at_cmd_success_callback(RemoteTokenizer *tzer)
 		
 	} else if( !memcmp(at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) {
 		if( !memcmp(at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
+		/*此命令是短信查询，不处理*/
 		printf("[AT:%s, result: OK]\r\n", at_sending);		
 		dev->sm_index_delete = -1;
 		dev->sm_delete_count = 0;
 		dev->sm_read_count = 0;
-		/*删除短信成功之后才能读取下一条短信，如果不成功，可以永远都不会再读取*/
+		/*删除短信成功之后才能读取下一条短信，如果不成功
+		，可能永远都不会再读取，在at fail中也处理fix it.*/
 		if(dev->sm_num > 0) {
 			int i;
 			
@@ -293,7 +295,8 @@ void on_at_cmd_success_callback(RemoteTokenizer *tzer)
 
 			printf("UPDATE sm_num=%d, sm_index={ ", dev->sm_num);
 			for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
-				printf("%d, ", dev->sm_index[i]);
+				if(dev->sm_index[i] != -1)
+					printf("%d, ", dev->sm_index[i]);
 			}
 			printf("}\r\n");				
 		}
@@ -315,6 +318,8 @@ void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 		printf("[AT:%s, result: ERROR]\r\n", at_sending);
 		dev->sm_delete_count = 0;
 		/*重新执行删除短信工作*/
+		if(dev->sm_read_count > 300000)
+			dev->sm_read_count = 0;
 	}
 }
 
@@ -368,7 +373,8 @@ void on_sm_check_callback(RemoteTokenizer *tzer, Token* tok)
 	
 	printf("sm_num=%d, sm_index={ ", dev->sm_num);
 	for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
-		printf("%d, ", dev->sm_index[i]);
+		if(dev->sm_index[i] != -1)
+			printf("%d, ", dev->sm_index[i]);
 	}
 	printf("}\r\n");
 }
@@ -405,13 +411,14 @@ void on_sm_notify_callback(RemoteTokenizer *tzer, Token* tok)
 		
 		printf("sm_num=%d, sm_index={ ", dev->sm_num);
 		for(i=0; i<sizeof(dev->sm_index)/sizeof(dev->sm_index[0]); i++) {
-			printf("%d, ", dev->sm_index[i]);
+			if(dev->sm_index[i] != -1)
+				printf("%d, ", dev->sm_index[i]);
 		}
 		printf("}\r\n");		
 	}
 }
 
-void longsung_reader_parse( UartReader* r )
+static void longsung_reader_parse( UartReader* r )
 {
 	int i;	
 	Token* tok;
@@ -420,7 +427,7 @@ void longsung_reader_parse( UartReader* r )
 	
 	//printf("r->pos=%d\r\n", r->pos);	
 	print_line(UART4, r->in, r->pos);
-	/*打印4G的所有串口消息*/
+	/*打印4G的所有串口消息, release 版本时去掉。*/
 	
 	longsung_tokenizer_init(tzer, r->in, r->in+r->pos);
 	
@@ -441,11 +448,11 @@ void longsung_reader_parse( UartReader* r )
 		r->on_sm_data(tzer, tok, dev->sm_index_read);
 	}
 	
-	if(!memcmp(tok[0].p, "OK", strlen("OK"))) {
-		r->on_at_success(tzer);
-		
-	} else if(!memcmp(tok[0].p, "AT+", strlen("AT+"))) {
+	if(!memcmp(tok[0].p, "AT+", strlen("AT+"))) {
 		r->on_at_command(tzer, tok);
+		
+	} else if(!memcmp(tok[0].p, "OK", strlen("OK"))) {
+		r->on_at_success(tzer);
 		
 	} else if(!memcmp(tok[0].p, "ERROR", strlen("ERROR"))) {
 		r->on_at_fail(tzer);
@@ -469,30 +476,30 @@ void longsung_reader_parse( UartReader* r )
 		if(str2int(tok[1].p, tok[1].end)==1) {
 			r->on_connect_success(tzer, tok);
 		}
-		//+MIPOPEN=1,1
+		/*+MIPOPEN=1,1*/
 	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
 		r->on_disconnect(tzer, tok);
-		//+MIPCLOSE:1,12,0,0
+		/*+MIPCLOSE:1,12,0,0*/
 	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
 		r->on_simcard_type(tzer, tok);
-		//+SIMTEST:3; 3
-		//+SIMTEST:0;
+		/*+SIMTEST:3; 3*/
+		/*+SIMTEST:0;*/
 	} else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) {
 		r->on_sm_check(tzer, tok);
-		//+CMGD: (0,1,2,4,5,6),(0-4)
+		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
 	} else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
 		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) {
 		r->on_sm_read(tzer, tok);
-		//+CMGR: "REC READ"	
+		/*+CMGR: "REC READ"*/
 	} else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) {
 		r->on_sm_notify(tzer, tok);
-		//+CMTI: "SM",0
+		/*+CMTI: "SM",0*/
 	}
 	
 	myfree(0, tok);	
 }
 
-void longsung_reader_addc( UartReader* r, int c )
+static void longsung_reader_addc( UartReader* r, int c )
 {
     if (r->overflow) {
         r->overflow = (c != '\n');
@@ -527,7 +534,8 @@ void handle_longsung_uart_msg( void )
 				if(j++%20==0) IWDG_Feed();	
 				kfifo_get(uart3_fifo, &ch, 1);
 				
-				longsung_reader_addc(reader, ch);
+				if(!mAndroidPower)
+					longsung_reader_addc(reader, ch);
 			}	
 		}
 }
@@ -540,7 +548,34 @@ void notify_longsung_period(void)
 		dev->ppp_flag = 1;
 }
 
-void init_longsung_status(char flag)
+static void init_longsung_reader(void) 
+{
+	reader->inited = 1;
+	reader->pos = 0;
+	reader->overflow = 0;
+	
+	reader->on_simcard_type = on_simcard_type_callback;	
+	reader->on_signal_strength	= on_signal_strength_callback;
+	
+	reader->on_command = on_remote_command_callback;
+	reader->on_connect_fail = on_connect_service_fail_callback;
+	reader->on_connect_success = on_connect_service_success_callback;
+	reader->on_disconnect = on_disconnect_service_callback;
+	
+	reader->on_ip_success = on_request_ip_success_callback;
+	reader->on_ip_fail = on_request_ip_fail_callback;
+	
+	reader->on_at_command = on_at_command_callback;
+	reader->on_at_success = on_at_cmd_success_callback;
+	reader->on_at_fail = on_at_cmd_fail_callback;
+	
+	reader->on_sm_check = on_sm_check_callback;
+	reader->on_sm_read = on_sm_read_callback;
+	reader->on_sm_data = on_sm_data_callback;
+	reader->on_sm_notify = on_sm_notify_callback;
+}
+
+static void init_longsung_status(char flag)
 {
   int i;
 	
@@ -580,7 +615,7 @@ void init_longsung_status(char flag)
 	}
 }
 
-void do_read_sm(int index)
+static void do_read_sm(int index)
 {
 	dev->sm_index_read = index;
 	
@@ -610,7 +645,7 @@ void do_read_sm(int index)
 	}
 }
 
-void do_delete_sm(int index)
+static void do_delete_sm(int index)
 {
 	switch(index)
 	{
@@ -640,8 +675,9 @@ void do_delete_sm(int index)
 
 void handle_longsung_setting(void)
 {
+	int i;
+	
 	if( !mAndroidPower ) {
-		int i;
 		static long mdelay[3] = { 0, 0 ,0 };
 		
 		/*android关闭，重启4G模块*/
@@ -679,7 +715,7 @@ void handle_longsung_setting(void)
 				}				
 			}
 			
-			/*查询SIM卡是否插入*/
+			/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
 			if( dev->simcard_type == -1 && mdelay[0] == 500000 ) {
 				at("AT+SIMTEST?");
 			}
@@ -742,21 +778,19 @@ void handle_longsung_setting(void)
 		}
 			
 		/*连接上远程服务端*/
-		if( dev->ppp_status == PPP_CONNECTED && 
-				dev->socket_num == 0 && dev->connect_flag == 1 ) {
-					
-			dev->connect_flag = 0;
-			mdelay[1] = 0;
-		}
-		
-		if( mdelay[1] <= 1000000 ) mdelay[1]++;
-		
-		if( dev->ppp_status == PPP_CONNECTED && 
-					dev->socket_num == 0 && mdelay[1] == 900000 ) {
-						
-			at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
-			//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
-			dev->heartbeat_tick = 0;
+		if( dev->ppp_status == PPP_CONNECTED && dev->socket_num == 0 ) {
+			if( dev->connect_flag == 1 ) {
+				dev->connect_flag = 0;
+				mdelay[1] = 0;
+			}
+			
+			if( mdelay[1] <= 1000000 ) mdelay[1]++;
+			
+			if( mdelay[1] == 900000 ) {
+				at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
+				//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
+				dev->heartbeat_tick = 0;
+			}
 		}
 		/*连接上远程服务端*/
 		
@@ -786,17 +820,17 @@ void handle_longsung_setting(void)
 			if( dev->sm_read_count == 200000 )
 				do_read_sm(dev->sm_index[0]);
 			
-			if( dev->sm_read_count <= 300000) 
+			if( dev->sm_read_count <= 300000 ) 
 				dev->sm_read_count++;
 		}
 		/*读取sim卡中的短信*/
 		
 		/*删除sim卡中的短信*/
 		if( dev->sm_index_delete != -1 ) {
-			if( dev->sm_delete_count == 0 ) {
+			if( dev->sm_delete_count == 50000 ) {
 				at("AT+CPMS=\"SM\"");
 			}
-			if( dev->sm_delete_count == 100000 ) {
+			if( dev->sm_delete_count == 150000 ) {
 				do_delete_sm(dev->sm_index_delete);
 				//dev->sm_index_delete = -1;
 			}		
@@ -808,40 +842,27 @@ void handle_longsung_setting(void)
 		
 		
 	} else {
-		if( !dev->is_inited ) {	
+		if( !dev->is_inited ) {
+			
+			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+				if( dev->socket_open[i] != -1 ) {
+					switch( dev->socket_open[i] )
+					{
+						case 1: delay_ms(5); at("AT+MIPCLOSE=1"); delay_ms(10); break;
+						case 2: delay_ms(4); at("AT+MIPCLOSE=2"); delay_ms(10); break;
+						case 3: delay_ms(5); at("AT+MIPCLOSE=3"); delay_ms(10); break;
+						case 4: delay_ms(5); at("AT+MIPCLOSE=4"); delay_ms(10); break;
+						default: break;
+					}
+				}
+			}			
+			
 			init_longsung_status(1);
 			
 			//reset 4g modules by gpio
 			printf("android power on, reset 4G module\r\n");
 		}
 	}
-}
-
-void init_longsung_reader(void) 
-{
-	reader->inited = 1;
-	reader->pos = 0;
-	reader->overflow = 0;
-	
-	reader->on_simcard_type = on_simcard_type_callback;	
-	
-	reader->on_command = on_remote_command_callback;
-	reader->on_connect_fail = on_connect_service_fail_callback;
-	reader->on_connect_success = on_connect_service_success_callback;
-	reader->on_disconnect = on_disconnect_service_callback;
-	
-	reader->on_signal_strength	= on_signal_strength_callback;
-	reader->on_ip_success = on_request_ip_success_callback;
-	reader->on_ip_fail = on_request_ip_fail_callback;
-	
-	reader->on_at_command = on_at_command_callback;
-	reader->on_at_success = on_at_cmd_success_callback;
-	reader->on_at_fail = on_at_cmd_fail_callback;
-	
-	reader->on_sm_check = on_sm_check_callback;
-	reader->on_sm_read = on_sm_read_callback;
-	reader->on_sm_data = on_sm_data_callback;
-	reader->on_sm_notify = on_sm_notify_callback;
 }
 
 void longsung_init()

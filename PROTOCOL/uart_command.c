@@ -304,7 +304,7 @@ LOOP:
 				{
 					mfifo->acceptCmds++;
 					*cmd_len = state+data_len;
-#if ACK2	
+#if ACK2
 					//0xaa 0xbb 0x03 0x80 c1 c2 check1 check2 -> ack message
 					*(ack+ACK_HEAD1) = 0xaa;
 					*(ack+ACK_HEAD2) = 0xbb;
@@ -330,7 +330,7 @@ LOOP:
 					tmp = (unsigned char)((ackCheckValue & 0xff00) >> 8);		
 					*(ack+*cmd_len-1) = tmp;		
 					*ack_len = *cmd_len;
-#endif					
+#endif				
 					state = HEAD1;
 					return UART_CMD;
 				}

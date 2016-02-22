@@ -47,3 +47,4 @@
 ..\obj\usart.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\usart.o: ..\HARDWARE\LED\led.h
 ..\obj\usart.o: ..\HARDWARE\IWDG\iwdg.h
+..\obj\usart.o: ..\HARDWARE\IOCTR\ioctr.h

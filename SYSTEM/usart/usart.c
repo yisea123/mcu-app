@@ -3,6 +3,7 @@
 #include "kfifo.h"
 #include "led.h"
 #include "iwdg.h"
+#include "ioctr.h"
 
 char mUar4Init=0, mUar1Init = 0, mUar2Init=0;
 /*************************************************************
@@ -44,7 +45,7 @@ int fputc(int ch, FILE *f)
 		IWDG_Feed();
 	}
 	
-	if(kfifo_len(debug_fifo) < (debug_fifo->size)) 
+	if( mAndroidPower && kfifo_len(debug_fifo) < (debug_fifo->size)) 
 	{
 		kfifo_put(debug_fifo, &Res, 1);
 	}

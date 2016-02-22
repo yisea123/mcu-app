@@ -79,10 +79,10 @@ int main(void)
 		test_func();
 		/*用于测试使用，在release版本中将被删除*/
 		
-//		handle_debug_msg_report();
+		handle_debug_msg_report();
 		/*此函数用于把printf的debug log发到android, 由android保存，并
 		回传给服务器，printf 字符串中必须要以\r\n结尾！！！请注意！
-		并且printf不可以中断中使用！*/
+		并且printf不可以在中断中使用！*/
 		
 		handle_shutdown_android_request();
 		/*处理关机请求*/
