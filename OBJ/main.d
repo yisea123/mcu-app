@@ -57,7 +57,7 @@
 ..\obj\main.o: ..\HARDWARE\STMFLASH\stmflash.h
 ..\obj\main.o: ..\PROTOCOL\bootloader_update.h
 ..\obj\main.o: ..\PROTOCOL\md5.h
-..\obj\main.o: pending.h
+..\obj\main.o: ..\PROTOCOL\pending.h
 ..\obj\main.o: ..\PROTOCOL\longsung.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\main.o: ..\PROTOCOL\timer.h

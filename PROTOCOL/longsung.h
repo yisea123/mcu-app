@@ -94,8 +94,8 @@ typedef struct {
 	int singal[2];
 	
 	char ppp_status;
-	char mipopen_status;
-	char mippush_status;
+//	char mipopen_status;
+//	char mippush_status;
 	
 	char socket_close_flag;
 	int socket_open[4];

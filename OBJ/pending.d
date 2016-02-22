@@ -1,4 +1,4 @@
-..\obj\pending.o: pending.c
+..\obj\pending.o: ..\PROTOCOL\pending.c
 ..\obj\pending.o: ..\SYSTEM\sys\sys.h
 ..\obj\pending.o: ..\USER\stm32f4xx.h
 ..\obj\pending.o: ..\CORE\core_cm4.h
@@ -55,3 +55,5 @@
 ..\obj\pending.o: ..\PROTOCOL\tmodem.h
 ..\obj\pending.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\pending.o: ..\HARDWARE\STMFLASH\stmflash.h
+..\obj\pending.o: ..\PROTOCOL\longsung.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h

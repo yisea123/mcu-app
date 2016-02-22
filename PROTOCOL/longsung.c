@@ -1,6 +1,6 @@
 #include "longsung.h"
 
-static DevStatus dev[1];
+DevStatus dev[1];
 static UartReader reader[1];
 
 void print_char(USART_TypeDef* USARTx, char ch)

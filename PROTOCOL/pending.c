@@ -16,6 +16,7 @@
 #include "tmodem.h"
 #include "iwdg.h"
 #include "stmflash.h"
+#include "longsung.h"
 
 extern long num_can1_IRQ, num_can2_IRQ, mMcuReportRepeatNum,  
 	numRecvAndroidCanCmd, numMcuReportToAndroid, numMcuSendedCmdToAndroid;
@@ -28,6 +29,7 @@ extern void list_event_to_android(void);
 extern char data0[CMD_UART_LEN], data3[CMD_LEN];
 extern long numRecvAndroidCanCmd;
 extern unsigned char md5[32];
+extern DevStatus dev[1];
 
 /*硬件问题导致无法重启*/
 __asm void SCU_RESET_Force(void)
@@ -131,9 +133,13 @@ void handle_pending_work(void)
 				break;
 			
 			case 400:
+				printf("longsung status: [simcard type=%d, reset_request=%d, ppp_status=%d, socket_num=%d, \
+				sm_num = %d, dev->scsq=%d, dev->rcsq=%d]\r\n", dev->simcard_type, dev->reset_request, 
+					dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq);						
 				break;
-			
+		
 			case 500:
+				printf("mAndroidPower=%d\r\n", mAndroidPower);
 				printf("mMcuBootTimes=%d\r\n", mMcuBootTimes);
 				printf("num_can1_IRQ=%ld\r\n", num_can1_IRQ);
 				printf("num_can2_IRQ=%ld\r\n", num_can2_IRQ);
