@@ -5,6 +5,10 @@
 #include "iwdg.h"
 #include "ioctr.h"
 
+struct kfifo* debug_fifo;
+struct kfifo* uart3_fifo;
+struct kfifo* uart6_fifo;
+
 char mUar4Init=0, mUar1Init = 0, mUar2Init=0;
 /*************************************************************
 uart4 pc10 pc11	用于调试用
@@ -474,7 +478,6 @@ void USART2_IRQHandler(void)                	//串口1中断服务程序
   } 
 } 
 
-char mUart3FifoLost = 0;
 //处理4G模块发过来的数据
 void USART3_IRQHandler(void)                	//串口1中断服务程序
 {
@@ -491,7 +494,6 @@ void USART3_IRQHandler(void)                	//串口1中断服务程序
     if(ret != 1) 
 		{
 			uart3_fifo->lostBytes++;
-			mUart3FifoLost = 1;
 		}
   } 
 		//}
@@ -527,8 +529,6 @@ void UART4_IRQHandler(void)                	//串口1中断服务程序
   } 
 } 
 
-char mUart6FifoLost = 0;
-
 void USART6_IRQHandler(void)                	//串口1中断服务程序
 {
 	u8 Res;
@@ -543,7 +543,6 @@ void USART6_IRQHandler(void)                	//串口1中断服务程序
     if(ret != 1) 
 		{
 			uart6_fifo->lostBytes++;
-			mUart6FifoLost = 1;
 		}
   } 
 

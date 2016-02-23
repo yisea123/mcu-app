@@ -3,17 +3,7 @@
 #include "stdio.h"	
 #include "stm32f4xx_conf.h"
 #include "sys.h" 
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//Mini STM32开发板
-//串口1初始化		   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.csom
-//修改日期:2011/6/14
-//版本：V1.4
-//版权所有，盗版必究。
-//Copyright(C) 正点原子 2009-2019
-//All rights reserved
+
 //********************************************************************************
 //V1.3修改说明 
 //支持适应不同频率下的串口波特率设置.
@@ -41,6 +31,9 @@ extern void uart4_init(u32 bound);
 extern void uart6_init(u32 bound);
 extern void uart3_init(u32 bound);
 extern void handle_debug_msg_report(void);
+extern struct kfifo* uart3_fifo;
+extern struct kfifo* uart6_fifo;
+extern struct kfifo* debug_fifo;
 #endif
 
 

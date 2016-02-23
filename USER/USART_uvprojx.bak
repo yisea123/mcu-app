@@ -78,7 +78,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=Y:\mirror\mcu\rom\Bin\USART.bin Y:\mirror\mcu\rom\OBJ\USART.axf</UserProg1Name>
+            <UserProg1Name>C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=C:\mcu\mcu-app\Bin\USART.bin C:\mcu\mcu-app\OBJ\USART.axf</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>1</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -308,7 +308,7 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8000000</StartAddress>
+                <StartAddress>0x8040000</StartAddress>
                 <Size>0xd0000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
@@ -611,6 +611,16 @@
               <FileName>md5.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\PROTOCOL\md5.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>longsung.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\longsung.c</FilePath>
             </File>
           </Files>
         </Group>

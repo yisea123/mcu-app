@@ -117,7 +117,7 @@ void TIM2_IRQHandler(void)
 		}
 		
 		/*40m*/
-		if(++m4gCount > 400) {
+		if(++m4gCount > 400) {//400
 			m4gCount = 0;
 			notify_longsung_period();
 		}

@@ -51,10 +51,11 @@ u32 mcuID[4];
 char data0[CMD_UART_LEN], data1[CMD_LEN], 
 	data2[CMD_LEN], data3[CMD_LEN];
 
+
 int main(void)
 { 
 	char *cmd, *ack, *cmd1, *cmd2;	
-	
+
 	SCB->VTOR = FLASH_BASE | 0x40000; 
 	
 	cmd=data0; cmd1=data1; cmd2=data2; ack=data3;
@@ -151,7 +152,9 @@ static int init_work(void)
 		/*用于大屏功能板*/
 		uart3_init(115200);
 		uart4_init(115200);
-		uart6_init(503000);//230400 -> 214550   460800->500000
+		uart6_init(503000); 
+		//t8 230400 的波特率不准，MCU这边调整为214550
+		//t8 460800 的波特率不准， MCU这边调整为503000
 	} else {
 		/*初始化串口2跟串口6，用于开发板*/
 		uart_init(115200);	
@@ -203,6 +206,7 @@ static int init_work(void)
 	{
 		return 1;
 	}
+	
 }
 
 

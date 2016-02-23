@@ -6,8 +6,6 @@
 #include "iwdg.h"
 
 extern char mReportMcuStatusPending;
-extern char mUart6FifoLost, mUart3FifoLost;
-extern char mCan1FifoLost, mCan2FifoLost;
 static char mStart = 0;
 static uint32_t mId = 0, mNumEvent=0;
 extern char mAndroidShutDownPending, mAndroidPower;

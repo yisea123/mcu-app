@@ -229,7 +229,7 @@ void on_disconnect_service_callback(RemoteTokenizer *tzer, Token* tok)
 	//printf("[tcp connect close...socketId=%d]\r\n", socketId);
 	//printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
 	//	, devStatus->socket_open[2], devStatus->socket_open[3]);
-	dev->connect_flag = 0;
+	//dev->connect_flag = 0;
 }
 
 /*******************************************
@@ -279,15 +279,20 @@ void on_at_cmd_success_callback(RemoteTokenizer *tzer)
 		if( !memcmp(at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
 		/*此命令是短信查询，不处理*/
 		printf("[AT:%s, result: OK]\r\n", at_sending);		
-		dev->sm_index_delete = -1;
-		dev->sm_delete_count = 0;
-		dev->sm_read_count = 0;
+
+		dev->sm_delete_flag = 1;
+		dev->sm_read_flag = 1;
 		/*删除短信成功之后才能读取下一条短信，如果不成功
 		，可能永远都不会再读取，在at fail中也处理fix it.*/
 		if(dev->sm_num > 0) {
 			int i;
-			
-			for(i=0; i<dev->sm_num-1; i++) {
+			for(i=0; i< dev->sm_num; i++) {
+				if(dev->sm_index[i] == dev->sm_index_delete) {
+					break;
+				}
+			}
+			dev->sm_index_delete = -1;
+			for(; i<dev->sm_num-1; i++) {
 				dev->sm_index[i] = dev->sm_index[i+1];
 			}
 			dev->sm_index[i] = -1;
@@ -315,11 +320,14 @@ void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 		//AT+MIPOPEN=1,0,"
 		printf("[TCP CONNECT FAIL! AT: %s", at_sending);
 	} else if( !memcmp(at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) {
+		if( !memcmp(at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
 		printf("[AT:%s, result: ERROR]\r\n", at_sending);
-		dev->sm_delete_count = 0;
+		dev->sm_delete_flag = 1;
 		/*重新执行删除短信工作*/
-		if(dev->sm_read_count > 300000)
-			dev->sm_read_count = 0;
+		dev->sm_read_flag = 1;
+	} else if( !memcmp(at_sending, "AT+CMGR=", strlen("AT+CMGR=")) ) {
+		/*读失败，重新读*/
+		dev->sm_read_flag = 1;
 	}
 }
 
@@ -418,6 +426,18 @@ void on_sm_notify_callback(RemoteTokenizer *tzer, Token* tok)
 	}
 }
 
+void on_sm_read_err_callback(RemoteTokenizer *tzer, Token* tok)
+{
+	/*******************************
+		当发送了错误的短信index时发生
+		AT+CMGR=1
+
+		+CMS ERROR: 321
+	********************************/
+	printf("SM read index error\r\n");
+	dev->sm_read_flag = 1;	
+}
+
 static void longsung_reader_parse( UartReader* r )
 {
 	int i;	
@@ -476,25 +496,28 @@ static void longsung_reader_parse( UartReader* r )
 		if(str2int(tok[1].p, tok[1].end)==1) {
 			r->on_connect_success(tzer, tok);
 		}
-		/*+MIPOPEN=1,1*/
+
 	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
 		r->on_disconnect(tzer, tok);
-		/*+MIPCLOSE:1,12,0,0*/
+
 	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
 		r->on_simcard_type(tzer, tok);
-		/*+SIMTEST:3; 3*/
-		/*+SIMTEST:0;*/
+
 	} else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) {
 		r->on_sm_check(tzer, tok);
-		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
+
 	} else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
 		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) {
 		r->on_sm_read(tzer, tok);
-		/*+CMGR: "REC READ"*/
+
 	} else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) {
 		r->on_sm_notify(tzer, tok);
-		/*+CMTI: "SM",0*/
+
+	} else if(!memcmp(tok[0].p, "+CMS ERROR: 321", strlen("+CMS ERROR: 321"))) {
+		r->on_sm_read_err(tzer, tok);
+		
 	}
+
 	
 	myfree(0, tok);	
 }
@@ -544,8 +567,6 @@ void notify_longsung_period(void)
 {
 		dev->heartbeat_tick++;	
 		dev->period_tick = 1;
-		dev->connect_flag = 1;
-		dev->ppp_flag = 1;
 }
 
 static void init_longsung_reader(void) 
@@ -573,6 +594,7 @@ static void init_longsung_reader(void)
 	reader->on_sm_read = on_sm_read_callback;
 	reader->on_sm_data = on_sm_data_callback;
 	reader->on_sm_notify = on_sm_notify_callback;
+	reader->on_sm_read_err = on_sm_read_err_callback;
 }
 
 static void init_longsung_status(char flag)
@@ -588,15 +610,18 @@ static void init_longsung_status(char flag)
 	dev->socket_close_flag = 0;
 	dev->socket_num = 0;
 
-	dev->ppp_flag = 0;
-	dev->connect_flag = 0;
+//	dev->ppp_flag = 0;
+//	dev->connect_flag = 0;
 	dev->heartbeat_tick = 0;
 	dev->period_tick = 0;	
 	
 	dev->sm_num = 0;
 	dev->sm_flag = 0;
-	dev->sm_read_count = 0;
+	//dev->sm_read_count = 0;
 	dev->sm_index_delete = -1;
+	
+	dev->sm_read_flag = 1;
+	dev->sm_delete_flag = 1;
 	
 	if(flag) {
 		dev->reset_request = 1;
@@ -673,12 +698,122 @@ static void do_delete_sm(int index)
 	}	
 }
 
+void do_close_socket(int index)
+{
+	switch( index )
+	{
+		case 1: at("AT+MIPCLOSE=1"); break;
+		case 2: at("AT+MIPCLOSE=2"); break;
+		case 3: at("AT+MIPCLOSE=3"); break;
+		case 4: at("AT+MIPCLOSE=4"); break;
+		default: break;
+	}	
+}
+
+/***************************************************************
+把数据加入到链表中去
+****************************************************************/
+void add_cmd_to_list(AtCommand *cmd)
+{
+	if(cmd)
+		list_add_tail(&cmd->list, &dev->at_head);
+}
+
+/***************************************************************
+如果此数据可以在链表中找到，从链表中删除这个数据
+****************************************************************/
+void del_cmd_from_list(AtCommand *cmd)
+{
+	AtCommand *command = NULL;
+	struct list_head *pos=NULL, *n=NULL;
+	
+	list_for_each_safe(pos, n, &dev->at_head) 
+	{ 
+		command = list_entry(pos, AtCommand, list); 
+		if(command == cmd && cmd != NULL) 
+		{ 
+				list_del(pos);
+		} 
+	} 
+}
+
+/***************************************************************
+如果链表里面没有数据，则返回NULL，如果有数据就返回一个数据
+****************************************************************/
+AtCommand* get_cmd_from_list()
+{
+	AtCommand *command = NULL;
+	struct list_head *pos=NULL, *n=NULL;
+	
+	list_for_each_safe(pos, n, &dev->at_head)
+	{
+		command = (AtCommand *)list_entry(pos, AtCommand, list);
+		break;
+	}	
+
+	return command;
+}
+
+int get_at_command_count(void)
+{
+	int count = 0;
+	struct list_head *pos, *n;
+	
+	list_for_each_safe(pos, n, &dev->at_head)
+	{
+		count++;	
+	}
+	
+	return count;
+}
+
+void send_command_to_device(AtCommand* cmd)
+{
+	if(cmd == NULL) return;
+	
+	//printf("%s, index=%d\r\n", __func__, cmd->index);
+	
+	switch(cmd->index)
+	{
+		case 1: at("AT+CSQ"); break;
+		case 2: at("AT+SIMTEST?"); break;
+		case 3: at("AT+CPMS=\"SM\""); break;
+		case 4: at("AT+CMGD=?"); break;
+		case 5: at("AT+MIPCALL?"); break;
+		case 6: at("AT+MIPCALL=0"); break;
+		case 7: at("AT+MIPPROFILE=1,\"3GNET\""); break;
+		case 8: at("AT+MIPCALL=1"); break;
+		case 9: at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0"); break;
+		/*at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");*/
+		case 10: at("AT+MIPSEND=1,\"hello world.\""); break;
+		case 11: at("AT+MIPPUSH=1"); break;
+		case 12: at("AT+CMGF=1"); break;
+		case 13: do_close_socket(cmd->para); break;		
+		case 14: do_read_sm(cmd->para); break;
+		case 15: do_delete_sm(cmd->para); break;		
+		default: break;
+	}
+}
+
+static void make_command_to_list(char index, long long interval, int para)
+{
+	AtCommand *command = NULL;	
+	command = (AtCommand *)mymalloc(0, sizeof(AtCommand));
+	if(command != NULL) {
+		command->index = index;
+		command->interval = interval;
+		command->para = para;
+		add_cmd_to_list(command);
+	}	
+}
+
 void handle_longsung_setting(void)
 {
 	int i;
+	static AtCommand* cmdSending = NULL;
 	
 	if( !mAndroidPower ) {
-		static long mdelay[3] = { 0, 0 ,0 };
+		static char period = 0;
 		
 		/*android关闭，重启4G模块*/
 		if( dev->reset_request ) {	
@@ -689,18 +824,29 @@ void handle_longsung_setting(void)
 		}
 		
 		if( dev->period_tick ) {
-			mdelay[0] = 0;
+			period = 1;
 			dev->period_tick = 0;
-			
+			printf("*********************************\r\n");
 			/*查询信号强度，每40秒遍历一次*/
-			at("AT+CSQ");
+			make_command_to_list(ATCSQ, 100000, -1);
+			
+			/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
+			if( dev->simcard_type == -1 ) {			
+				/*为了第一时间连接上服务器*/
+				make_command_to_list(ATSIMTEST, 110000, -1);
+				make_command_to_list(ATMIPCALL_, 100000, -1);
+				make_command_to_list(ATMIPCALL0, 120000, -1);	
+				make_command_to_list(ATMIPPROFILE, 120000, -1);	
+				make_command_to_list(ATMIPCALL1, 120000, -1);
+				make_command_to_list(ATMIPOPEN, 120000, -1);						
+				make_command_to_list(ATMIPCALL_, 100000, -1);		
+				dev->heartbeat_tick = 0;				
+			}			
 		}
 
-		if( mdelay[0] <= 2500000 ) mdelay[0]++;
-		
 		if( dev->boot_status ) {
 			/*表示4G已启动完成*/
-			if( mdelay[0] == 1) {
+			if( period ) {
 				dev->scsq++;
 				if( (dev->scsq)-(dev->rcsq) > 3 ) {
 					dev->reset_request = 1;
@@ -713,134 +859,100 @@ void handle_longsung_setting(void)
 					dev->reset_request = 1;
 					printf("sim card no exit!\r\n");
 				}				
-			}
-			
-			/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
-			if( dev->simcard_type == -1 && mdelay[0] == 500000 ) {
-				at("AT+SIMTEST?");
-			}
 
-			/*查询SM短信未读index*/
-			if( dev->simcard_type != 0 ) {
-				if( mdelay[0] == 1600000 ) {
-					at("AT+CPMS=\"SM\"");
+				/*查询SM短信未读index*/
+				if( dev->simcard_type > 0 ) {
+						make_command_to_list(ATCPMS, 100000, -1);				
+						make_command_to_list(ATCMGD_, 100000, -1);
+						/*查询IP*/
+						make_command_to_list(ATMIPCALL_, 100000, -1);							
 				}
-				if( mdelay[0] == 1700000 ) {
-					at("AT+CMGD=?");
-				}
-			}
-			/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
-			
-			/*查询IP*/
-			if( mdelay[0] == 2500000 ) {
-				at("AT+MIPCALL?");
+				/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
 			}
 			
 			/*PPP连接获取IP*/		
-			if( dev->simcard_type != 0 && dev->simcard_type != -1 &&
-						dev->ppp_flag == 1 && dev->ppp_status == PPP_DISCONNECT ) {
-				dev->ppp_flag = 0;
+			if( dev->simcard_type > 0 && period && 
+					dev->ppp_status == PPP_DISCONNECT ) {
 				dev->ppp_status = PPP_CONNECTING;
-				delay_ms(10);
-				at("AT+MIPCALL=0");
-				delay_ms(10);
-				at("AT+MIPPROFILE=1,\"3GNET\"");
-				delay_ms(10);
-				at("AT+MIPCALL=1");
+				make_command_to_list(ATMIPCALL0, 100000, -1);	
+				make_command_to_list(ATMIPPROFILE, 100000, -1);	
+				make_command_to_list(ATMIPCALL1, 100000, -1);								
+			}	
+			
+			/*检查活跃的socket个数，保持一个连接*/
+			dev->socket_num = 0;
+			
+			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+				if(dev->socket_open[i] != -1)
+					dev->socket_num++;
 			}
 			
-		}
-		
-		/*检查活跃的socket个数，保持一个连接*/
-		dev->socket_num = 0;
-		
-		for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
-			if(dev->socket_open[i] != -1)
-				dev->socket_num++;
-		}
-		
-		/*若发现socket大于1，关闭所有socket,重新建立连接*/
-		if( dev->socket_num > 1 || dev->socket_close_flag == 1) {
-			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
-				if( dev->socket_open[i] != -1 ) {
-					switch( dev->socket_open[i] )
-					{
-						case 1: delay_ms(4); at("AT+MIPCLOSE=1"); delay_ms(6); break;
-						case 2: delay_ms(4); at("AT+MIPCLOSE=2"); delay_ms(6); break;
-						case 3: delay_ms(4); at("AT+MIPCLOSE=3"); delay_ms(6); break;
-						case 4: delay_ms(4); at("AT+MIPCLOSE=4"); delay_ms(6); break;
-						default: break;
+			/*若发现socket大于1，关闭所有socket,重新建立连接*/
+			if( (dev->socket_num > 1 || dev->socket_close_flag) && period ) {
+				for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+					if( dev->socket_open[i] != -1 ) {
+						make_command_to_list(ATMIPCLOSE, 150000, dev->socket_open[i]);											
 					}
+				}
+				
+				if(dev->socket_close_flag == 1) dev->socket_close_flag = 0;
+			}
+				
+			/*连接上远程服务端*/
+			if( dev->ppp_status == PPP_CONNECTED && dev->socket_num == 0 ) {
+				if( period ) {
+					make_command_to_list(ATMIPOPEN, 150000, -1);						
+					//at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
+					//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
+					dev->heartbeat_tick = 0;
 				}
 			}
 			
-			if(dev->socket_close_flag == 1) dev->socket_close_flag = 0;
-		}
-			
-		/*连接上远程服务端*/
-		if( dev->ppp_status == PPP_CONNECTED && dev->socket_num == 0 ) {
-			if( dev->connect_flag == 1 ) {
-				dev->connect_flag = 0;
-				mdelay[1] = 0;
+			/*发送心跳包给服务*/
+			if( dev->socket_num == 1 && dev->ppp_status == PPP_CONNECTED) {
+				if( dev->heartbeat_tick >= 2 ) {
+					dev->heartbeat_tick = 0;
+					make_command_to_list(ATMIPSEND, 200000, -1);	
+					make_command_to_list(ATMIPPUSH, 100000, -1);					
+				}
 			}
-			
-			if( mdelay[1] <= 1000000 ) mdelay[1]++;
-			
-			if( mdelay[1] == 900000 ) {
-				at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
-				//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
-				dev->heartbeat_tick = 0;
-			}
-		}
-		/*连接上远程服务端*/
-		
-		/*发送心跳包给服务*/
-		if( dev->socket_num == 1 && dev->ppp_status == PPP_CONNECTED) {
-			if( dev->heartbeat_tick >= 3 ) {
-				dev->heartbeat_tick = 0;
-				mdelay[2] = 0;
-			}
-			if( mdelay[2] <= 1500000 ) mdelay[2]++;
-		
-			if( mdelay[2] == 1200000 ) {
-				at("AT+MIPSEND=1,\"hello world.\"");
-			}	
-			if( mdelay[2] == 1400000 ) {
-				at("AT+MIPPUSH=1");
-			}
-		}
-		/*发送心跳包给服务*/
 
-		/*读取sim卡中的短信*/
-		if( dev->sm_num > 0 ) {
-			if( dev->sm_read_count == 0 )
-				at("AT+CPMS=\"SM\"");
-			if( dev->sm_read_count == 100000 )
-				at("AT+CMGF=1");
-			if( dev->sm_read_count == 200000 )
-				do_read_sm(dev->sm_index[0]);
-			
-			if( dev->sm_read_count <= 300000 ) 
-				dev->sm_read_count++;
-		}
-		/*读取sim卡中的短信*/
-		
-		/*删除sim卡中的短信*/
-		if( dev->sm_index_delete != -1 ) {
-			if( dev->sm_delete_count == 50000 ) {
-				at("AT+CPMS=\"SM\"");
+			/*删除sim卡中的短信*/
+			if( dev->sm_index_delete != -1 && dev->sm_delete_flag ) {
+				make_command_to_list(ATCPMS, 100000, -1);
+				make_command_to_list(ATCMGD, 100000, dev->sm_index_delete);					
+				dev->sm_delete_flag = 0;
 			}
-			if( dev->sm_delete_count == 150000 ) {
-				do_delete_sm(dev->sm_index_delete);
-				//dev->sm_index_delete = -1;
-			}		
 			
-			if( dev->sm_delete_count <= 200000 )
-				dev->sm_delete_count++;
+			/*读取sim卡中的短信*/
+			if( dev->sm_num > 0 && dev->sm_read_flag) {
+				make_command_to_list(ATCPMS, 100000, -1);	
+				make_command_to_list(ATCMGF, 100000, -1);
+				make_command_to_list(ATCMGR, 100000, dev->sm_index[0]);					
+				dev->sm_read_flag = 0;
+			}
+
 		}
-		/*删除sim卡中的短信*/
+
+		if(cmdSending == NULL) {
+			cmdSending = get_cmd_from_list();
+			if(cmdSending)
+				send_command_to_device(cmdSending);
+		} else {
+			if(cmdSending->interval > 0) {
+				cmdSending->interval--;
+			} else {
+				del_cmd_from_list(cmdSending);
+				myfree(0, cmdSending);
+				cmdSending = NULL;
+			}
+		}	
 		
+		if(get_at_command_count() > 20) {
+			printf("AT count = %d\r\n", get_at_command_count());
+		}
 		
+		period = 0;		
 	} else {
 		if( !dev->is_inited ) {
 			
@@ -869,7 +981,180 @@ void longsung_init()
 {
 	init_longsung_reader();
 	init_longsung_status(1);
+	INIT_LIST_HEAD(&dev->at_head);
 }
+
+
+
+/*********************************************************************
+
+	if( !mAndroidPower ) {
+		static long mdelay[3] = { 0, 0 ,0 };
+		
+
+		if( dev->reset_request ) {	
+			init_longsung_status(0);
+								
+			//reset 4g modules by gpio
+			printf("Reset 4G Module.\r\n");
+		}
+		
+		if( dev->period_tick ) {
+			mdelay[0] = 0;
+			dev->period_tick = 0;
+			
+
+			at("AT+CSQ");
+		}
+
+		if( mdelay[0] <= 2500000 ) mdelay[0]++;
+		
+		if( dev->boot_status ) {
+
+			if( mdelay[0] == 1) {
+				dev->scsq++;
+				if( (dev->scsq)-(dev->rcsq) > 3 ) {
+					dev->reset_request = 1;
+					dev->socket_close_flag = 1;
+					printf("scsq-rcsq=%d! error.\r\n", dev->scsq-dev->rcsq);
+				}
+				
+				if( dev->simcard_type == 0 && dev->scsq > 4 ) {
+					dev->reset_request = 1;
+					printf("sim card no exit!\r\n");
+				}				
+			}
+			
+
+			if( dev->simcard_type == -1 && mdelay[0] == 500000 ) {
+				at("AT+SIMTEST?");
+			}
+
+
+			if( dev->simcard_type != 0 ) {
+				if( mdelay[0] == 1600000 ) {
+					at("AT+CPMS=\"SM\"");
+				}
+				if( mdelay[0] == 1700000 ) {
+					at("AT+CMGD=?");
+				}
+			}
+
+			
+
+			if( mdelay[0] == 2500000 ) {
+				at("AT+MIPCALL?");
+			}
+			
+
+			if( dev->simcard_type != 0 && dev->simcard_type != -1 &&
+						dev->ppp_flag == 1 && dev->ppp_status == PPP_DISCONNECT ) {
+				dev->ppp_flag = 0;
+				dev->ppp_status = PPP_CONNECTING;
+				delay_ms(10);
+				at("AT+MIPCALL=0");
+				delay_ms(10);
+				at("AT+MIPPROFILE=1,\"3GNET\"");
+				delay_ms(10);
+				at("AT+MIPCALL=1");
+			}
+			
+		}
+		
+
+		dev->socket_num = 0;
+		
+		for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+			if(dev->socket_open[i] != -1)
+				dev->socket_num++;
+		}
+		
+
+		if( dev->socket_num > 1 || dev->socket_close_flag == 1) {
+			for( i=0; i<sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) {
+				if( dev->socket_open[i] != -1 ) {
+					switch( dev->socket_open[i] )
+					{
+						case 1: delay_ms(4); at("AT+MIPCLOSE=1"); delay_ms(6); break;
+						case 2: delay_ms(4); at("AT+MIPCLOSE=2"); delay_ms(6); break;
+						case 3: delay_ms(4); at("AT+MIPCLOSE=3"); delay_ms(6); break;
+						case 4: delay_ms(4); at("AT+MIPCLOSE=4"); delay_ms(6); break;
+						default: break;
+					}
+				}
+			}
+			
+			if(dev->socket_close_flag == 1) dev->socket_close_flag = 0;
+		}
+			
+
+		if( dev->ppp_status == PPP_CONNECTED && dev->socket_num == 0 ) {
+			if( dev->connect_flag == 1 ) {
+				dev->connect_flag = 0;
+				mdelay[1] = 0;
+			}
+			
+			if( mdelay[1] <= 1000000 ) mdelay[1]++;
+			
+			if( mdelay[1] == 900000 ) {
+				at("AT+MIPOPEN=1,0,\"www.baidu.com\",80,0");
+				//at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");			
+				dev->heartbeat_tick = 0;
+			}
+		}
+
+		
+
+		if( dev->socket_num == 1 && dev->ppp_status == PPP_CONNECTED) {
+			if( dev->heartbeat_tick >= 3 ) {
+				dev->heartbeat_tick = 0;
+				mdelay[2] = 0;
+			}
+			if( mdelay[2] <= 1500000 ) mdelay[2]++;
+		
+			if( mdelay[2] == 1200000 ) {
+				at("AT+MIPSEND=1,\"hello world.\"");
+			}	
+			if( mdelay[2] == 1400000 ) {
+				at("AT+MIPPUSH=1");
+			}
+		}
+
+
+
+		if( dev->sm_num > 0 ) {
+			if( dev->sm_read_count == 0 )
+				at("AT+CPMS=\"SM\"");
+			if( dev->sm_read_count == 100000 )
+				at("AT+CMGF=1");
+			if( dev->sm_read_count == 200000 )
+				do_read_sm(dev->sm_index[0]);
+			
+			if( dev->sm_read_count <= 300000 ) 
+				dev->sm_read_count++;
+		}
+
+		
+
+		if( dev->sm_index_delete != -1 ) {
+			if( dev->sm_delete_count == 50000 ) {
+				at("AT+CPMS=\"SM\"");
+			}
+			if( dev->sm_delete_count == 150000 ) {
+				do_delete_sm(dev->sm_index_delete);
+				//dev->sm_index_delete = -1;
+			}		
+			
+			if( dev->sm_delete_count <= 200000 )
+				dev->sm_delete_count++;
+		}
+		
+	} 
+
+*********************************************************************/
+
+
+
 
 
 

@@ -133,9 +133,8 @@ void handle_pending_work(void)
 				break;
 			
 			case 400:
-				printf("longsung status: [simcard type=%d, reset_request=%d, ppp_status=%d, socket_num=%d, \
-				sm_num = %d, dev->scsq=%d, dev->rcsq=%d]\r\n", dev->simcard_type, dev->reset_request, 
-					dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq);						
+				printf("4G status [simcard_type=%d,reset_request=%d,ppp_status=%d,socket_num=%d,sm_num=%d,dev->scsq=%d,dev->rcsq=%d]\r\n", 
+					dev->simcard_type, dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq);						
 				break;
 		
 			case 500:

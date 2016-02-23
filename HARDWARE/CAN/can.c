@@ -3,17 +3,10 @@
 #include "delay.h"
 #include "usart.h"
 #include "uart_command.h"
-//////////////////////////////////////////////////////////////////////////////////	 
-//
-//ALIENTEK STM32F407开发板
-//CAN驱动 代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/7
-//版本：V1.0 
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
+
+struct kfifo* can1_fifo;
+struct kfifo* can2_fifo;
+
 ////////////////////////////////////////////////////////////////////////////////// 	 
 
 //CAN初始化
@@ -169,6 +162,21 @@ uint8_t CAN_FilterSet(Filter_config *fitler_cfg)
     return 0;
 
 }
+
+
+
+
+//CAN初始化
+//tsjw:重新同步跳跃时间单元. @ref CAN_synchronisation_jump_width   范围: ; CAN_SJW_1tq~ CAN_SJW_4tq
+//tbs2:时间段2的时间单元.   @ref CAN_time_quantum_in_bit_segment_2 范围:CAN_BS2_1tq~CAN_BS2_8tq;
+//tbs1:时间段1的时间单元.   @refCAN_time_quantum_in_bit_segment_1  范围: ;	  CAN_BS1_1tq ~CAN_BS1_16tq
+//brp :波特率分频器.范围:1~1024;(实际要加1,也就是1~1024) tq=(brp)*tpclk1
+//波特率=Fpclk1/((tsjw+tbs1+tbs2+3)*brp);
+//mode: @ref CAN_operating_mode 范围：CAN_Mode_Normal,普通模式;CAN_Mode_LoopBack,回环模式;
+//Fpclk1的时钟在初始化的时候设置为36M,如果设置CAN_Normal_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,6,CAN_Mode_LoopBack);
+//则波特率为:42M/((1+6+7)*6)=500Kbps
+//返回值:0,初始化OK;
+//    其他,初始化失败;
 
 u16 CAN1_RX_STA=0;
 

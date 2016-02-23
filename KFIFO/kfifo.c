@@ -3,13 +3,6 @@
 #include "usart.h"
 #include "malloc.h"
 
-struct kfifo* debug_fifo;
-struct kfifo* uart3_fifo;
-struct kfifo* uart6_fifo;
-struct kfifo* can1_fifo;
-struct kfifo* can2_fifo;
-
-
 void* memcpy(void *des, const void *src, unsigned int n)  
 {  
   u8 *xdes=des;
@@ -160,7 +153,7 @@ struct kfifo* kfifo_init(void *buffer, uint32_t size, void *f_lock)
      ret = __kfifo_put(ring_buf, buffer, size);
  //    pthread_mutex_unlock(ring_buf->f_lock);
 		 //if(ret != size) printf("%s->  ret=%d, size=%d, %d\r\n", __func__, ret, size, ring_buf->size);
-		 if(ret != size) ring_buf->mPrint = 1;
+		 if(ret != size) ring_buf->mLost = 1;
 	 
      return ret;
  }

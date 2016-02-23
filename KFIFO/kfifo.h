@@ -38,7 +38,7 @@ struct kfifo {
 	  unsigned int lostBytes;
 	  unsigned int errorCmds;
 	  unsigned long acceptCmds;
-	  char 				mPrint;
+	  char 				mLost;
 };
 
 struct kfifo* kfifo_init(void *buffer, unsigned int size, void *f_lock);
@@ -51,10 +51,6 @@ extern  void reset_fifo(struct kfifo *ring_buf);
 void kfifo_clean(struct kfifo *ring_buf);
 void printf_kfifo_info(struct kfifo *ring_buf);
 void* memcpy(void *des, const void *src, unsigned int n) ;
-extern struct kfifo* uart3_fifo;
-extern struct kfifo* uart6_fifo;
-extern struct kfifo* can1_fifo;
-extern struct kfifo* can2_fifo;
-extern struct kfifo* debug_fifo;
+
 #endif
 

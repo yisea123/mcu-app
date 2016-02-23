@@ -1,7 +1,7 @@
 #ifndef __CAN_H
 #define __CAN_H	 
-#include "sys.h"	    
-
+#include "sys.h"
+	    
 #define TurnOn   0  //滤波器打开
 #define TurnOff  1  //滤波器关闭
 
@@ -13,6 +13,7 @@ typedef struct {
 	  uint16_t *can2_id;
 	  uint8_t  filter_switch;//滤波开关
 }Filter_config;
+
 
 //CAN1接收RX0中断使能
 #define CAN1_RX0_INT_ENABLE	1		//0,不使能;1,使能.								    
@@ -45,6 +46,11 @@ extern u8 CAN2_Send_Msg2(uint32_t id, uint8_t ide, uint8_t rtr, u8* msg,u8 len);
 extern u8 CAN2_Receive_Msg(u8 *buf);							//接收数据
 
 extern u16 CAN2_RX_STA; 
+
+extern struct kfifo* can1_fifo;
+
+extern struct kfifo* can2_fifo;
+
 #endif
 
 

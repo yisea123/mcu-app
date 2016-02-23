@@ -587,7 +587,7 @@ android在开机成功后，会下发指令：AA BB 02 04 01 85 B2
 				//AA BB 02 04 01 85 B2
 				mAndroidRunning = 1;
 				/*开机之后log默认关闭调试串口的输出*/
-//				mDebugUartPrintfEnable = 0;				
+				mDebugUartPrintfEnable = 0;				
 				
 				/*Android运行后，上传当前MCU ID 及软件版本*/
 				report_mcu_id_version();

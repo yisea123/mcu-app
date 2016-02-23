@@ -8,14 +8,36 @@
 #include "iwdg.h"
 #include "ioctr.h"
 #include "delay.h"
+#include "list.h"
 #include <string.h>
 
 #define MAX_TOKENS		20
 #define MAX_LINE_LEN		512
 
+/******************************/
 #define PPP_DISCONNECT 		0
 #define PPP_CONNECTING 		1
 #define PPP_CONNECTED  		2
+/******************************/
+
+/******************************/
+#define ATCSQ						1
+#define ATSIMTEST				2
+#define ATCPMS					3
+#define ATCMGD_					4
+#define ATMIPCALL_			5
+#define ATMIPCALL0			6
+#define ATMIPPROFILE		7
+#define ATMIPCALL1			8
+#define ATMIPOPEN				9
+#define ATMIPSEND				10
+#define ATMIPPUSH				11
+#define ATCMGF					12
+#define ATMIPCLOSE			13
+#define ATCMGR					14
+#define ATCMGD					15
+/******************************/
+
 typedef struct{
 	char action;
 	
@@ -54,6 +76,7 @@ typedef void (* check_sm_callback)(RemoteTokenizer *tzer, Token* tok);
 typedef void (* read_sm_callback)(RemoteTokenizer *tzer, Token* tok);
 typedef void (* sm_data_callback)(RemoteTokenizer *tzer, Token* tok, int index);
 typedef void (* sm_notify_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* sm_read_err_callback)(RemoteTokenizer *tzer, Token* tok);
 
 typedef struct {
 	char inited;
@@ -80,9 +103,19 @@ typedef struct {
 	read_sm_callback on_sm_read;
 	sm_data_callback on_sm_data;
 	sm_notify_callback on_sm_notify;
-	
+	sm_read_err_callback on_sm_read_err;
 	char in[MAX_LINE_LEN];
 }UartReader;
+
+typedef struct {
+	char index;
+	int para;
+	long count;
+	long long interval;
+	
+	char status;
+	struct list_head list;
+}AtCommand;
 
 typedef struct {
 	char is_inited;
@@ -104,18 +137,22 @@ typedef struct {
 	int sm_index[20];
 	char sm_num;
 	int sm_index_read;
-	long sm_read_count;
+	//long sm_read_count;
 	int sm_index_delete;
-	long sm_delete_count;
+	//long sm_delete_count;
 	char sm_flag;
+	char sm_read_flag;
+	char sm_delete_flag;
 	
   char scsq;
 	char rcsq;
 	
-	char ppp_flag;
-	char connect_flag;	
+//	char ppp_flag;
+//	char connect_flag;	
 	char heartbeat_tick;
 	char period_tick;
+	
+	struct list_head at_head;
 }DevStatus;
 
 //extern void remote_reader_addc( UartReader* r, int c);
