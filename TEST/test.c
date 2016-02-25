@@ -1,18 +1,14 @@
 #include "test.h"
-#include "kfifo.h"
-#include "led.h"
-#include "tmodem.h"
-#include "rtc.h"
-#include "iwdg.h"
 
-extern char mReportMcuStatusPending;
 static char mStart = 0;
 static uint32_t mId = 0, mNumEvent=0;
-extern char mAndroidShutDownPending, mAndroidPower;
 int num=0;
+char mAndroidPowerBefore = 0;
 
+extern char mPACKETSIZE;
 extern unsigned int flashdestination;
 extern char devNum;
+
 void update(void)
 {
 		flashdestination = APPLICATION_ADDRESS;
@@ -110,10 +106,6 @@ void report_mesg_to_t8()
 	}		
 }
 */
-char mAndroidPowerBefore = 0;
-extern char mPACKETSIZE;
-extern long numMcuReportToAndroid;
-
 
 void test_func(void)
 {
@@ -199,7 +191,6 @@ void report_mcu_status(void)
 	mReportMcuStatusPending = 1;
 }
 
-extern char mDebugUartPrintfEnable;
 
 void enable_debug_tx(uint32_t num)
 {

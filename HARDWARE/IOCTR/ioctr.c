@@ -1,11 +1,10 @@
 #include "ioctr.h"
-#include "sys.h"
-#include "car_event.h"
-#include "timer.h"
 
-extern char mAndroidShutDownPending;
-extern char mAndroidPowerUpPending;
-extern char mDebugUartPrintfEnable;
+char mAndroidShutDownPending=0;
+/*此变量用于请求关掉android的电源*/
+
+char mAndroidPowerUpPending=0;
+/*此变量用于请求打开android的电源*/
 
 char mAndroidPower = 0;
 //此变量用于标示android电源是否供给

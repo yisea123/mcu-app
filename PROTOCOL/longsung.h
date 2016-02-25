@@ -11,6 +11,7 @@
 #include "list.h"
 #include <string.h>
 
+#define ONE_SECOND		110000
 #define MAX_TOKENS		20
 #define MAX_LINE_LEN		512
 
@@ -37,13 +38,6 @@
 #define ATCMGR					14
 #define ATCMGD					15
 /******************************/
-
-typedef struct{
-	char action;
-	
-	char *data;
-	int len;
-}RemoteCommand;
 
 typedef struct {
     const char*  p;
@@ -80,7 +74,6 @@ typedef void (* sm_read_err_callback)(RemoteTokenizer *tzer, Token* tok);
 
 typedef struct {
 	char inited;
-	
 	int pos;
 	int overflow;
 	
@@ -104,16 +97,14 @@ typedef struct {
 	sm_data_callback on_sm_data;
 	sm_notify_callback on_sm_notify;
 	sm_read_err_callback on_sm_read_err;
+	
 	char in[MAX_LINE_LEN];
 }UartReader;
 
 typedef struct {
 	char index;
 	int para;
-	long count;
 	long long interval;
-	
-	char status;
 	struct list_head list;
 }AtCommand;
 
@@ -127,9 +118,6 @@ typedef struct {
 	int singal[2];
 	
 	char ppp_status;
-//	char mipopen_status;
-//	char mippush_status;
-	
 	char socket_close_flag;
 	int socket_open[4];
 	char socket_num;
@@ -137,31 +125,28 @@ typedef struct {
 	int sm_index[20];
 	char sm_num;
 	int sm_index_read;
-	//long sm_read_count;
 	int sm_index_delete;
-	//long sm_delete_count;
-	char sm_flag;
+	char sm_data_flag;
 	char sm_read_flag;
 	char sm_delete_flag;
 	
   char scsq;
 	char rcsq;
 	
-//	char ppp_flag;
-//	char connect_flag;	
 	char heartbeat_tick;
 	char period_tick;
 	
+	int at_count;
+	char at_sending[64];
 	struct list_head at_head;
 }DevStatus;
 
-//extern void remote_reader_addc( UartReader* r, int c);
 extern void longsung_init(void);
 extern void handle_longsung_uart_msg(void);
 extern int str2int(const char* p, const char* end);
 extern void notify_longsung_period(void);
 extern void handle_longsung_setting(void);
-
+extern DevStatus dev[1];
 #endif
 
 

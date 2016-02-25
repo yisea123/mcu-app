@@ -1,35 +1,9 @@
-#include "sys.h"
-#include "led.h"
-#include "key.h"
-#include "can.h"
-#include "rtc.h"
-#include "list.h"
-#include "beep.h"
-#include "kfifo.h"
-#include "delay.h"
-#include "usart.h"
-#include "ioctr.h"
-#include "usmart.h"
-#include "malloc.h"
-#include "car_event.h"
-#include "uart_command.h"
-#include "tmodem.h"
-#include "iwdg.h"
-#include "stmflash.h"
-#include "longsung.h"
+#include "pending.h"
 
-extern long num_can1_IRQ, num_can2_IRQ, mMcuReportRepeatNum,  
-	numRecvAndroidCanCmd, numMcuReportToAndroid, numMcuSendedCmdToAndroid;
-extern char mMcuJumpAppPending;
-extern char mRequestSoftRestPending;
-extern char mReportMcuStatusPending;
-extern unsigned int FLASH_If_Erase_Sector(unsigned int StartSector);
-extern void handle_debug_msg_report(void);
-extern void list_event_to_android(void);
 extern char data0[CMD_UART_LEN], data3[CMD_LEN];
-extern long numRecvAndroidCanCmd;
-extern unsigned char md5[32];
-extern DevStatus dev[1];
+
+char mMcuJumpAppPending = 0, mRequestSoftRestPending = 0;
+/*此变量用于请求打开reset MCU*/ /*此变量用于请求打开reset MCU*/
 
 /*硬件问题导致无法重启*/
 __asm void SCU_RESET_Force(void)
@@ -133,8 +107,9 @@ void handle_pending_work(void)
 				break;
 			
 			case 400:
-				printf("4G status [simcard_type=%d,reset_request=%d,ppp_status=%d,socket_num=%d,sm_num=%d,dev->scsq=%d,dev->rcsq=%d]\r\n", 
-					dev->simcard_type, dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq);						
+				printf("4G [simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d]\r\n", 
+					dev->simcard_type, dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, 
+					dev->scsq, dev->rcsq, dev->at_count);						
 				break;
 		
 			case 500:

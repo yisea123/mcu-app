@@ -1,7 +1,4 @@
-#include "sys.h"
 #include "kfifo.h"
-#include "usart.h"
-#include "malloc.h"
 
 void* memcpy(void *des, const void *src, unsigned int n)  
 {  

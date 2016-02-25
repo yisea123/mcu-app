@@ -96,10 +96,10 @@ periodicNum全局变量，这个变量会每100MS自加加一次。
 3、给下载固件中的mTickCount计数
 *********************************************************************/
 
-int m4gCount = 0;
-
 void TIM2_IRQHandler(void)
-{ 		    		  			    
+{ 
+	static int m4gCount = 0;
+	
 	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)//溢出中断
 	{
 		++periodicNum;
@@ -110,14 +110,14 @@ void TIM2_IRQHandler(void)
 		if(session_begin)
 		{
 			/**41也就是4100毫秒 = 4.1秒，开始传输rom后，4.1秒内没有rom数据，重置tmodem状态*/
-			if(mTickCount++ > 71)	
+			if(mTmodemTickCount++ > 71)	
 			{
 				reset_tmodem_status();
 			}
 		}
 		
 		/*40m*/
-		if(++m4gCount > 400) {//400
+		if(++m4gCount > 19) {//400
 			m4gCount = 0;
 			notify_longsung_period();
 		}

@@ -139,8 +139,8 @@ extern void report_tmodem_packet0(char C, char C0);
 extern void handle_scu_rom_update(void);
 extern void handle_booloader_rom_update(void);
 extern void reset_tmodem_status(void);
-
-
+extern unsigned int FLASH_If_Erase_Sector(unsigned int StartSector);
+extern unsigned char md5[32];
 extern unsigned int romSize;
-extern char session_begin, mTickCount;
+extern char session_begin, mTmodemTickCount;
 #endif

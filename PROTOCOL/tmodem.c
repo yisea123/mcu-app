@@ -90,23 +90,14 @@
 																									UPDATE_DONE                            
 ***********************************************************************/
 
-char mPACKETSIZE = PACKET_SIZE;
-
 extern char mMcuJumpAppPending;
-
-char mScuRomUpdatePending = 0;
-
-char mBootloaderUpdatePending = 0;
-
-char devNum=MCU_NUM,  session_begin=0, mTickCount=0;
-
 unsigned char md5[32];
-unsigned int romSize = 0;
-//static unsigned char buf_1024[1024] = { 0 };
+unsigned int romSize = 0, flashdestination = APPLICATION_ADDRESS;
+char devNum=MCU_NUM, session_begin=0, mTmodemTickCount=0, 
+	mScuRomUpdatePending=0, mBootloaderUpdatePending=0, mPACKETSIZE = PACKET_SIZE;
+
 static char FileName[FILE_NAME_LENGTH], num_eot = 0, num_ca=0;
-static unsigned int packets_received = 0,  continuity=0, tmp0, tmp1;	
-static unsigned int targetSector=0;
-unsigned int flashdestination = APPLICATION_ADDRESS;
+static unsigned int packets_received = 0,  continuity=0, tmp0, tmp1, targetSector=0;	
 
  unsigned int Str2Int(unsigned char *inputstr, unsigned int *intnum)
 {
@@ -338,7 +329,7 @@ static unsigned int continuity_add(char session_begin)
 
 void reset_tmodem_status(void)
 {
-	printf("%s, mTickCount=%d\r\n", __func__, mTickCount);
+	printf("%s, mTmodemTickCount=%d\r\n", __func__, mTmodemTickCount);
 	tmp0 = 0;
 	tmp1 = 0;
 	num_ca = 0;
@@ -558,7 +549,7 @@ int handle_update_bin(const char* packet_data, int len)
 								}
 								/*在此处添加一个定时器，用于计算android 在4秒钟之内是否 还在继续发送rom的packet包，如果没有，调用reset_tmodem_status（）
 								同时用一个变量去标示此定时器, 与uart_command.c中的代码，共用定时器2   TIM2_IRQHandler*/
-								mTickCount = 0;
+								mTmodemTickCount = 0;
 								/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
 								romSize = size;
 								session_begin = 1;
@@ -593,7 +584,7 @@ int handle_update_bin(const char* packet_data, int len)
 							else if(session_begin)
 							{
 								session_done = 1;
-								mTickCount = 0;
+								mTmodemTickCount = 0;
 								break;
 							} else {
 								return E2;//ERR_TRANSMISS_START
@@ -623,7 +614,7 @@ int handle_update_bin(const char* packet_data, int len)
 									targetSector = GetSector(flashdestination);
 									FLASH_If_Erase_Sector(flashdestination); 
 								}
-								mTickCount = 0;
+								mTmodemTickCount = 0;
 								/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
 								return UD2;					
 							} else {

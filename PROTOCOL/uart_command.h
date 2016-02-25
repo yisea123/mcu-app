@@ -112,6 +112,7 @@
 #include "car_event.h"
 #include "rtc.h"
 #include "list.h"
+#include "pending.h"
 
 //uint32_t id, uint8_t ide, uint8_t rtr, u8* msg,u8 len
 struct msg_periodic {
@@ -136,6 +137,8 @@ struct msg_periodic {
 //ack为组织好的确认包，ack_len为确认包长度
 //发确认包ACK给大屏，并处理CMD
 
+extern long numRecvAndroidCanCmd;
+extern char mReportMcuStatusPending;
 extern uint32_t periodicNum;
 extern struct list_head periodic_head;
 extern int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len);

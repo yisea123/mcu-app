@@ -1,6 +1,10 @@
 #ifndef __KFIFO_H
-#define __KFIFO_H	 
+#define __KFIFO_H	
+
 #include "uart_command.h"
+#include "usart.h"
+#include "malloc.h"
+#include "sys.h"
 
 enum {
 	HEAD1 = 0, //MUST 0

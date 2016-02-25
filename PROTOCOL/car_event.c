@@ -4,11 +4,8 @@
 
 struct list_head event_head;
 struct car_event* event_sending = NULL;
-long count_cmd = 0;
-long numMcuSendedCmdToAndroid = 0;
-long numMcuReportToAndroid = 0;
-extern long num_can1_IRQ, can1_report_bytes;
-
+long count_cmd = 0, numMcuSendedCmdToAndroid = 0, 
+	numMcuReportToAndroid = 0 , mMcuReportRepeatNum = 0;
 
 /***************************************************************
 把数据加入到链表中去
@@ -89,7 +86,7 @@ struct car_event * check_event(struct car_event *event)
 解析can1队列中的数据，如果正确解析完整的一帧，返回CAN_EVENT
 并且cmd中保存了一帧的数据， cmd_len保存这帧数据的长度
 ****************************************************************/
-int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
+static int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -184,7 +181,7 @@ LOOP:
 解析can2队列中的数据，如果正确解析完整的一帧，返回CAN_EVENT
 并且cmd中保存了一帧的数据， cmd_len保存这帧数据的长度
 ****************************************************************/
-int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
+static int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean*/)
 {
 	static char data_len;
 	static int state = HEAD1, i=0;	
@@ -379,7 +376,7 @@ void report_car_event(int result, const char* cmd, int cmd_len)
 	}	
 }
 
-void decode_can_fifo(struct kfifo *mfifo, char *cmd)
+static void decode_can_fifo(struct kfifo *mfifo, char *cmd)
 {
 	int result = 0, len = 0;
 	
@@ -398,8 +395,6 @@ void decode_can_fifo(struct kfifo *mfifo, char *cmd)
 		}
 	}		
 }
-
-long mMcuReportRepeatNum=0;
 
 void list_event_to_android(void)
 {

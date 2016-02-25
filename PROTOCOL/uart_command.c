@@ -4,10 +4,6 @@
 #include "rtc.h"
 #include <string.h>
 
-//#include "dma.h"
-extern char mDebugUartPrintfEnable;
-extern void report_debug_to_android(void);
-extern void get_sys_time(uint32_t format, RTC_DateTypeDef* date, RTC_TimeTypeDef* time);
 static int report_rtc_msg(unsigned char *msg, unsigned char len);
 static int report_mcu_version_msg(unsigned char *msg, unsigned char len);
 void report_mcu_software_version(void);

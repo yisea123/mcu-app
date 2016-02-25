@@ -30,21 +30,6 @@ printf(" \
 \r\n\r\n");
 
 static int init_work(void);
-extern uint16_t cpuGetFlashSize(void);
-extern void cpuidGetId(u32 mcuID[]);
-extern void handle_pending_work(void);
-	
-char mAndroidShutDownPending=0;
-/*此变量用于请求关掉android的电源*/
-
-char mAndroidPowerUpPending=0;
-/*此变量用于请求打开android的电源*/
-
-char mMcuJumpAppPending = 0;
-/*此变量用于请求打开reset MCU*/
-
-char mRequestSoftRestPending = 0;
-/*此变量用于请求打开reset MCU*/
 
 u32 mcuID[4];
 

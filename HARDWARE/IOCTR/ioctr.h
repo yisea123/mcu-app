@@ -1,6 +1,10 @@
 #ifndef __IOCTR_H
-#define __IOCTR_H	 
+#define __IOCTR_H
+
 #include "sys.h" 
+#include "car_event.h"
+#include "timer.h"
+#include "usart.h"
 
 /******************OUTPUT********************/
 
@@ -30,5 +34,5 @@ extern void handle_shutdown_android_request(void);
 
 extern char mAndroidPower;
 extern char mAndroidRunning;
-
+extern char mAndroidShutDownPending;
 #endif

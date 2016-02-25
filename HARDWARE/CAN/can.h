@@ -51,6 +51,8 @@ extern struct kfifo* can1_fifo;
 
 extern struct kfifo* can2_fifo;
 
+extern long num_can1_IRQ, num_can2_IRQ;
+
 #endif
 
 
