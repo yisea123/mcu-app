@@ -1,4 +1,5 @@
 ..\obj\cjson.o: ..\PROTOCOL\cJSON.c
+..\obj\cjson.o: ..\PROTOCOL\cJSON.h
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
@@ -6,7 +7,6 @@
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\cjson.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
-..\obj\cjson.o: ..\PROTOCOL\cJSON.h
 ..\obj\cjson.o: ..\MALLOC\malloc.h
 ..\obj\cjson.o: ..\USER\stm32f4xx.h
 ..\obj\cjson.o: ..\CORE\core_cm4.h
