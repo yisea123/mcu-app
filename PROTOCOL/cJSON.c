@@ -52,7 +52,7 @@ static char* cJSON_strdup(const char* str)
       char* copy;
 
       len = strlen(str) + 1;
-      if (!(copy = (char*)cJSON_malloc(len))) return 0;
+      if (NULL==(copy = (char*)cJSON_malloc(len))) return 0;
       memcpy(copy,str,len);
       return copy;
 }
@@ -69,7 +69,7 @@ void cJSON_InitHooks(cJSON_Hooks* hooks)
 	cJSON_malloc = (hooks->malloc_fn)?hooks->malloc_fn:malloc;
 	cJSON_free	 = (hooks->free_fn)?hooks->free_fn:free;
 }
-*/
+*/ 
 
 /* Internal constructor. */
 static cJSON *cJSON_New_Item(void)
@@ -277,7 +277,7 @@ static char *print_string_ptr(const char *str,printbuffer *p)
 		strcpy(out,"\"\"");
 		return out;
 	}
-	ptr=str;while ((token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
+	ptr=str;while (NULL!=(token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
 	
 	if (p)	out=ensure(p,len+3);
 	else	out=(char*)cJSON_malloc(len+3);
@@ -351,7 +351,7 @@ char *cJSON_PrintBuffered(cJSON *item,int prebuffer,int fmt)
 	p.length=prebuffer;
 	p.offset=0;
 	return print_value(item,0,fmt,&p);
-	return p.buffer;
+//	return p.buffer;
 }
 
 
@@ -422,7 +422,7 @@ static const char *parse_array(cJSON *item,const char *value)
 	while (*value==',')
 	{
 		cJSON *new_item;
-		if (!(new_item=cJSON_New_Item())) return 0; 	/* memory fail */
+		if (NULL==(new_item=cJSON_New_Item())) return 0; 	/* memory fail */
 		child->next=new_item;new_item->prev=child;child=new_item;
 		value=skip(parse_value(child,skip(value+1)));
 		if (!value) return 0;	/* memory fail */
@@ -534,7 +534,7 @@ static const char *parse_object(cJSON *item,const char *value)
 	while (*value==',')
 	{
 		cJSON *new_item;
-		if (!(new_item=cJSON_New_Item()))	return 0; /* memory fail */
+		if (NULL==(new_item=cJSON_New_Item()))	return 0; /* memory fail */
 		child->next=new_item;new_item->prev=child;child=new_item;
 		value=skip(parse_string(child,skip(value+1)));
 		if (!value) return 0;
