@@ -3,30 +3,86 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Project:</h2>
-C:\mcu\mcu-app\USER\USART.uvprojx
-Project File Date:  02/22/2016
+F:\work\xiaopeng\github\mcu-app\USER\USART.uvprojx
+Project File Date:  02/28/2016
 
 <h2>Output:</h2>
 Build target 'USART'
-compiling main.c...
-compiling can.c...
-compiling ioctr.c...
-compiling usart.c...
-compiling kfifo.c...
-compiling uart_command.c...
-compiling car_event.c...
-compiling tmodem.c...
-compiling bootloader_update.c...
-compiling md5.c...
-compiling timer.c...
-compiling longsung.c...
-compiling pending.c...
-compiling test.c...
+compiling cJSON.c...
+..\PROTOCOL\cJSON.c(55): warning:  #1293-D: assignment in condition
+        if (!(copy = (char*)cJSON_malloc(len))) return 0;
+..\PROTOCOL\cJSON.c(280): warning:  #1293-D: assignment in condition
+        ptr=str;while ((token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
+..\PROTOCOL\cJSON.c(354): warning:  #111-D: statement is unreachable
+        return p.buffer;
+..\PROTOCOL\cJSON.c(425): warning:  #1293-D: assignment in condition
+                if (!(new_item=cJSON_New_Item())) return 0;     /* memory fail */
+..\PROTOCOL\cJSON.c(537): warning:  #1293-D: assignment in condition
+                if (!(new_item=cJSON_New_Item()))       return 0; /* memory fail */
+..\PROTOCOL\cJSON.c: 5 warnings, 0 errors
 linking...
-Program Size: Code=54192 RO-data=3696 RW-data=1032 ZI-data=1221920  
+Program Size: Code=54190 RO-data=3694 RW-data=1032 ZI-data=1221920  
 FromELF: creating hex file...
 After Build - User command #1: C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=C:\mcu\mcu-app\Bin\USART.bin C:\mcu\mcu-app\OBJ\USART.axf
-"..\OBJ\USART.axf" - 0 Error(s), 0 Warning(s).
-</pre>
-</body>
-</html>
+"..\OBJ\USART.axf" - 0 Error(s), 5 Warning(s).
+ */
+..\PROTOCOL\cJSON.c(535): warning:  #1293-D: assignment in condition
+                if (!(new_item=cJSON_New_Item()))       return 0; /* memory fail */
+..\PROTOCOL\cJSON.c: 5 warnings, 4 errors
+"..\OBJ\USART.axf" - 4 Error(s), 5 Warning(s).
+Target not created
+tible with parameter of type "u8"
+                cJSON_free(c);
+..\PROTOCOL\cJSON.c(92): error:  #165: too few arguments in function call
+                cJSON_free(c);
+..\PROTOCOL\cJSON.c(131): error:  #165: too few arguments in function call
+        newbuffer=(char*)cJSON_malloc(newsize);
+..\PROTOCOL\cJSON.c(132): error:  #167: argument of type "char *" is incompatible with parameter of type "u8"
+        if (!newbuffer) {cJSON_free(p->buffer);p->length=0,p->buffer=0;return 0;}
+..\PROTOCOL\cJSON.c(132): error:  #165: too few arguments in function call
+        if (!newbuffer) {cJSON_free(p->buffer);p->length=0,p->buffer=0;return 0;}
+..\PROTOCOL\cJSON.c(134): error:  #167: argument of type "char *" is incompatible with parameter of type "u8"
+        cJSON_free(p->buffer);
+..\PROTOCOL\cJSON.c(134): error:  #165: too few arguments in function call
+        cJSON_free(p->buffer);
+..\PROTOCOL\cJSON.c(156): error:  #165: too few arguments in function call
+                else    str=(char*)cJSON_malloc(2);     /* special case for 0. */
+..\PROTOCOL\cJSON.c(162): error:  #165: too few arguments in function call
+                else    str=(char*)cJSON_malloc(21);    /* 2^64+1 can be represented in 21 chars. */
+..\PROTOCOL\cJSON.c(168): error:  #165: too few arguments in function call
+                else    str=(char*)cJSON_malloc(64);    /* This is a nice tradeoff. */
+..\PROTOCOL\cJSON.c(201): error:  #165: too few arguments in function call
+        out=(char*)cJSON_malloc(len+1); /* This is how long we need for the string, roughly. */
+..\PROTOCOL\cJSON.c(263): error:  #165: too few arguments in function call
+                else            out=(char*)cJSON_malloc(len+3);
+..\PROTOCOL\cJSON.c(275): error:  #165: too few arguments in function call
+                else    out=(char*)cJSON_malloc(3);
+..\PROTOCOL\cJSON.c(280): warning:  #1293-D: assignment in condition
+        ptr=str;while ((token=*ptr) && ++len) {if (strchr("\"\\\b\f\n\r\t",token)) len++; else if (token<32) len+=5;ptr++;}
+..\PROTOCOL\cJSON.c(283): error:  #165: too few arguments in function call
+        else    out=(char*)cJSON_malloc(len+3);
+..\PROTOCOL\cJSON.c(350): error:  #165: too few arguments in function call
+        p.buffer=(char*)cJSON_malloc(prebuffer);
+..\PROTOCOL\cJSON.c(354): warning:  #111-D: statement is unreachable
+        return p.buffer;
+..\PROTOCOL\cJSON.c(425): warning:  #1293-D: assignment in condition
+                if (!(new_item=cJSON_New_Item())) return 0;     /* memory fail */
+..\PROTOCOL\cJSON.c(450): error:  #165: too few arguments in function call
+                else    out=(char*)cJSON_malloc(3);
+..\PROTOCOL\cJSON.c(474): error:  #165: too few arguments in function call
+                entries=(char**)cJSON_malloc(numentries*sizeof(char*));
+..\PROTOCOL\cJSON.c(488): error:  #165: too few arguments in function call
+                if (!fail)      out=(char*)cJSON_malloc(len);
+..\PROTOCOL\cJSON.c(495): error:  #167: argument of type "char *" is incompatible with parameter of type "u8"
+                        for (i=0;i<numentries;i++) if (entries[i]) cJSON_free(entries[i]);
+..\PROTOCOL\cJSON.c(495): error:  #165: too few arguments in function call
+                        for (i=0;i<numentries;i++) if (entries[i]) cJSON_free(entries[i]);
+..\PROTOCOL\cJSON.c(496): error:  #167: argument of type "char **" is incompatible with parameter of type "u8"
+                        cJSON_free(entries);
+..\PROTOCOL\cJSON.c(496): error:  #165: too few arguments in function call
+                        cJSON_free(entries);
+..\PROTOCOL\cJSON.c(507): error:  #167: argument of type "char *" is incompatible with parameter of type "u8"
+                        cJSON_free(entries[i]);
+..\PROTOCOL\cJSON.c: 4 warnings, 30 errors
+"..\OBJ\USART.axf" - 30 Error(s), 4 Warning(s).
+Target not created
