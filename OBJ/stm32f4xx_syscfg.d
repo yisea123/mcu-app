@@ -2,7 +2,7 @@
 ..\obj\stm32f4xx_syscfg.o: ..\FWLIB\inc\stm32f4xx_syscfg.h
 ..\obj\stm32f4xx_syscfg.o: ..\USER\stm32f4xx.h
 ..\obj\stm32f4xx_syscfg.o: ..\CORE\core_cm4.h
-..\obj\stm32f4xx_syscfg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\stm32f4xx_syscfg.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\stm32f4xx_syscfg.o: ..\CORE\core_cmInstr.h
 ..\obj\stm32f4xx_syscfg.o: ..\CORE\core_cmFunc.h
 ..\obj\stm32f4xx_syscfg.o: ..\CORE\core_cm4_simd.h

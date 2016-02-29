@@ -35,6 +35,8 @@
 "..\obj\timer.o"
 "..\obj\longsung.o"
 "..\obj\pending.o"
+"..\obj\cjson.o"
+"..\obj\aes.o"
 "..\obj\usmart.o"
 "..\obj\usmart_config.o"
 "..\obj\usmart_str.o"
