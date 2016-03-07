@@ -98,7 +98,7 @@ periodicNum全局变量，这个变量会每100MS自加加一次。
 
 void TIM2_IRQHandler(void)
 { 
-	static int m4gCount = 0;
+	static int lgperiod = 0;
 	
 	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)//溢出中断
 	{
@@ -117,8 +117,8 @@ void TIM2_IRQHandler(void)
 		}
 		
 		/*40m*/
-		if(++m4gCount > 19) {//400
-			m4gCount = 0;
+		if(++lgperiod > 400) {//400
+			lgperiod = 0;
 			notify_longsung_period();
 		}
 		

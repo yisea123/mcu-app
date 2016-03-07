@@ -2,7 +2,7 @@
 ..\obj\usart.o: ..\SYSTEM\sys\sys.h
 ..\obj\usart.o: ..\USER\stm32f4xx.h
 ..\obj\usart.o: ..\CORE\core_cm4.h
-..\obj\usart.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\usart.o: ..\CORE\core_cmInstr.h
 ..\obj\usart.o: ..\CORE\core_cmFunc.h
 ..\obj\usart.o: ..\CORE\core_cm4_simd.h
@@ -36,7 +36,7 @@
 ..\obj\usart.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\usart.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\usart.o: ..\SYSTEM\usart\usart.h
-..\obj\usart.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\usart.o: ..\KFIFO\kfifo.h
 ..\obj\usart.o: ..\PROTOCOL\uart_command.h
 ..\obj\usart.o: ..\KFIFO\kfifo.h
@@ -57,7 +57,7 @@
 ..\obj\usart.o: ..\PROTOCOL\longsung.h
 ..\obj\usart.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\usart.o: ..\HARDWARE\IOCTR\ioctr.h
-..\obj\usart.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\usart.o: ..\USMART\usmart.h
 ..\obj\usart.o: ..\USMART\usmart_str.h
 ..\obj\usart.o: ..\HARDWARE\STMFLASH\stmflash.h

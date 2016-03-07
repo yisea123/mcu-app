@@ -3,7 +3,7 @@
 ..\obj\timer.o: ..\SYSTEM\sys\sys.h
 ..\obj\timer.o: ..\USER\stm32f4xx.h
 ..\obj\timer.o: ..\CORE\core_cm4.h
-..\obj\timer.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\timer.o: ..\CORE\core_cmInstr.h
 ..\obj\timer.o: ..\CORE\core_cmFunc.h
 ..\obj\timer.o: ..\CORE\core_cm4_simd.h
@@ -40,7 +40,7 @@
 ..\obj\timer.o: ..\KFIFO\kfifo.h
 ..\obj\timer.o: ..\PROTOCOL\uart_command.h
 ..\obj\timer.o: ..\SYSTEM\usart\usart.h
-..\obj\timer.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\timer.o: ..\MALLOC\malloc.h
 ..\obj\timer.o: ..\HARDWARE\CAN\can.h
 ..\obj\timer.o: ..\PROTOCOL\car_event.h
@@ -59,4 +59,4 @@
 ..\obj\timer.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\timer.o: ..\HARDWARE\STMFLASH\stmflash.h
 ..\obj\timer.o: ..\PROTOCOL\longsung.h
-..\obj\timer.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h

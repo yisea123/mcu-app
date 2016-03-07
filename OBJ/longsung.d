@@ -3,7 +3,7 @@
 ..\obj\longsung.o: ..\SYSTEM\sys\sys.h
 ..\obj\longsung.o: ..\USER\stm32f4xx.h
 ..\obj\longsung.o: ..\CORE\core_cm4.h
-..\obj\longsung.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\longsung.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\longsung.o: ..\CORE\core_cmInstr.h
 ..\obj\longsung.o: ..\CORE\core_cmFunc.h
 ..\obj\longsung.o: ..\CORE\core_cm4_simd.h
@@ -38,7 +38,7 @@
 ..\obj\longsung.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\longsung.o: ..\MALLOC\malloc.h
 ..\obj\longsung.o: ..\SYSTEM\usart\usart.h
-..\obj\longsung.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\longsung.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\longsung.o: ..\KFIFO\kfifo.h
 ..\obj\longsung.o: ..\PROTOCOL\uart_command.h
 ..\obj\longsung.o: ..\KFIFO\kfifo.h
@@ -61,4 +61,4 @@
 ..\obj\longsung.o: ..\USMART\usmart_str.h
 ..\obj\longsung.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\longsung.o: ..\HARDWARE\STMFLASH\stmflash.h
-..\obj\longsung.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\longsung.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h

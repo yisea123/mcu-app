@@ -35,4 +35,5 @@ extern void handle_shutdown_android_request(void);
 extern char mAndroidPower;
 extern char mAndroidRunning;
 extern char mAndroidShutDownPending;
+extern char mAndroidPowerUpPending;
 #endif

@@ -23,7 +23,7 @@
 /* cJSON */
 /* JSON parser in C. */
 
-#include "cJSON.h"
+#include "cjson.h"
 
 static const char *ep;
 

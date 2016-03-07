@@ -3,7 +3,7 @@
 ..\obj\can.o: ..\SYSTEM\sys\sys.h
 ..\obj\can.o: ..\USER\stm32f4xx.h
 ..\obj\can.o: ..\CORE\core_cm4.h
-..\obj\can.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\can.o: ..\CORE\core_cmInstr.h
 ..\obj\can.o: ..\CORE\core_cmFunc.h
 ..\obj\can.o: ..\CORE\core_cm4_simd.h
@@ -39,7 +39,7 @@
 ..\obj\can.o: ..\HARDWARE\LED\led.h
 ..\obj\can.o: ..\SYSTEM\delay\delay.h
 ..\obj\can.o: ..\SYSTEM\usart\usart.h
-..\obj\can.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\can.o: ..\PROTOCOL\uart_command.h
 ..\obj\can.o: ..\KFIFO\kfifo.h
 ..\obj\can.o: ..\PROTOCOL\uart_command.h
@@ -56,7 +56,7 @@
 ..\obj\can.o: ..\PROTOCOL\longsung.h
 ..\obj\can.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\can.o: ..\HARDWARE\IOCTR\ioctr.h
-..\obj\can.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\can.o: ..\USMART\usmart.h
 ..\obj\can.o: ..\USMART\usmart_str.h
 ..\obj\can.o: ..\HARDWARE\STMFLASH\stmflash.h

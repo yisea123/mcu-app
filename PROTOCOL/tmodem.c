@@ -90,8 +90,10 @@
 																									UPDATE_DONE                            
 ***********************************************************************/
 
+static uint8_t *key = NULL;
 extern char mMcuJumpAppPending;
-unsigned char md5[32];
+static unsigned char aes_key[32];
+unsigned char tmodem_md5[LEN_MD5];
 unsigned int romSize = 0, flashdestination = APPLICATION_ADDRESS;
 char devNum=MCU_NUM, session_begin=0, mTmodemTickCount=0, 
 	mScuRomUpdatePending=0, mBootloaderUpdatePending=0, mPACKETSIZE = PACKET_SIZE;
@@ -252,7 +254,6 @@ unsigned int FLASH_If_DisableWriteProtection(void)
   return (1);
 }
 
-
 /**
   * @brief  This function does an erase of all user flash area
   * @param  StartSector: start of user flash area
@@ -268,7 +269,7 @@ unsigned int FLASH_If_Erase_Sector(unsigned int StartSector)
 	
   /* Get the sector where start the user flash area */
   UserStartSector = GetSector(StartSector);
-
+  printf("%s\r\n", __func__);
   for(i = 0; i <= 10; i++)
   {
     /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
@@ -283,12 +284,15 @@ unsigned int FLASH_If_Erase_Sector(unsigned int StartSector)
 			//printf("%s: addr=0X%X,sector=%d, success\r\n", __func__, StartSector, UserStartSector);
 			FLASH_DataCacheCmd(ENABLE);	//FLASH擦除结束,开启数据缓存
 			FLASH_Lock();//上锁
+			printf("%s out.\r\n", __func__);
+			printf("%s: addr=0X%X, sector=%d, success!\r\n", __func__, StartSector, UserStartSector);
 			return 0;
 		}
   }
 	
   FLASH_DataCacheCmd(ENABLE);	//FLASH擦除结束,开启数据缓存
 	FLASH_Lock();//上锁 
+	printf("%s out.\r\n", __func__);
   return (0);
 }
 
@@ -437,6 +441,7 @@ static int phase_packet (const char *data, int len, int *length)
   return 0;
 }
 
+/************************************************************************************************
 static void catch_md5_from_packet(const unsigned char *buf_ptr, const int ps, const int k)
 {
 	static unsigned char *ptr;
@@ -474,6 +479,36 @@ static void catch_md5_from_packet(const unsigned char *buf_ptr, const int ps, co
 	}
 	else
 		printf("%s:error!\r\n", __func__);
+}
+************************************************************************************************/
+
+static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char md5[])
+{
+	u32 src;
+	int mRead = 0;	
+	unsigned char data[4], *p;
+	
+	p = md5;
+	if((devNum==MCU_NUM) || (devNum==SCU_NUM)) {
+		src = APPLICATION_ADDRESS + romSize;
+	} else {
+		src = BOOTLOADER_ADDRESS + romSize;
+	}	
+
+	printf("%s: src=%x, binSize=%d\r\n", __func__, src, romSize);
+	
+	while(mRead < LEN_MD5) 
+	{
+		STMFLASH_Read(src, (u32 *)data, 1);
+		src += 4;
+		mRead += 4;
+		memcpy(p, data, 4);
+		p += 4;
+	}
+
+	printf("%s:[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
+			md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], md5[9],
+			md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 	
 }
 
 int handle_update_bin(const char* packet_data, int len)
@@ -531,13 +566,14 @@ int handle_update_bin(const char* packet_data, int len)
 								
 								FileName[i++] = '\0';
 								printf("%s: FileName=%s\r\n", __func__, FileName);
-								for (i = 0, file_ptr ++; (*file_ptr != ' ') && (i < FILE_SIZE_LENGTH);) {
+								for (i = 0, file_ptr ++; (*file_ptr != '\0') && (i < FILE_SIZE_LENGTH);) {
 									file_size[i++] = *file_ptr++;
 								}
 								file_size[i++] = '\0';
 								Str2Int(file_size, &size);
 								/*RSA 脱密后， 真实的bin文件， size 只有一半, 并且最后16bytes为MD5值*/
-								size = size/2-LEN_MD5;
+								//size = size/2-LEN_MD5;
+								size = size-LEN_MD5;
 								mRecvBytes = 0;
 								printf("%s: file size = %d, USE_FLASH_SIZE=%d\r\n",__func__, size, USER_FLASH_SIZE);
 								/* Test the size of the image to be sent */
@@ -547,6 +583,18 @@ int handle_update_bin(const char* packet_data, int len)
 									printf("%s: file size > flash size\r\n", __func__);
 									return E4; //rom过大，falsh不够保存 ERR_SIZE_EXT
 								}
+								
+								printf("aes_key:\r\n[");
+								for (i = 0, file_ptr ++; i < sizeof(aes_key)/sizeof(aes_key[0]); i++) {
+									aes_key[i] = *file_ptr++;
+									printf("%02x,", aes_key[i]);
+								}								
+								printf("]\r\n");
+								
+								if(key) { aes_destory_key(key); key = NULL;}
+								key = aes_create_key(aes_key, sizeof(aes_key)/sizeof(aes_key[0]));					
+								if(!key) return E2;
+								
 								/*在此处添加一个定时器，用于计算android 在4秒钟之内是否 还在继续发送rom的packet包，如果没有，调用reset_tmodem_status（）
 								同时用一个变量去标示此定时器, 与uart_command.c中的代码，共用定时器2   TIM2_IRQHandler*/
 								mTmodemTickCount = 0;
@@ -560,7 +608,9 @@ int handle_update_bin(const char* packet_data, int len)
 								{
 									/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 									printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
-									FLASH_If_Erase_Sector(flashdestination); 
+									FLASH_If_Erase_Sector(flashdestination);
+									//FLASH_If_Erase_Sector(APPLICATION_ADDRESS_1);
+									//FLASH_If_Erase_Sector(APPLICATION_ADDRESS_2);									
 								}
 								
 								if(devNum == BOOTLOADER_NUM)
@@ -595,36 +645,48 @@ int handle_update_bin(const char* packet_data, int len)
 						else if(session_begin) {
 							if(packets_received==1) printf("%s: flash save addr:%x\r\n", __func__, flashdestination);
 							//buf_ptr = (unsigned char*)(packet_data+PACKET_HEADER);
-							buf_ptr = decode_packet((unsigned char*)(packet_data+PACKET_HEADER), packet_length);
-							
-							/*RSA 脱密后，  有效数据只有packet_length的一半*/
-							packet_length = packet_length/2;
+							for(i=0; i< packet_length/AES_DECODE_LEN; i++) {
+								buf_ptr = aes_decode_packet(key, (uint8_t*)(packet_data+PACKET_HEADER+AES_DECODE_LEN*i), AES_DECODE_LEN);
+								
+								/*RSA 脱密后，  有效数据只有packet_length的一半*/
+								/*
+								packet_length = packet_length/2;
+								mRecvBytes+=packet_length;
+								if(mRecvBytes > romSize)
+								catch_md5_from_packet(buf_ptr, packet_length, mRecvBytes - romSize);
+								*/
+								
+								ramsource = (unsigned int)buf_ptr;				
+								preFlashdestination = flashdestination;	
+								flashdestination = STMFLASH_Write(flashdestination, (uint32_t *) ramsource, AES_DECODE_LEN/4);
+								if(flashdestination == preFlashdestination + AES_DECODE_LEN) {
+									//packets_received ++;
+									if(targetSector != GetSector(flashdestination))
+									{
+										printf("%s: rom is too big! Erase one more sector!\r\n", __func__);
+										targetSector = GetSector(flashdestination);
+										FLASH_If_Erase_Sector(flashdestination); 
+									}
+									mTmodemTickCount = 0;
+									/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
+									//return UD2;					
+								} else {
+									/* End session */
+									printf("%s: STMFLASH_Write error\r\n", __func__);
+									printf("%s: des=0x%x, preDes=0x%x, packet_length=%d\r\n", __func__, flashdestination,
+												preFlashdestination, packet_length);
+									return E5; //MCU读写flash 出错，停止更新 ERR_FLASH_RW				
+								}
+							} 
 							mRecvBytes+=packet_length;
+							/*
 							if(mRecvBytes > romSize)
 								catch_md5_from_packet(buf_ptr, packet_length, mRecvBytes - romSize);
-							
-							ramsource = (unsigned int)buf_ptr;				
-							preFlashdestination = flashdestination;	
-							flashdestination = STMFLASH_Write(flashdestination, (unsigned int*) ramsource, packet_length/4);
-							if(flashdestination == preFlashdestination + packet_length) {
-								packets_received ++;
-								if(targetSector != GetSector(flashdestination))
-								{
-									printf("%s: rom is too big! Erase one more sector!\r\n", __func__);
-									targetSector = GetSector(flashdestination);
-									FLASH_If_Erase_Sector(flashdestination); 
-								}
-								mTmodemTickCount = 0;
-								/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
-								return UD2;					
-							} else {
-								/* End session */
-								printf("%s: STMFLASH_Write error\r\n", __func__);
-								printf("%s: des=0x%x, preDes=0x%x, packet_length=%d\r\n", __func__, flashdestination,
-											preFlashdestination, packet_length);
-								return E5; //MCU读写flash 出错，停止更新 ERR_FLASH_RW				
-							}
-						} else {
+							*/
+							//if(mRecvBytes >= romSize+LEN_MD5) read_md5_from_flash(devNum, romSize, md5);
+							packets_received ++;
+							return UD2;
+						}else {
 							printf("session_begin=0, but android send rom data...\r\n");
 							return E2; //ERR_TRANSMISS_START
 						}
@@ -687,6 +749,8 @@ int handle_update_bin(const char* packet_data, int len)
 	{
 		u32 src;
 		
+		read_md5_from_flash(devNum, romSize, tmodem_md5);
+		
 		if((devNum==MCU_NUM) || (devNum==SCU_NUM)) 
 		{
 			src = APPLICATION_ADDRESS;
@@ -699,7 +763,7 @@ int handle_update_bin(const char* packet_data, int len)
 		printf("%s: Download Finish.\r\n", __func__);
 		reset_tmodem_status();
 		
-		if(check_md5(src, romSize, md5) == 0)
+		if(check_md5(src, romSize, tmodem_md5) == 0)
 		{
 			printf("%s: Check MD5 Ok!\r\n", __func__);
 			return UD5;
@@ -756,11 +820,22 @@ void check_if_need_to_erase()
 	{
 		/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 		printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
-		FLASH_If_Erase_Sector(APPLICATION_ADDRESS); 
+		FLASH_If_Erase_Sector(APPLICATION_ADDRESS);
+		FLASH_If_Erase_Sector(APPLICATION_ADDRESS_1);
+		FLASH_If_Erase_Sector(APPLICATION_ADDRESS_2);		
 		RTC_WriteBackupRegister(RTC_BKP_DR3, 0x1234);
 	}	
 }
 
+void erase_flash(void)
+{
+	printf("erase flash test!\r\n");
+	FLASH_If_Erase_Sector(APPLICATION_ADDRESS);
+	FLASH_If_Erase_Sector(APPLICATION_ADDRESS_1);
+	FLASH_If_Erase_Sector(APPLICATION_ADDRESS_2);	
+}
+
+extern uint32_t rand_count;
 extern long numMcuReportToAndroid;
 extern char mAndroidShutDownPending;
 /**
@@ -773,11 +848,10 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 	{
 		//处理UPDATE 状态
 		case  UD0: 
-							 rand = numMcuReportToAndroid%12;
-							 mPACKETSIZE = 40+rand*8;
+							 rand = rand_count%5;
+							 mPACKETSIZE = 64+rand*16;	
 							 printf("%s: UD0 mPACKETSIZE=%d\r\n",__func__, mPACKETSIZE);
-		
-							 if(mPACKETSIZE > 128) mPACKETSIZE=128;
+							 if(mPACKETSIZE>128 || mPACKETSIZE<64) mPACKETSIZE=128;
 							 report_tmodem_packet0(UPDATE, mPACKETSIZE);     
 							 report_tmodem_packet0(ACK, (packets_received & 0xff)); 
 							 report_tmodem_packet(CRC16);break;
@@ -806,14 +880,21 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 		//处理错误信息
 		case 	E0:  printf("E0\r\n");
 		case  E1:  printf("E1\r\n");
-		case  E3:  report_tmodem_packet(ACK); printf("E3\r\n"); break;
-		case 	E2:  report_tmodem_packet(ERR_TRANSMISS_START); printf("E2\r\n"); break;
-		case  E4:  report_tmodem_packet(ERR_SIZE_EXT);printf("E4\r\n"); break;
-		case  E5:  report_tmodem_packet(ERR_FLASH_RW); printf("E5\r\n"); check_if_need_to_erase(); break;
-		case  E6:  report_tmodem_packet(ERR_PACKET_INDEX); printf("E6\r\n"); break;
-		case  E7:  report_tmodem_packet(ERR_UPDATE_REQUEST); printf("E7\r\n"); break;
+		case  E3:  report_tmodem_packet(ACK); printf("E3\r\n"); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
+		case 	E2:  report_tmodem_packet(ERR_TRANSMISS_START); printf("E2\r\n"); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
+		case  E4:  report_tmodem_packet(ERR_SIZE_EXT);printf("E4\r\n"); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
+		case  E5:  report_tmodem_packet(ERR_FLASH_RW); printf("E5\r\n"); 
+							 check_if_need_to_erase(); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
+		case  E6:  report_tmodem_packet(ERR_PACKET_INDEX); printf("E6\r\n"); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
+		case  E7:  report_tmodem_packet(ERR_UPDATE_REQUEST); printf("E7\r\n"); 
+							 if(key) {aes_destory_key(key); key=NULL;} break;
 		
-		default:   break;	
+		default:   if(key) {aes_destory_key(key); key=NULL;} break;	
 	}
 }
 
@@ -831,7 +912,7 @@ void handle_booloader_rom_update(void)
 {
 	printf("%s: \r\n", __func__);
 	mBootloaderUpdatePending = 1;
-	init_bootloaderUpdateState(&mBootloaderUpdatePending, romSize, md5);
+	init_bootloaderUpdateState(&mBootloaderUpdatePending, romSize, tmodem_md5);
 }
 
 

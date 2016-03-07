@@ -3,7 +3,7 @@
 ..\obj\pending.o: ..\SYSTEM\sys\sys.h
 ..\obj\pending.o: ..\USER\stm32f4xx.h
 ..\obj\pending.o: ..\CORE\core_cm4.h
-..\obj\pending.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\pending.o: ..\CORE\core_cmInstr.h
 ..\obj\pending.o: ..\CORE\core_cmFunc.h
 ..\obj\pending.o: ..\CORE\core_cm4_simd.h
@@ -46,7 +46,7 @@
 ..\obj\pending.o: ..\PROTOCOL\uart_command.h
 ..\obj\pending.o: ..\KFIFO\kfifo.h
 ..\obj\pending.o: ..\SYSTEM\usart\usart.h
-..\obj\pending.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\pending.o: ..\PROTOCOL\car_event.h
 ..\obj\pending.o: ..\MALLOC\malloc.h
 ..\obj\pending.o: ..\PROTOCOL\pending.h
@@ -57,7 +57,7 @@
 ..\obj\pending.o: ..\PROTOCOL\longsung.h
 ..\obj\pending.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\pending.o: ..\HARDWARE\IOCTR\ioctr.h
-..\obj\pending.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\pending.o: ..\USMART\usmart.h
 ..\obj\pending.o: ..\USMART\usmart_str.h
 ..\obj\pending.o: ..\HARDWARE\STMFLASH\stmflash.h

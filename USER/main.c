@@ -25,7 +25,7 @@
 #define START_LOG   \
 printf(" \
 \r\n/******       MCU   -   START        ******/ \
-\r\n/***** LOADER FROM ANDROID RELEASE-12 *****/ \
+\r\n/***** LOADER FROM ANDROID RELEASE-15 *****/ \
 \r\n/*****  WAIT TO UPDATE FROM ANDROID *******/ \
 \r\n\r\n");
 
@@ -36,6 +36,8 @@ u32 mcuID[4];
 char data0[CMD_UART_LEN], data1[CMD_LEN], 
 	data2[CMD_LEN], data3[CMD_LEN];
 
+extern int json_test(void);
+extern void aes_test(void);
 
 int main(void)
 { 
@@ -59,7 +61,10 @@ int main(void)
  所有与大屏的串口通讯都在此循环中，不断的遍历所有要处理的数据，
  所以不会有发送数据包不完整的情况
 ****************************************************************/
-	
+	json_test();
+	aes_test();
+	//erase_flash();
+
 	while(1)
 	{
 		test_func();

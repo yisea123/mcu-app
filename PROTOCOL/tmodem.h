@@ -1,6 +1,7 @@
 #ifndef __T_MODEM_H
 #define __T_MODEM_H	 
 
+#include "aes.h"
 //0xaa 0xbb len mCmd d0 d1 d2 d3... check01 check02
 
 //AA BB 131  0x05 00 FF foo.c 102400 CRC1 CRC2
@@ -54,9 +55,10 @@
 #define PACKET_TRAILER          (2)
 #define PACKET_OVERHEAD         (PACKET_HEADER + PACKET_TRAILER)
 
-/*必须可被8整除*/
-#define PACKET_SIZE             (40) 
-/*128  [40 48 56 64 72 80 88 96 104 112 120 128] PACKET_SIZE%8=0 && 128=>PACKET_SIZE>=40*/
+/*必须可被16整除*/
+#define PACKET_SIZE             (64) 
+/*128  [64 80 96 112 128] 
+PACKET_SIZE%16=0 && 128=>PACKET_SIZE>32+FILE_NAME_LENGTH+FILE_SIZE_LENGTH+2*/
 
 #define PACKET_1K_SIZE          (1024)
 
@@ -126,7 +128,9 @@
 #define BOOTLOADER_ADDRESS_END 	(0x08020000-1)
 #define BOOTLOADER_SIZE_MAX 		(BOOTLOADER_ADDRESS_END-BOOTLOADER_ADDRESS)
 
-#define APPLICATION_ADDRESS   (unsigned int)0x080A0000 
+#define APPLICATION_ADDRESS   (unsigned int)0x080A0000
+#define APPLICATION_ADDRESS_1   (unsigned int)0x080C0000
+#define APPLICATION_ADDRESS_2   (unsigned int)0x080E0000	
 #define USER_FLASH_END_ADDRESS        0x080FFFFF
 #define USER_FLASH_SIZE 	(USER_FLASH_END_ADDRESS-APPLICATION_ADDRESS)
 
@@ -140,7 +144,9 @@ extern void handle_scu_rom_update(void);
 extern void handle_booloader_rom_update(void);
 extern void reset_tmodem_status(void);
 extern unsigned int FLASH_If_Erase_Sector(unsigned int StartSector);
-extern unsigned char md5[32];
+extern unsigned char tmodem_md5[16];
 extern unsigned int romSize;
 extern char session_begin, mTmodemTickCount;
+extern void erase_flash(void);
+
 #endif

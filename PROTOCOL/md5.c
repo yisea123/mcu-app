@@ -206,11 +206,11 @@ void MD5Final(unsigned char digest[16], MD5_CTX *context)
 
 //static unsigned char mMD5[32];
 
-int check_md5(u32 src, int binSize, unsigned char* md5)
+int check_md5(u32 src, unsigned int binSize, unsigned char* md5)
 {
-	unsigned char d[4];
-	int mRead = 0, result = 0, i;
-	unsigned char calMD5[32];
+	int result = 0, i;
+	unsigned char d[4], calMD5[LEN_MD5];
+	unsigned int mRead = 0;
 	
 	MD5_CTX context;  
 	
@@ -229,13 +229,12 @@ int check_md5(u32 src, int binSize, unsigned char* md5)
 		}
 		else
 		{
-			MD5Update(&context, d, mRead-binSize); 
+			MD5Update(&context, d, binSize+4-mRead); 
 		}
-	}
+	} 
 	
 	MD5Final((unsigned char *)calMD5, &context); 
 
-	calMD5[LEN_MD5] = '\0';
 	printf("%s:[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
 			calMD5[0], calMD5[1],calMD5[2], calMD5[3],calMD5[4], calMD5[5],calMD5[6], calMD5[7],
 			calMD5[8], calMD5[9],calMD5[10], calMD5[11],calMD5[12], calMD5[13],calMD5[14], calMD5[15]); 
@@ -248,7 +247,18 @@ int check_md5(u32 src, int binSize, unsigned char* md5)
 	return result; 
 }
 
-
+void cal_md5(uint8_t *data, int len, char* md5)
+{
+	MD5_CTX context;
+	
+	MD5Init(&context);
+	MD5Update(&context, data, len);
+	MD5Final((unsigned char*)md5, &context);
+	
+	printf("%s:len=%d, [%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
+			len, md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],
+			md5[8], md5[9],md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]);	
+}
 
 
 

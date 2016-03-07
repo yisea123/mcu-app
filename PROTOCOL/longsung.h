@@ -9,11 +9,14 @@
 #include "ioctr.h"
 #include "delay.h"
 #include "list.h"
+#include "cjson.h"
 #include <string.h>
 
 #define ONE_SECOND		110000
 #define MAX_TOKENS		20
-#define MAX_LINE_LEN		512
+
+/*可使用的JSON长度小于二分之一MAX_LINE_LEN*/
+#define MAX_LINE_LEN		1024
 
 /******************************/
 #define PPP_DISCONNECT 		0
@@ -37,6 +40,8 @@
 #define ATMIPCLOSE			13
 #define ATCMGR					14
 #define ATCMGD					15
+#define ATMIPHEX				16
+#define ATMQTT					17
 /******************************/
 
 typedef struct {
@@ -106,7 +111,31 @@ typedef struct {
 	int para;
 	long long interval;
 	struct list_head list;
+	
+	//int mqttdataindex;
+	unsigned char *mqttdata;
+	int mqttdatalen;
 }AtCommand;
+
+typedef struct __attribute((__packed__)) {
+	uint8_t ver;
+	uint8_t compress_encrypt;
+	uint8_t frametype;
+	uint8_t servicetype;
+	uint8_t frameinfo;
+	uint8_t sessionid;
+	uint8_t frameid;
+	uint8_t tmp;
+	uint32_t datasize;
+	uint8_t revert[4];
+}FrameHead;
+
+typedef struct __attribute((__packed__)) {
+  uint8_t rpc;
+	uint8_t rpcmethrod[3];
+	uint32_t rpcid;
+	uint32_t jsonlen;
+}DataHead;
 
 typedef struct {
 	char is_inited;
@@ -138,6 +167,8 @@ typedef struct {
 	
 	int at_count;
 	char at_sending[64];
+	FrameHead fh;
+	DataHead dh;
 	struct list_head at_head;
 }DevStatus;
 

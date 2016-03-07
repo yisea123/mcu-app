@@ -3,7 +3,7 @@
 ..\obj\stmflash.o: ..\SYSTEM\sys\sys.h
 ..\obj\stmflash.o: ..\USER\stm32f4xx.h
 ..\obj\stmflash.o: ..\CORE\core_cm4.h
-..\obj\stmflash.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\stmflash.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\stmflash.o: ..\CORE\core_cmInstr.h
 ..\obj\stmflash.o: ..\CORE\core_cmFunc.h
 ..\obj\stmflash.o: ..\CORE\core_cm4_simd.h
@@ -38,4 +38,4 @@
 ..\obj\stmflash.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\stmflash.o: ..\SYSTEM\delay\delay.h
 ..\obj\stmflash.o: ..\SYSTEM\usart\usart.h
-..\obj\stmflash.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\stmflash.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h

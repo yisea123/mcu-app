@@ -3,12 +3,12 @@
 ..\obj\kfifo.o: ..\PROTOCOL\uart_command.h
 ..\obj\kfifo.o: ..\KFIFO\kfifo.h
 ..\obj\kfifo.o: ..\SYSTEM\usart\usart.h
-..\obj\kfifo.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\kfifo.o: ..\USER\stm32f4xx_conf.h
 ..\obj\kfifo.o: ..\FWLIB\inc\stm32f4xx_adc.h
 ..\obj\kfifo.o: ..\USER\stm32f4xx.h
 ..\obj\kfifo.o: ..\CORE\core_cm4.h
-..\obj\kfifo.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\kfifo.o: ..\CORE\core_cmInstr.h
 ..\obj\kfifo.o: ..\CORE\core_cmFunc.h
 ..\obj\kfifo.o: ..\CORE\core_cm4_simd.h
@@ -57,7 +57,7 @@
 ..\obj\kfifo.o: ..\PROTOCOL\longsung.h
 ..\obj\kfifo.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\kfifo.o: ..\HARDWARE\IOCTR\ioctr.h
-..\obj\kfifo.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\kfifo.o: ..\USMART\usmart.h
 ..\obj\kfifo.o: ..\USMART\usmart_str.h
 ..\obj\kfifo.o: ..\HARDWARE\STMFLASH\stmflash.h

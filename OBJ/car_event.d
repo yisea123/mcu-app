@@ -4,7 +4,7 @@
 ..\obj\car_event.o: ..\MALLOC\malloc.h
 ..\obj\car_event.o: ..\USER\stm32f4xx.h
 ..\obj\car_event.o: ..\CORE\core_cm4.h
-..\obj\car_event.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
 ..\obj\car_event.o: ..\CORE\core_cmInstr.h
 ..\obj\car_event.o: ..\CORE\core_cmFunc.h
 ..\obj\car_event.o: ..\CORE\core_cm4_simd.h
@@ -38,7 +38,7 @@
 ..\obj\car_event.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\car_event.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\car_event.o: ..\SYSTEM\usart\usart.h
-..\obj\car_event.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\car_event.o: ..\SYSTEM\sys\sys.h
 ..\obj\car_event.o: ..\KFIFO\kfifo.h
 ..\obj\car_event.o: ..\PROTOCOL\uart_command.h
@@ -58,7 +58,7 @@
 ..\obj\car_event.o: ..\PROTOCOL\longsung.h
 ..\obj\car_event.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\car_event.o: ..\HARDWARE\IOCTR\ioctr.h
-..\obj\car_event.o: f:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\car_event.o: ..\USMART\usmart.h
 ..\obj\car_event.o: ..\USMART\usmart_str.h
 ..\obj\car_event.o: ..\HARDWARE\STMFLASH\stmflash.h

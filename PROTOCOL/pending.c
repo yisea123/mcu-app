@@ -184,7 +184,7 @@ void handle_pending_work(void)
 		&& mAndroidPower ==0 ) 
 	{
 		char tag = 0;
-		u32 *pData = (u32 *)md5;
+		u32 *pData = (u32 *)tmodem_md5;
 		unsigned char pRead[16];
 		
 		unsigned int preFlashdestination, mUpdate, tmp;
@@ -285,8 +285,8 @@ void handle_pending_work(void)
 			mMcuJumpAppPending = 0;
 			printf("%s:SCU_RESET_Force()\r\n", __func__);
 			report_debug_to_android();	
-			//SCU_RESET_Force();
-			enter_loop_module();
+			SCU_RESET_Force();
+			//enter_loop_module();
 			/* 重启之前修改标志跟rom大小 ！*/
 		}
 	}	

@@ -107,6 +107,8 @@ void report_mesg_to_t8()
 }
 */
 
+uint32_t rand_count = 0;
+
 void test_func(void)
 {
 	u8 t;
@@ -131,16 +133,18 @@ void test_func(void)
 	}	
 		
 	//aa bb 0x1 0x0f check1 check2
+	rand_count++;
+	
 	if(num == 1)
 	{ 
 		int rand;
 		num = 0;
 		//printf("%s: request update rom.bin.\r\n", __func__);
 		printf("%s:-\r\n", __func__);
-		rand = numMcuReportToAndroid%12;
-		mPACKETSIZE = 40+rand*8;		
-		if(mPACKETSIZE > 128) mPACKETSIZE=128;
+		rand = rand_count%5;
+		mPACKETSIZE = 64+rand*16;		
 		printf("rand=%d, mPACKETSIZE=%d\r\n", rand, mPACKETSIZE);
+		
 		report_tmodem_packet0(UPDATE, mPACKETSIZE);
 		report_tmodem_packet0(ACK, 0);
 		report_tmodem_packet(CRC16);
