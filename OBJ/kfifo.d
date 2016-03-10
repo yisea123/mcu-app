@@ -54,10 +54,17 @@
 ..\obj\kfifo.o: ..\PROTOCOL\timer.h
 ..\obj\kfifo.o: ..\PROTOCOL\uart_command.h
 ..\obj\kfifo.o: ..\PROTOCOL\tmodem.h
+..\obj\kfifo.o: ..\PROTOCOL\aes.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\kfifo.o: ..\PROTOCOL\longsung.h
 ..\obj\kfifo.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\kfifo.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\kfifo.o: ..\PROTOCOL\cjson.h
 ..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\kfifo.o: ..\USMART\usmart.h
 ..\obj\kfifo.o: ..\USMART\usmart_str.h
 ..\obj\kfifo.o: ..\HARDWARE\STMFLASH\stmflash.h

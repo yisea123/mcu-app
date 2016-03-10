@@ -54,10 +54,17 @@
 ..\obj\pending.o: ..\HARDWARE\IOCTR\ioctr.h
 ..\obj\pending.o: ..\PROTOCOL\timer.h
 ..\obj\pending.o: ..\PROTOCOL\tmodem.h
+..\obj\pending.o: ..\PROTOCOL\aes.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\pending.o: ..\PROTOCOL\longsung.h
 ..\obj\pending.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\pending.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\pending.o: ..\PROTOCOL\cjson.h
 ..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\pending.o: ..\USMART\usmart.h
 ..\obj\pending.o: ..\USMART\usmart_str.h
 ..\obj\pending.o: ..\HARDWARE\STMFLASH\stmflash.h

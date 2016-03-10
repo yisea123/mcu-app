@@ -55,10 +55,17 @@
 ..\obj\bootloader_update.o: ..\PROTOCOL\timer.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\uart_command.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\tmodem.h
+..\obj\bootloader_update.o: ..\PROTOCOL\aes.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\longsung.h
 ..\obj\bootloader_update.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\bootloader_update.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\bootloader_update.o: ..\PROTOCOL\cjson.h
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\bootloader_update.o: ..\USMART\usmart.h
 ..\obj\bootloader_update.o: ..\USMART\usmart_str.h
 ..\obj\bootloader_update.o: ..\HARDWARE\STMFLASH\stmflash.h

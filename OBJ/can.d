@@ -53,10 +53,17 @@
 ..\obj\can.o: ..\HARDWARE\IOCTR\ioctr.h
 ..\obj\can.o: ..\PROTOCOL\timer.h
 ..\obj\can.o: ..\PROTOCOL\tmodem.h
+..\obj\can.o: ..\PROTOCOL\aes.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\can.o: ..\PROTOCOL\longsung.h
 ..\obj\can.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\can.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\can.o: ..\PROTOCOL\cjson.h
 ..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\can.o: ..\USMART\usmart.h
 ..\obj\can.o: ..\USMART\usmart_str.h
 ..\obj\can.o: ..\HARDWARE\STMFLASH\stmflash.h

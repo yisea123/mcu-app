@@ -56,7 +56,14 @@
 ..\obj\timer.o: ..\USMART\usmart.h
 ..\obj\timer.o: ..\USMART\usmart_str.h
 ..\obj\timer.o: ..\PROTOCOL\tmodem.h
+..\obj\timer.o: ..\PROTOCOL\aes.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\timer.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\timer.o: ..\HARDWARE\STMFLASH\stmflash.h
 ..\obj\timer.o: ..\PROTOCOL\longsung.h
+..\obj\timer.o: ..\PROTOCOL\cjson.h
 ..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h

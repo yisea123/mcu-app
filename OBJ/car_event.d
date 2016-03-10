@@ -55,10 +55,17 @@
 ..\obj\car_event.o: ..\PROTOCOL\timer.h
 ..\obj\car_event.o: ..\PROTOCOL\uart_command.h
 ..\obj\car_event.o: ..\PROTOCOL\tmodem.h
+..\obj\car_event.o: ..\PROTOCOL\aes.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\car_event.o: ..\PROTOCOL\longsung.h
 ..\obj\car_event.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\car_event.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\car_event.o: ..\PROTOCOL\cjson.h
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\car_event.o: ..\USMART\usmart.h
 ..\obj\car_event.o: ..\USMART\usmart_str.h
 ..\obj\car_event.o: ..\HARDWARE\STMFLASH\stmflash.h

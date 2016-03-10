@@ -54,10 +54,17 @@
 ..\obj\main.o: ..\PROTOCOL\timer.h
 ..\obj\main.o: ..\PROTOCOL\uart_command.h
 ..\obj\main.o: ..\PROTOCOL\tmodem.h
+..\obj\main.o: ..\PROTOCOL\aes.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\main.o: ..\PROTOCOL\longsung.h
 ..\obj\main.o: ..\HARDWARE\IWDG\iwdg.h
 ..\obj\main.o: ..\HARDWARE\IOCTR\ioctr.h
+..\obj\main.o: ..\PROTOCOL\cjson.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
+..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\main.o: ..\USMART\usmart.h
 ..\obj\main.o: ..\USMART\usmart_str.h
 ..\obj\main.o: ..\HARDWARE\STMFLASH\stmflash.h

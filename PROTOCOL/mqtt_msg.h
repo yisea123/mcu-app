@@ -34,18 +34,22 @@
 #ifndef MQTT_MSG_H_
 #define MQTT_MSG_H_
 
-#define MQTT_BUFF_DECODE        0
-#define MQTT_BUFF_ENCODE        1
+#define MQTT_BUFF_DECODE        	0
+#define MQTT_BUFF_ENCODE       	 	1
 
-#define MQTT_OUTDATA_PINGRESP   9
-#define MQTT_OUTDATA_PUBCOMP    8
-#define MQTT_OUTDATA_PUBREL     7
-#define MQTT_OUTDATA_PUBREC     6
-#define MQTT_OUTDATA_PUBBACK    5
-#define MQTT_OUTDATA_PUBLISH    4
-#define MQTT_OUTDATA_PINGREQ    3
-#define MQTT_OUTDATA_SUBSCRIBE  2
-#define MQTT_OUTDATA_CONNECT    1
+#define MQTT_OUTDATA_CONNECT    	1
+#define MQTT_OUTDATA_PUBLISH    	3
+#define MQTT_OUTDATA_PUBACK     	4
+#define MQTT_OUTDATA_PUBREC     	5
+#define MQTT_OUTDATA_PUBREL     	6
+#define MQTT_OUTDATA_PUBCOMP    	7
+#define MQTT_OUTDATA_SUBSCRIBE  	8
+#define MQTT_OUTDATA_SUBACK     	9
+#define MQTT_OUTDATA_UNSUBSCRIBE 	10
+#define MQTT_OUTDATA_PINGREQ    	12
+#define MQTT_OUTDATA_PINGRESP   	13
+#define MQTT_OUTDATA_DISCONNECT 	14
+#define MQTT_OUTDATA_SUBSCRIBE_TEST  110
 
 enum mqtt_dev_statu
 {
@@ -141,7 +145,8 @@ typedef struct mqtt_event_data_t
 #define MQTT_EVENT_TYPE_EXITED                7
 #define MQTT_EVENT_TYPE_PUBLISH_CONTINUATION  8
 
-#define OUT_DATA_LEN_MAX        20
+#define OUT_DATA_LEN_MAX        40
+
 typedef struct mqtt_state_t
 {
   uint16_t port;
@@ -167,11 +172,15 @@ typedef struct {
 	enum mqtt_dev_statu connect_status;
   uint8_t in_buffer[512];
   uint8_t out_buffer[512];	
-	mqtt_state_t mqtt_state[1];	
+	mqtt_state_t mqtt_state[1];
+	mqtt_connect_info_t connect_info;
+	uint32_t pub_in_num;
+	uint32_t pub_out_num;
 }mqtt_dev_status;
 
 static int mqtt_get_type(uint8_t* buffer)   { return (buffer[0] & 0xf0) >> 4; }
 static int mqtt_get_dup(uint8_t* buffer)    { return (buffer[0] & 0x08) >> 3; }
+static int mqtt_set_dup(uint8_t* buffer)    { return (buffer[0] | 0x08); }
 static int mqtt_get_qos(uint8_t* buffer)    { return (buffer[0] & 0x06) >> 1; }
 static int mqtt_get_retain(uint8_t* buffer) { return (buffer[0] & 0x01); }
 

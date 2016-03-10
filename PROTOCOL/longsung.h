@@ -110,11 +110,16 @@ typedef struct {
 	char index;
 	int para;
 	long long interval;
-	struct list_head list;
 	
-	//int mqttdataindex;
+	int mqtype;
+	uint16_t msgid;
+	char mqttack;
 	unsigned char *mqttdata;
 	int mqttdatalen;
+	char try;
+	
+	char clean;
+	struct list_head list;	
 }AtCommand;
 
 typedef struct __attribute((__packed__)) {
@@ -169,7 +174,10 @@ typedef struct {
 	char at_sending[64];
 	FrameHead fh;
 	DataHead dh;
+	AtCommand* atcmd;
 	struct list_head at_head;
+	struct list_head mqtt_head;
+	long long close_tcp_interval;
 }DevStatus;
 
 extern void longsung_init(void);

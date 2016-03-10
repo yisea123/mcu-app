@@ -422,11 +422,6 @@
               <FileType>1</FileType>
               <FilePath>.\system_stm32f4xx.c</FilePath>
             </File>
-            <File>
-              <FileName>pending.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\pending.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
@@ -621,6 +616,11 @@
               <FileName>longsung.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\PROTOCOL\longsung.c</FilePath>
+            </File>
+            <File>
+              <FileName>pending.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\pending.c</FilePath>
             </File>
           </Files>
         </Group>

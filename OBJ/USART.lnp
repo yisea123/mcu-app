@@ -35,11 +35,15 @@
 "..\obj\timer.o"
 "..\obj\longsung.o"
 "..\obj\pending.o"
+"..\obj\aes.o"
+"..\obj\mqtt_msg.o"
+"..\obj\cjson.o"
 "..\obj\usmart.o"
 "..\obj\usmart_config.o"
 "..\obj\usmart_str.o"
 "..\obj\list.o"
 "..\obj\test.o"
+"..\obj\jsontest.o"
 --strict --scatter "..\OBJ\USART.sct"
 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
