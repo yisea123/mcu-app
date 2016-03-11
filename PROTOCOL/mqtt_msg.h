@@ -170,7 +170,8 @@ typedef struct mqtt_state_t
 
 typedef struct {
 	enum mqtt_dev_statu connect_status;
-  uint8_t in_buffer[512];
+	/*由于4G模块的原因，最多支持1500个字节，也就750个hex!*/
+  uint8_t in_buffer[750];
   uint8_t out_buffer[512];	
 	mqtt_state_t mqtt_state[1];
 	mqtt_connect_info_t connect_info;

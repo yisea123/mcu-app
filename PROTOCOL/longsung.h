@@ -15,8 +15,9 @@
 #define ONE_SECOND		110000
 #define MAX_TOKENS		20
 
-/*可使用的JSON长度小于二分之一MAX_LINE_LEN*/
-#define MAX_LINE_LEN		1024
+/*可使用的JSON长度小于二分之一MAX_LINE_LEN, 
+由于4G模块每包最多1500， hex就750个！*/
+#define MAX_LINE_LEN		1555//1024 1500
 
 /******************************/
 #define PPP_DISCONNECT 		0
@@ -178,6 +179,8 @@ typedef struct {
 	struct list_head at_head;
 	struct list_head mqtt_head;
 	long long close_tcp_interval;
+	char mqtt_alive;
+	long long clean_interval;
 }DevStatus;
 
 extern void longsung_init(void);

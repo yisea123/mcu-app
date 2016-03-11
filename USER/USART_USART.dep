@@ -54,7 +54,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -233,7 +233,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -341,7 +341,7 @@ I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
@@ -554,7 +554,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1077,7 +1077,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1143,7 +1143,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1209,7 +1209,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1275,7 +1275,7 @@ I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
 I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1345,7 +1345,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1451,7 +1451,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1521,15 +1521,15 @@ I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-F (..\PROTOCOL\longsung.c)(0x56DD644E)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+F (..\PROTOCOL\longsung.c)(0x56E16E12)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -1594,7 +1594,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-I (..\PROTOCOL\mqtt_msg.h)(0x56DD5CE9)
+I (..\PROTOCOL\mqtt_msg.h)(0x56E13883)
 I (..\PROTOCOL\md5.h)(0x56DD1068)
 F (..\PROTOCOL\pending.c)(0x56D7F271)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\pending.o --omf_browse ..\obj\pending.crf --depend ..\obj\pending.d)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1651,7 +1651,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1703,7 +1703,7 @@ I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 F (..\PROTOCOL\mqtt_msg.c)(0x56DCF5B6)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\mqtt_msg.o --omf_browse ..\obj\mqtt_msg.crf --depend ..\obj\mqtt_msg.d)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-I (..\PROTOCOL\mqtt_msg.h)(0x56DD5CE9)
+I (..\PROTOCOL\mqtt_msg.h)(0x56E13883)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
 F (..\PROTOCOL\cJSON.c)(0x56D7FA09)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\cjson.o --omf_browse ..\obj\cjson.crf --depend ..\obj\cjson.d)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
@@ -1924,7 +1924,7 @@ I (..\PROTOCOL\timer.h)(0x56C52FFB)
 I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56DCE340)
+I (..\PROTOCOL\longsung.h)(0x56E0EFB8)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)

@@ -117,7 +117,7 @@ void TIM2_IRQHandler(void)
 		}
 		
 		/*40m*/
-		if(++lgperiod > 400) {//400
+		if(++lgperiod > 400) {//400 //10其中一个MCU的时钟比较慢！
 			lgperiod = 0;
 			notify_longsung_period();
 		}
