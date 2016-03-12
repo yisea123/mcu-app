@@ -37,6 +37,7 @@
 #define MQTT_BUFF_DECODE        	0
 #define MQTT_BUFF_ENCODE       	 	1
 
+/**********************************
 #define MQTT_OUTDATA_CONNECT    	1
 #define MQTT_OUTDATA_PUBLISH    	3
 #define MQTT_OUTDATA_PUBACK     	4
@@ -50,6 +51,7 @@
 #define MQTT_OUTDATA_PINGRESP   	13
 #define MQTT_OUTDATA_DISCONNECT 	14
 #define MQTT_OUTDATA_SUBSCRIBE_TEST  110
+**********************************/
 
 enum mqtt_dev_statu
 {
@@ -171,7 +173,11 @@ typedef struct mqtt_state_t
 typedef struct {
 	enum mqtt_dev_statu connect_status;
 	/*由于4G模块的原因，最多支持1500个字节，也就750个hex!*/
-  uint8_t in_buffer[750];
+  uint8_t in_buffer[1500];//750 1024
+	int in_pos;
+	int in_waitting;
+  char fixhead;
+	/*是否为mqtt协议头标志！*/	
   uint8_t out_buffer[512];	
 	mqtt_state_t mqtt_state[1];
 	mqtt_connect_info_t connect_info;
