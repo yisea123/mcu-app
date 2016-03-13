@@ -507,7 +507,26 @@ static int mqtt_check_json_md5(mqtt_state_t* state, char *data, int len, char *m
 }
 
 static int mqtt_publish(mqtt_state_t *state, const char* topic, char* data, int qos, int retain);
+
+void mqtt_publish_test(int qos, char *topic, char *payload)
+{
+	mqtt_state_t* state = mqtt_dev->mqtt_state;
 	
+	printf("usmart: mqtt publish test. topic=%s, payload=%s, qos=%d\r\n", topic, payload, qos);
+	
+	if(qos > 2 || qos <0)
+	{
+		printf("%s: qos error!!!", __func__);
+		return;
+	}
+	
+	memset(state->jsonbuff, '\0', sizeof(state->jsonbuff));
+	memcpy(state->jsonbuff, payload, strlen(payload));
+	//sprintf(state->jsonbuff, "{\"addr\": \"/xp/publish\",\"format\":{\"type\":\"rect\",\"publish_num\":%d}}", mqtt_dev->pub_in_num);
+	
+	mqtt_publish(state, topic, state->jsonbuff, qos, 0);		
+}
+
 static void deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 {
 	char topic[128], *payload = NULL;
@@ -521,7 +540,7 @@ static void deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
   event_data.data = mqtt_get_publish_data(message, &event_data.data_length);
 	
 	if(event_data.topic_length > sizeof(topic) || event_data.data_length <= 0
-		 || (event_data.data_length + event_data.topic_length) > 1480)
+		 || (event_data.data_length + event_data.topic_length) > (1500-6)/*fix head+topic.len+msgid*/)
 	{
 		waitting_len = 0;
 		
@@ -878,7 +897,7 @@ static void parse_mqtt_packet1(mqtt_state_t *state, int nbytes)
 	{
 		case MQTT_MSG_TYPE_CONNACK:
 			
-			if(state->in_buffer[nbytes-1] == 0x00) 
+			if(state->in_buffer[/*nbytes-1*/3] == 0x00) 
 			{
 				mqtt_dev->connect_status = MQTT_DEV_STATUS_CONNECT;
 				mqtt_set_mesg_ack(MQTT_MSG_TYPE_CONNECT, 0);
@@ -924,6 +943,7 @@ static void parse_mqtt_packet1(mqtt_state_t *state, int nbytes)
 			else if(msg_qos == 2) 
 			{
 				state->outbound_message = mqtt_msg_pubrec(&state->mqtt_connection, msg_id);
+				/* recv process: */
 				make_command_to_list(ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREC);
 			}
 			
@@ -951,24 +971,26 @@ static void parse_mqtt_packet1(mqtt_state_t *state, int nbytes)
 			break;
 			
 		case MQTT_MSG_TYPE_PUBREC:
-			
+			/*send process: publish received = 4 bytes*/
 			state->outbound_message = mqtt_msg_pubrel(&state->mqtt_connection, msg_id);
+		  mqtt_set_mesg_ack(MQTT_MSG_TYPE_PUBLISH, msg_id);
 			make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PUBREL);
 
 			break;
 		
 		case MQTT_MSG_TYPE_PUBREL:
-
+			/*recv process: publish release = 4 bytes*/
 			state->outbound_message = mqtt_msg_pubcomp(&state->mqtt_connection, msg_id);
+		  mqtt_set_mesg_ack(MQTT_MSG_TYPE_PUBREC, msg_id);
 			make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PUBCOMP);
-		
+
 			break;
 		
 		case MQTT_MSG_TYPE_PUBCOMP:
-
+			/*send process: publish completed = 4 bytes*/
 			if(state->pending_msg_type == MQTT_MSG_TYPE_PUBLISH && state->pending_msg_id == msg_id)
 				complete_pending(state, MQTT_EVENT_TYPE_PUBLISHED, msg_id);
-			
+			mqtt_set_mesg_ack(MQTT_MSG_TYPE_PUBREL, msg_id);
 			break;
 			
 		case MQTT_MSG_TYPE_PINGREQ:
@@ -1007,7 +1029,7 @@ static uint8_t str_to_hex(char *src)
 }
 
 /*如果为mqtt消息头，此函数解析！*/
-void check_packet_by_fixhead(char *fixhead, uint8_t *read, int nbytes)
+void check_packet_from_fixhead(char *fixhead, uint8_t *read, int nbytes)
 {
 	int msg_len;
 	
@@ -1033,7 +1055,7 @@ void check_packet_by_fixhead(char *fixhead, uint8_t *read, int nbytes)
 		parse_mqtt_packet1(mqtt_dev->mqtt_state, msg_len);
 		memmove(read, read+msg_len, nbytes-msg_len);
 		*fixhead = 1;		
-		check_packet_by_fixhead(fixhead, read, nbytes-msg_len);
+		check_packet_from_fixhead(fixhead, read, nbytes-msg_len);
 	}
 	else if(msg_len <= sizeof(mqtt_dev->in_buffer))//msg_len > nbytes  1500 > 1300 > 750
 	{
@@ -1071,7 +1093,7 @@ void on_remote_command_callback1(RemoteTokenizer *tzer, Token* tok)
 	
 	if(mqtt_dev->fixhead)
 	{
-		check_packet_by_fixhead(&(mqtt_dev->fixhead), read, nbytes);
+		check_packet_from_fixhead(&(mqtt_dev->fixhead), read, nbytes);
 	}
 	else 
 	{
@@ -1095,7 +1117,7 @@ void on_remote_command_callback1(RemoteTokenizer *tzer, Token* tok)
 				mqtt_dev->fixhead = 1;
 				mqtt_dev->in_waitting = 0;
 				mqtt_dev->in_pos = 0;				
-				check_packet_by_fixhead(&(mqtt_dev->fixhead), read, nbytes-mqtt_dev->in_waitting);
+				check_packet_from_fixhead(&(mqtt_dev->fixhead), read, nbytes-mqtt_dev->in_waitting);
 			}
 			else if(mqtt_dev->in_waitting > nbytes)
 			{
@@ -1129,7 +1151,7 @@ void on_remote_command_callback1(RemoteTokenizer *tzer, Token* tok)
 				mqtt_dev->fixhead = 1;
 				memmove(read, read+(nbytes-len), len);
 				printf("%s: Drop some char in packet! len = %d, nbytes=%d\r\n", __func__, len, nbytes);
-				check_packet_by_fixhead(&(mqtt_dev->fixhead), read, mqtt_dev->in_waitting);
+				check_packet_from_fixhead(&(mqtt_dev->fixhead), read, mqtt_dev->in_waitting);
 			}
 		}
 		else if(mqtt_dev->in_waitting > 750)
@@ -1681,7 +1703,7 @@ static void init_mqtt_dev(mqtt_dev_status* dev)
 	dev->connect_info.password = NULL;//"zhou";// NULL
 	dev->connect_info.will_topic = "mcu";
 	dev->connect_info.will_message = "death";
-	dev->connect_info.keepalive = 400;
+	dev->connect_info.keepalive = 450;
 	dev->connect_info.will_qos = 1;
 	dev->connect_info.will_retain = 0;
 	dev->connect_info.clean_session = 1;
@@ -2068,7 +2090,7 @@ static void prepare_mqtt_packet(mqtt_state_t *state, AtCommand* cmd)
 		case MQTT_MSG_TYPE_SUBSCRIBE:
 		  state->pending_msg_type = MQTT_MSG_TYPE_SUBSCRIBE;
 			state->outbound_message = mqtt_msg_subscribe(&state->mqtt_connection, 
-                                                   "/system/sensor", 1, //此处的QOS关系收到PUBLISH消息的qos
+                                                   "/system/sensor", 2, //此处的QOS关系收到PUBLISH消息的qos
                                                    &state->pending_msg_id);
 			cmd->msgid = state->pending_msg_id;		
 			cmd->mqtype = MQTT_MSG_TYPE_SUBSCRIBE;
@@ -2079,6 +2101,7 @@ static void prepare_mqtt_packet(mqtt_state_t *state, AtCommand* cmd)
 			}		
 			break;
 	
+		/*需要记录msg_id的消息*/
 		case MQTT_MSG_TYPE_PUBLISH:
 		case MQTT_MSG_TYPE_PUBCOMP:
 		case MQTT_MSG_TYPE_PUBREL:
@@ -2169,7 +2192,7 @@ static void make_command_to_list(char index, long long interval, int para)
 				default: printf("%s: mqtt para error!\r\n", __func__); break;
 			}
 			
-			/*需要malloc的命令！*/
+			/*需要malloc的命令！需要保存msg_id的消息*/
 			if(para == MQTT_MSG_TYPE_PUBLISH || para == MQTT_MSG_TYPE_PUBCOMP || 
 					para == MQTT_MSG_TYPE_PUBREL || para == MQTT_MSG_TYPE_PUBREC || 
 					para == MQTT_MSG_TYPE_PUBACK) 
@@ -2249,6 +2272,7 @@ static void make_command_to_list(char index, long long interval, int para)
 
 static void mqtt_set_mesg_ack(int type, uint16_t msg_id)
 {
+	int del_done = 0;
 	AtCommand *cmd = NULL;
 	struct list_head *pos, *n;
 	
@@ -2267,15 +2291,16 @@ static void mqtt_set_mesg_ack(int type, uint16_t msg_id)
 		
 		if(cmd != NULL && cmd->mqtype == type && cmd->msgid == msg_id) 
 		{
+			del_done = 1;
 			cmd->mqttack = 1;
 			printf("%s:type=%d,msgid=0x%04x, [%s] is ACK, REMOVE it!\r\n", __func__, 
-								cmd->mqtype, cmd->msgid , mqtt_get_name(cmd->mqtype));
+								type, msg_id , mqtt_get_name(type));
 			//break; delete for add MQTT_MSG_TYPE_PINGREQ in mqtt_head!
 		}
-		else 
+		else if(del_done == 0)
 		{
 			printf("%s: set [%s] fail! [type=%d, msgid=%d]\r\n", __func__, 
-								mqtt_get_name(cmd->mqtype), type, msg_id);
+								mqtt_get_name(type), type, msg_id);
 		}
 	}		
 }
@@ -2367,7 +2392,9 @@ static void mqtt_list_cmd(void)
 			cmd->interval = ONE_SECOND/20;
 	
 			/*目前只有MQTT_OUTDATA_PUBLISH才需要检查 mqttdata*/
-			if(cmd->mqttdata == NULL && (cmd->mqtype==MQTT_MSG_TYPE_PUBLISH)) 
+			if(cmd->mqttdata == NULL && (cmd->mqtype==MQTT_MSG_TYPE_PUBLISH) &&
+					(cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREL) &&
+					(cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREC)) 
 			{
 				myfree(0, cmd);
 				printf("ERROR: [%s] mqttdata is NULL remote it from mqtt_head.\r\n", mqtt_get_name(cmd->mqtype));
@@ -2375,7 +2402,7 @@ static void mqtt_list_cmd(void)
 			}
 			
 			/*超过3次, 断开MQTT的连接*/
-			if(cmd->try++ > 3)
+			if(cmd->try++ > 2)
 			{
 				printf("ERROR: [%s try>=3], type=%d,id=0X%04X,len=%d,p=0x%p\r\n", mqtt_get_name(cmd->mqtype), 
 									cmd->mqtype, cmd->msgid, cmd->mqttdatalen, cmd->mqttdata);
@@ -2389,7 +2416,7 @@ static void mqtt_list_cmd(void)
 				continue;
 			}
 			
-			/*目前根据协议只有PUBLISH、SUBSCRIBE用得到，后续吸添加*/
+			/*目前根据协议只有PUBLISH、SUBSCRIBE用得到，后续添加*/
 			if(mqtt_get_qos(cmd->mqttdata) && (cmd->mqtype == MQTT_MSG_TYPE_PUBLISH ||
 						cmd->mqtype == MQTT_MSG_TYPE_SUBSCRIBE))
 					mqtt_set_dup(cmd->mqttdata);
@@ -2438,10 +2465,14 @@ static void at_list_cmd(void)
 			del_cmd_from_list(dev->atcmd, &dev->at_head);
 			
 			/*目前只有两个消息需要检查回复, 新加入MQTT_DEV_STATUS_CONNECT*/
-			if((dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBLISH ||
+			if(((dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBLISH && 
+						dev->atcmd->mqttdata!=NULL && 
+						mqtt_get_qos(dev->atcmd->mqttdata))||
 						dev->atcmd->mqtype == MQTT_MSG_TYPE_SUBSCRIBE ||
 						dev->atcmd->mqtype == MQTT_MSG_TYPE_CONNECT ||
-						dev->atcmd->mqtype == MQTT_MSG_TYPE_PINGREQ) && 
+						dev->atcmd->mqtype == MQTT_MSG_TYPE_PINGREQ ||
+						dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREC ||
+						dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREL) && 
 						(dev->atcmd->mqttack == 0)) 
 			{
 				/*wait for 5 second*/
@@ -2537,7 +2568,7 @@ static void mqtt_send_connect_or_tick(void)
 				make_command_to_list(ATMIPPUSH, ONE_SECOND/20, -1);	
 			}		
 			/*发送心跳包给服务 40s每个tick*/				
-			if( dev->heartbeat_tick >= 7) 
+			if( dev->heartbeat_tick >= 5) 
 			{//触发条件
 				if(mqtt_dev->connect_status != MQTT_DEV_STATUS_NULL
 						&& mqtt_dev->connect_status != MQTT_DEV_STATUS_CONNECTING) 

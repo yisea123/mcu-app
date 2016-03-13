@@ -26,6 +26,7 @@ extern void updateb(void);
 extern void report_mcu_status(void);
 extern void enable_debug_tx(uint32_t num);
 extern void at(char *at);
+extern void mqtt_publish_test(int qos, char *topic, char *payload);
 
 //函数名列表初始化(用户自己添加)
 //用户直接在这里输入要执行的函数名及其查找串
@@ -60,7 +61,8 @@ struct _m_usmart_nametab usmart_nametab[]=
  	(void*)RTC_Set_Date,"u8 RTC_Set_Date(u8 year,u8 month,u8 date,u8 week)",		   			  	    
  	(void*)RTC_Set_AlarmA,"void RTC_Set_AlarmA(u8 week,u8 hour,u8 min,u8 sec)",		   			  	    
  	(void*)RTC_Set_WakeUp,"void RTC_Set_WakeUp(u8 wksel,u16 cnt)",		
-	(void*)at,"void at(char *at)",			
+	(void*)at,"void at(char *at)",
+	(void*)mqtt_publish_test,"void mqtt_publish_test(int qos, char* topic, char*payload)", 
 };						  
 ///////////////////////////////////END///////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////
