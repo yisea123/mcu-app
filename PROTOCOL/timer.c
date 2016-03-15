@@ -98,7 +98,7 @@ periodicNum全局变量，这个变量会每100MS自加加一次。
 
 void TIM2_IRQHandler(void)
 { 
-	static int lgperiod = 0;
+	static int lgperiod = 0, countsecond = 0;
 	
 	if(TIM_GetITStatus(TIM2,TIM_IT_Update)==SET)//溢出中断
 	{
@@ -120,6 +120,10 @@ void TIM2_IRQHandler(void)
 		if(++lgperiod > 400) {//400 //10其中一个MCU的时钟比较慢！
 			lgperiod = 0;
 			notify_longsung_period();
+		}
+		if(++countsecond > 10) {
+			countsecond = 0;
+			notify_longsung_second();
 		}
 		
 		TIM_SetCounter(TIM2,0);		//清空定时器的CNT

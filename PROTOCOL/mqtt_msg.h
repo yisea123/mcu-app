@@ -167,7 +167,7 @@ typedef struct mqtt_state_t
   int pending_msg_type;
 	int mqtt_flags;
 	unsigned char *outdata[OUT_DATA_LEN_MAX];
-	char jsonbuff[512];
+	char jsonbuff[750];
 } mqtt_state_t;
 
 typedef struct {
@@ -177,12 +177,17 @@ typedef struct {
 	int in_pos;
 	int in_waitting;
   char fixhead;
+	char parse_packet_flag;
 	/*是否为mqtt协议头标志！*/	
-  uint8_t out_buffer[512];	
+  uint8_t out_buffer[1500];	
 	mqtt_state_t mqtt_state[1];
 	mqtt_connect_info_t connect_info;
+	char subscribe_topic[128];
 	uint32_t pub_in_num;
 	uint32_t pub_out_num;
+	uint32_t reset_count;
+	long long recv_bytes;
+	char reboot;
 }mqtt_dev_status;
 
 static int mqtt_get_type(uint8_t* buffer)   { return (buffer[0] & 0xf0) >> 4; }
@@ -212,3 +217,92 @@ mqtt_message_t* mqtt_msg_disconnect(mqtt_connection_t* connection);
 extern void mqtt_init(mqtt_state_t* state, uint8_t* in_buffer, int 
 	in_buffer_length, uint8_t* out_buffer, int out_buffer_length);
 #endif
+
+/*
+MQTT_MSG_TYPE_SUSCRIBE
+AT+MIPSEND=1,"821a000100152f73797374656d2f6c69622f68772f73656e736f7201"
+
+fixed header:
+82 1a
+
+variable header:
+0001 //msg_id  在SUBACK中需要比较
+
+payload:
+0015 // "/system/lib/hw/sensor".len
+2f73797374656d2f6c69622f68772f73656e736f72 //"/system/lib/hw/sensor"
+01 //qos
+
+... 可重复多个topic的信息
+...
+...
+
+***********************************************************************
+MQTT_MSG_TYPE_SUBACK
++MIPRTCP=1,5,9003000101
+--mqtt packet:
+90,03,00,01,01,
+message_length=5
+msg_type=9, msg_qos=0, msg_id=0x01
+------->MQTT_MSG_TYPE_SUBACK state->pending_msg_id=0X0001, msg_id=0X0001
+complete_pending: type=3
+
+fixed header:
+90,03,
+variable header:
+00,01, //msg_id
+01, //qos
+***********************************************************************
+
+MQTT_MSG_TYPE_CONNECT
+fixed header:
+10 26 
+variable header:
+00 06 
+4d5149736470 //MQIsdp
+03 //version
+16 //0001,0110
+012c //300
+000c //yangjianzhou.len = 12
+79616e676a69616e7a686f75 //"yangjianzhou"
+0003 "mcu".len
+6d6375 "mcu"
+0005 "death".len
+6465617468" "death"
+
+***********************************************************************
+"321c
+0006
+73656e736f72
+0002
+4d43552046524f4d205849414f2050454e47"
+
+MQTT_MSG_TYPE_PUBLISH
+fixed header:
+32,39,
+variable header:
+00,15,  // "/system/lib/hw/sensor".len=21
+2F,73,79,73,74,65,6D,2F,6C,69,62,2F,68,77,2F,73,65,6E,73,6F,72, /system/lib/hw/sensor
+00,17, //MSG_ID 不关注此ID的值，把它返回给server
+payload:
+31,32,33,34,35,61,62,63,64,65,00,00,00,00,00,00, //"12345abcef******################"
+8D,C5,46,5E,6F,81,9F,03,25,59,8C,BE,1C,7B,45,8F,
+
+***********************************************************************
+MQTT_MSG_TYPE_PUBACK
+fixed header:
+40,02,
+variable header:
+00,04, //msg_id  需比较此ID，是否为发出去的消息的ID一致
+
+***********************************************************************
+MQTT_MSG_TYPE_CONNACK
+fixed header:
+2002
+variable header:
+0000 要比较第四个字节的值，从而得到连接结果。
+***********************************************************************
+*/	
+
+
+

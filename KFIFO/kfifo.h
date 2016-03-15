@@ -25,7 +25,7 @@ enum {
 //2048
 #define CAN_KFIFO_LEN 2048
 //1024
-#define UART_4G_KFIFO_LEN 2048
+#define UART_4G_KFIFO_LEN 2048*2
 //256
 #define CMD_LEN 64
 #define is_power_of_2(x) ((x) != 0 && (((x) & ((x) - 1)) == 0))

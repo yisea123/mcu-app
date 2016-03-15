@@ -42,7 +42,8 @@
 #define ATCMGR					14
 #define ATCMGD					15
 #define ATMIPHEX				16
-#define ATMQTT					17
+#define ATRESET         17
+#define ATMQTT					18
 /******************************/
 
 typedef struct {
@@ -55,7 +56,7 @@ typedef struct {
 	Token tokens[MAX_TOKENS];
 }RemoteTokenizer;
 
-typedef void (* command_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* tcp_data_callback)(RemoteTokenizer *tzer, Token* tok);
 
 typedef void (* connect_err_callback)(RemoteTokenizer *tzer);
 typedef void (* connect_success_callback)(RemoteTokenizer *tzer, Token* tok);
@@ -86,7 +87,7 @@ typedef struct {
 	connect_err_callback on_connect_fail;
 	connect_success_callback on_connect_success;
 	disconnect_callback on_disconnect;
-	command_callback on_command;
+	tcp_data_callback on_tcp_data;
 	
 	signal_strength_callback on_signal_strength;
 	
@@ -111,6 +112,8 @@ typedef struct {
 	char index;
 	int para;
 	long long interval;
+	
+	char atack;
 	
 	int mqtype;
 	uint16_t msgid;
@@ -152,6 +155,7 @@ typedef struct {
 	
 	int singal[2];
 	
+	char tcp_connect;
 	char ppp_status;
 	char socket_close_flag;
 	int socket_open[4];
@@ -178,9 +182,13 @@ typedef struct {
 	AtCommand* atcmd;
 	struct list_head at_head;
 	struct list_head mqtt_head;
+	struct list_head atcmd_head;
 	long long close_tcp_interval;
 	char mqtt_alive;
 	long long clean_interval;
+	uint32_t malloc_count;
+	uint32_t free_count;
+	long long sys_time;
 }DevStatus;
 
 extern void longsung_init(void);
@@ -188,6 +196,7 @@ extern void handle_longsung_uart_msg(void);
 extern int str2int(const char* p, const char* end);
 extern void notify_longsung_period(void);
 extern void handle_longsung_setting(void);
+extern void notify_longsung_second(void);
 extern DevStatus dev[1];
 #endif
 
