@@ -147,7 +147,7 @@ typedef struct mqtt_event_data_t
 #define MQTT_EVENT_TYPE_EXITED                7
 #define MQTT_EVENT_TYPE_PUBLISH_CONTINUATION  8
 
-#define OUT_DATA_LEN_MAX        40
+#define OUT_DATA_LEN_MAX        							40
 
 typedef struct mqtt_state_t
 {
@@ -188,6 +188,7 @@ typedef struct {
 	uint32_t reset_count;
 	long long recv_bytes;
 	char reboot;
+	char iot;
 }mqtt_dev_status;
 
 static int mqtt_get_type(uint8_t* buffer)   { return (buffer[0] & 0xf0) >> 4; }

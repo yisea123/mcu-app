@@ -13,6 +13,7 @@
 
 #define PACKET_ITEM 3
 
+#define CAN_DATA_VALUE_LEN		8
 /**********************************/
 //event type
 //0xaa 0xbb len mCmd d0~d3(id) ide rtr data0 data1 ... check01 check02
@@ -125,7 +126,9 @@ struct msg_periodic {
 	
 	uint32_t update;
 	uint32_t *periodic; // 指向一个全局的变量，定时器定时 （每100ms）修改此变量的值。
-	u8 n;  //n*100ms send msg to can. 
+	u8 n;  //n*100ms send msg to can.
+	u8 is_zero;
+	u8 send_status;
 	struct list_head list;
 };
 //return 0: do nothing
@@ -141,12 +144,13 @@ extern long numRecvAndroidCanCmd;
 extern char mReportMcuStatusPending;
 extern uint32_t periodicNum;
 extern struct list_head periodic_head;
+extern struct list_head periodic_wait_head;
 extern int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len);
 extern int do_uart_cmd(int result, const char* cmd, int cmd_len);
 extern void send_cmd_ack(const char* ack, int ack_len);
 extern void parse_cmd_ack(const char* ack, int ack_len);
 extern unsigned short calculate_crc(unsigned char *p, unsigned short n);
-extern void list_periodic_msg(void);
+//extern void list_periodic_msg(void);
 extern void handle_downstream_work(char* cmd, char *ack);
 extern int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId);
 #endif

@@ -613,7 +613,7 @@ static int deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 		//memcpy(state->jsonbuff, "ABCD", strlen("ABCD"));
 		sprintf(state->jsonbuff, "time:[%llds]. mqtt_bytes=%lld, atcmdhead=%d, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
 		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d", 
-					dev->sys_time, mqtt_dev->recv_bytes, uart3_fifo->lostBytes, get_at_command_count(&dev->atcmd_head),mqtt_dev->reset_count,mqtt_dev->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
+					dev->sys_time, mqtt_dev->recv_bytes, get_at_command_count(&dev->atcmd_head),uart3_fifo->lostBytes, mqtt_dev->reset_count,mqtt_dev->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
 					mqtt_dev->in_waitting,mqtt_dev->in_pos,dev->malloc_count,dev->free_count,dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head));		
 
@@ -628,6 +628,11 @@ static int deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 		memset(state->jsonbuff, '\0', sizeof(state->jsonbuff));
 		memcpy(state->jsonbuff, "disconnect tcp in 3 second!", strlen("disconnect tcp in 3 second!"));
 		mqtt_publish(state, "/xp/publish", state->jsonbuff, 1, 0);
+		
+		memcpy(state->jsonbuff, "{\"name\": \"112.124.102.62\",\"format\":{\"type\":\"198.41.30.241\",\"width\":1080,\"interlace\":false}}", 
+		strlen("{\"name\": \"jzyang\",\"format\":{\"type\":\"rect\",\"width\":1080,\"interlace\":false}}"));
+	
+		mqtt_publish(state, "/xp/publish", state->jsonbuff, 1, 0);			
 		dev->close_tcp_interval = 3*ONE_SECOND;
 	}
 
@@ -637,6 +642,7 @@ static int deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 		memset(state->jsonbuff, '\0', sizeof(state->jsonbuff));
 		memcpy(state->jsonbuff, "rebooting", strlen("rebooting"));
 		mqtt_publish(state, "/xp/publish", state->jsonbuff, 1, 0);
+			
 		mqtt_dev->reboot = 1;
 	}
 	
@@ -646,7 +652,7 @@ static int deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 		memset(state->jsonbuff, '\0', sizeof(state->jsonbuff));
 		//memcpy(state->jsonbuff, "MCU mesg!", strlen("MCU mesg!"));
 		
-		memcpy(state->jsonbuff, "{\"name\": \"jzyang\",\"format\":{\"type\":\"rect\",\"width\":1080,\"interlace\":false}}", 
+		memcpy(state->jsonbuff, "{\"name\": \"112.124.102.62\",\"format\":{\"type\":\"198.41.30.241\",\"width\":1080,\"interlace\":false}}", 
 		strlen("{\"name\": \"jzyang\",\"format\":{\"type\":\"rect\",\"width\":1080,\"interlace\":false}}"));
 	
 		mqtt_publish(state, "/xp/publish", state->jsonbuff, 1, 0);					
@@ -663,7 +669,18 @@ static int deliver_publish(mqtt_state_t* state, uint8_t* message, int length)
 			memcpy(state->jsonbuff, payload+strlen("copy"), edata.data_length - strlen("copy"));
 			mqtt_publish(state, "/xp/publish", state->jsonbuff, 1, 0);	
 		}			
-	}			
+	}
+	
+	if(!memcmp(payload, "iot1", strlen("iot1")))
+	{
+		mqtt_dev->iot = 1;
+	}
+	
+	if(!memcmp(payload, "iot0", strlen("iot0")))
+	{
+		mqtt_dev->iot = 0;
+	}
+	
 	myfree(0, payload);
 	dev->free_count++;
 	
@@ -714,7 +731,7 @@ int mqtt_publish_with_length(mqtt_state_t *state, const char* topic, const char*
   state->pending_msg_type = MQTT_MSG_TYPE_PUBLISH;
 	//printf("mqtt: sending publish...data len=%d\r\n", state->outbound_message->length);
 
-	make_command_to_list(ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_PUBLISH);
+	make_command_to_list(ATMQTT, ONE_SECOND/25, MQTT_MSG_TYPE_PUBLISH);
 	//make_command_to_list(ATMIPPUSH, ONE_SECOND/40, -1);
   return 0;
 }
@@ -863,7 +880,7 @@ static void parse_mqtt_packet(mqtt_state_t *state, int nbytes)
 			if(msg_qos == 1) 
 			{
 				state->outbound_message = mqtt_msg_puback(&state->mqtt_connection, msg_id);
-				make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PUBACK);		
+				make_command_to_list(ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBACK);		
 			} 
 			else if(msg_qos == 2) 
 			{
@@ -900,7 +917,7 @@ static void parse_mqtt_packet(mqtt_state_t *state, int nbytes)
 		
 			state->outbound_message = mqtt_msg_pubrel(&state->mqtt_connection, msg_id);
 		  mqtt_set_mesg_ack(MQTT_MSG_TYPE_PUBLISH, msg_id);
-			make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PUBREL);
+			make_command_to_list(ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREL);
 
 			break;
 		
@@ -910,7 +927,7 @@ static void parse_mqtt_packet(mqtt_state_t *state, int nbytes)
 		
 			state->outbound_message = mqtt_msg_pubcomp(&state->mqtt_connection, msg_id);
 		  mqtt_set_mesg_ack(MQTT_MSG_TYPE_PUBREC, msg_id);
-			make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PUBCOMP);
+			make_command_to_list(ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBCOMP);
 
 			break;
 		
@@ -927,8 +944,8 @@ static void parse_mqtt_packet(mqtt_state_t *state, int nbytes)
 			/*2 bytes*/
 		  if(check_packet_legal(state, 2)) return;
 		
-			make_command_to_list(ATMQTT, ONE_SECOND/30, MQTT_MSG_TYPE_PINGRESP);
-			make_command_to_list(ATMIPPUSH, ONE_SECOND/30, -1);	
+			make_command_to_list(ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
+			make_command_to_list(ATMIPPUSH, ONE_SECOND/50, -1);	
 		
 			break;
 		
@@ -1452,7 +1469,7 @@ static void longsung_reader_parse( UartReader* r )
 	RemoteTokenizer tzer[1];
 	
 	//printf("r->pos=%d\r\n", r->pos);	
-	print_line(UART4, r->in, r->pos);//jzyang
+	//print_line(UART4, r->in, r->pos);//jzyang
 	/*打印4G的所有串口消息, release 版本时去掉。*/
 	
 	longsung_tokenizer_init(tzer, r->in, r->in+r->pos);
@@ -1673,7 +1690,7 @@ static void init_mqtt_dev(mqtt_dev_status* dev)
 	mqtt_dev->fixhead = 1;
 	mqtt_dev->parse_packet_flag = 1;
 	mqtt_dev->reboot = 0;
-	
+	mqtt_dev->iot = 0;
 	for(i=0; i<OUT_DATA_LEN_MAX; i++) 
 	{
 		dev->mqtt_state->outdata[i] = NULL;
@@ -2007,22 +2024,7 @@ static void prepare_mqtt_packet(mqtt_state_t *state, AtCommand* cmd)
 				at(buff);
 			}		
 			break;
-
-/*			
-		case MQTT_OUTDATA_SUBSCRIBE_TEST:
-		  state->pending_msg_type = MQTT_MSG_TYPE_SUBSCRIBE;
-			state->outbound_message = mqtt_msg_subscribe(&state->mqtt_connection, 
-                                                   "sensor", 1, 
-                                                   &state->pending_msg_id);
-			cmd->msgid = state->pending_msg_id;	
-		  cmd->mqtype = MQTT_MSG_TYPE_SUBSCRIBE;
 		
-			if(make_mqtt_packet(buff, state->outbound_message->data, state->outbound_message->length))
-			{
-				at(buff);
-			}					
-			break;
-*/			
 		case MQTT_MSG_TYPE_SUBSCRIBE:
 		  state->pending_msg_type = MQTT_MSG_TYPE_SUBSCRIBE;
 			state->outbound_message = mqtt_msg_subscribe(&state->mqtt_connection, 
@@ -2080,7 +2082,12 @@ static void send_command_to_device(AtCommand* cmd)
 		case ATMIPCALL0: at("AT+MIPCALL=0"); break;
 		case ATMIPPROFILE: at("AT+MIPPROFILE=1,\"3GNET\""); break;//3GNET
 		case ATMIPCALL1: at("AT+MIPCALL=1"); break;
-		case ATMIPOPEN: at("AT+MIPOPEN=1,0,\"112.124.102.62\",1883,0"); break;
+		case ATMIPOPEN: 
+			if(mqtt_dev->iot) 
+				at("AT+MIPOPEN=1,0,\"198.41.30.241\",1883,0");
+			else 
+				at("AT+MIPOPEN=1,0,\"112.124.102.62\",1883,0"); 
+		break;
 		//case ATMIPOPEN: at("AT+MIPOPEN=1,0,\"198.41.30.241\",1883,0"); break;
 		//case ATMIPOPEN: at("AT+MIPOPEN=1,0,\"iot.eclipse.org\",1883,0"); break;
 		/*at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");
@@ -2192,7 +2199,7 @@ static void make_command_to_list(char index, long long interval, int para)
 						add_cmd_to_list(cmd, &dev->at_head);					
 						
 						/*申请成功了才加入ATMIPPUSH*/
-						make_command_to_list(ATMIPPUSH, ONE_SECOND/40, -1);
+						make_command_to_list(ATMIPPUSH, ONE_SECOND/50, -1);
 						
 						if(cmd->mqtype == MQTT_MSG_TYPE_PUBLISH) mqtt_dev->pub_out_num++;
 					}
@@ -2443,7 +2450,7 @@ static void mqtt_list_cmd(void)
 					mqtt_set_dup(cmd->mqttdata);
 			
 			add_cmd_to_list(cmd, &dev->at_head);
-			make_command_to_list(ATMIPPUSH, ONE_SECOND/20, -1);
+			make_command_to_list(ATMIPPUSH, ONE_SECOND/40, -1);
 			printf("%s: add [%s] to AT LIST HEAD again! type=%d, msgid=0x%04x!\r\n", 
 							__func__, mqtt_get_name(cmd->mqtype), cmd->mqtype, cmd->msgid);			
 		} 	
@@ -2606,7 +2613,7 @@ static void mqtt_send_connect_or_tick(void)
 				/*连接前把  mqtt_list at_list 的mqtt消息清空！在+MIPCLOSE:清空*/			
 				mqtt_dev->connect_status = MQTT_DEV_STATUS_CONNECTING;
 				make_command_to_list(ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT);
-				make_command_to_list(ATMIPPUSH, ONE_SECOND/20, -1);	
+				make_command_to_list(ATMIPPUSH, ONE_SECOND/25, -1);	
 			}		
 			/*发送心跳包给服务 50s每个tick*/				
 			if( dev->heartbeat_tick >= 3) 
@@ -2618,8 +2625,8 @@ static void mqtt_send_connect_or_tick(void)
 					if(mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT) 
 					{
 						//有可能是其它的状态MQTT_DEV_STATUS_CONNACK  MQTT_DEV_STATUS_SUBACK
-						make_command_to_list(ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_PINGREQ);
-						make_command_to_list(ATMIPPUSH, ONE_SECOND/40, -1);			
+						make_command_to_list(ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ);
+						make_command_to_list(ATMIPPUSH, ONE_SECOND/50, -1);			
 					}
 				}									
 			} 
@@ -2640,7 +2647,7 @@ static void tcp_connect_server(void)
 				/*取消上一次要关闭tcp的请求*/
 				if(dev->close_tcp_interval) dev->close_tcp_interval = 0;//动作
 				/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
-				make_command_to_list(ATMIPHEX, ONE_SECOND/20, -1);							
+				make_command_to_list(ATMIPHEX, ONE_SECOND/30, -1);							
 				make_command_to_list(ATMIPOPEN, ONE_SECOND/2, -1);			
 				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, -1);					
 				dev->heartbeat_tick = 6;

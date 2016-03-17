@@ -511,6 +511,11 @@ static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char
 			md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 	
 }
 
+/***********************************************************
+0xaa 0xbb len 0x05 d0 d1 d2 d3... check01 check02		
+固件更新状态：在更新固件过程中返回TMODEM协议所要求的反馈			
+************************************************************/		
+
 int handle_update_bin(const char* packet_data, int len)
 {
 	static int mRecvBytes=0;
