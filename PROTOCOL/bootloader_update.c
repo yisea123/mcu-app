@@ -29,11 +29,12 @@ void del_b_event_from_list(struct bootloaderUpdateEvent *event)
 	list_for_each_safe(pos, n, &bootloader_event_head) 
 	{ 
 		mevent = list_entry(pos, struct bootloaderUpdateEvent, list); 
+		
 		if(mevent == event && event != NULL) 
 		{ 
 				list_del(pos); 
 		} 
-	 } 
+	} 
 }
 
 /***************************************************************
@@ -65,6 +66,7 @@ int list_b_event(void)
 	{
 		count++;	
 	}
+	
 	return count;
 }
 
@@ -106,7 +108,9 @@ void make_b_event_to_list(struct bootloaderUpdateState *bootloaderState)
 	if(bootloaderState->isInit) 
 	{
 		event = (struct bootloaderUpdateEvent*)mymalloc(0, sizeof(struct bootloaderUpdateEvent));
-		if(event == NULL) {
+		
+		if(event == NULL) 
+		{
 			printf("%s: mymalloc struct bootloaderUpdateEvent fail!\r\n", __func__);
 			return;
 		}
@@ -147,12 +151,15 @@ void deal_bootloader_event(struct bootloaderUpdateState *bootloaderState)
 		start = event->state->des;
 		event->state->des = STMFLASH_Write(event->state->des, (unsigned int*) ramsource, FRAME_SIZE/4);	
 		
-		if((event->state->des - start) != FRAME_SIZE) {
+		if((event->state->des - start) != FRAME_SIZE) 
+		{
 			/*如果写不成功，还原des的指向，直接返回，等待下一次进入这个函数*/
 			printf("%s: burn bootloader error\r\n", __func__);
 			event->state->des = start;
 			return;
-		} else {
+		}
+		else
+		{
 			/*如果写成功，从链表中去除这个节点，这样，就可再次进入make_b_event_to_list*/
 			printf("%s: write bootloader success.\r\n", __func__);
 			del_b_event_from_list(event);

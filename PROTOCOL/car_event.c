@@ -29,12 +29,13 @@ void del_event_from_list(struct car_event *event)
 	list_for_each_safe(pos, n, &event_head) 
 	{ 
 		mevent = list_entry(pos, struct car_event, list); 
+		
 		if(mevent == event && event != NULL) 
 		{ 
 				list_del(pos); 
 				//myfree(0, event); 
 		} 
-	 } 
+	} 
 }
 
 /***************************************************************
@@ -63,6 +64,7 @@ int list_event(void)
 	{
 		count++;	
 	}
+	
 	return count;
 }
 
@@ -72,13 +74,17 @@ struct car_event * check_event(struct car_event *event)
 	struct list_head *pos = NULL, *n = NULL;
 	
 //	printf("{\r\n");
-	list_for_each_safe(pos, n, &event_head) {
+	list_for_each_safe(pos, n, &event_head) 
+	{
 		event0 = (struct car_event *)list_entry(pos, struct car_event, list);
-		if(event0->ID == event->ID && event0->data_len == event->data_len ) {
+		
+		if(event0->ID == event->ID && event0->data_len == event->data_len ) 
+		{
 			//printf("ID= %X\r\n", event0->ID);
 			return event0;
 		}
 	}		
+	
 	return NULL;
 }
 
@@ -99,31 +105,43 @@ static int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean
 //	if (fifoClean) state = HEAD1;
 
 LOOP:	
-	switch(state) {
-		
+	switch(state) 
+	{
 		case HEAD1:
 			i = 0;
 			data_len = 0;
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data == 0xaa) {
+		
+			if(ret == 1 && data == 0xaa) 
+			{
 				*cmd = data;			
 				state++;
-			} else if(ret == 1) {
+			} 
+			else if(ret == 1) 
+			{
 				printf("%s->error1!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
-			} else if(ret == 0) {
+			} 
+			else if(ret == 0) 
+			{
 				break;
 			} 
 			
 		case HEAD2:
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data == 0xbb){
+		
+			if(ret == 1 && data == 0xbb)
+			{
 				*(cmd+state) = data;
 				state++;
-			} else if (ret == 0) {
+			} 
+			else if (ret == 0) 
+			{
 				break;
-			} else if (ret == 1) {
+			} 
+			else if (ret == 1) 
+			{
 				printf("%s->error2!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
@@ -131,25 +149,34 @@ LOOP:
 			
 		case LEN:
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data != 0) {
+		
+			if(ret == 1 && data != 0) 
+			{
 				data_len = data;
 				*(cmd+state) = data;
 				//state++;	
-			} else if (ret == 0) {
+			} 
+			else if (ret == 0) 
+			{
 				printf("%s->error3-1!\r\n", __func__);
 				break;
-			} else {
+			} 
+			else 
+			{
 				printf("%s->error3-2!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
 			}
 			
-		  if(data_len > sizeof(mData)) {	
+		  if(data_len > sizeof(mData)) 
+			{	
 				printf("data_len > %d error!\r\n", sizeof(mData));
 			}
 			
 		  ret = kfifo_get(mfifo, &mData, data_len);
-			if(ret != data_len) {
+			
+			if(ret != data_len) 
+			{
 				printf("%s-> read error 4! ret=%d, data_len=%d\r\n", 
 				__func__, ret, data_len);
 						
@@ -157,7 +184,8 @@ LOOP:
 				goto LOOP;
 			}
 		
-			for(i=0; i< data_len; i++) {
+			for(i=0; i< data_len; i++) 
+			{
 				*(cmd+LEN+1+i) = mData[i];
 			}
 //0xaa 0xbb len mCmd d0~d3 ide rtr data0... check01 check02			
@@ -194,31 +222,43 @@ static int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len/*, int fifoClean
 //	if (fifoClean) state = HEAD1;
 
 LOOP:	
-	switch(state) {
-		
+	switch(state) 
+	{
 		case HEAD1:
 			i = 0;
 			data_len = 0;
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data == 0xaa) {
+		
+			if(ret == 1 && data == 0xaa) 
+			{
 				*cmd = data;			
 				state++;
-			} else if(ret == 1) {
+			} 
+			else if(ret == 1) 
+			{
 				printf("%s->error1!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
-			} else if(ret == 0) {
+			} 
+			else if(ret == 0) 
+			{
 				break;
 			} 
 			
 		case HEAD2:
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data == 0xbb){
+		
+			if(ret == 1 && data == 0xbb)
+			{
 				*(cmd+state) = data;
 				state++;
-			} else if (ret == 0) {
+			} 
+			else if (ret == 0) 
+			{
 				break;
-			} else if (ret == 1) {
+			} 
+			else if (ret == 1) 
+			{
 				printf("%s->error2!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
@@ -226,25 +266,34 @@ LOOP:
 			
 		case LEN:
 			ret = kfifo_get(mfifo, &data, 1);
-			if(ret == 1 && data != 0) {
+		
+			if(ret == 1 && data != 0) 
+			{
 				data_len = data;
 				*(cmd+state) = data;
 				//state++;	
-			} else if (ret == 0) {
+			} 
+			else if (ret == 0) 
+			{
 				printf("%s->error3-1!\r\n", __func__);
 				break;
-			} else {
+			} 
+			else 
+			{
 				printf("%s->error3-2!\r\n", __func__);
 				state = HEAD1;
 				goto LOOP;
 			}
 			
-		  if(data_len > sizeof(mData)) {	
+		  if(data_len > sizeof(mData)) 
+			{	
 				printf("data_len > %d error!\r\n", sizeof(mData));
 			}
 			
 		  ret = kfifo_get(mfifo, &mData, data_len);
-			if(ret != data_len) {
+			
+			if(ret != data_len) 
+			{
 				printf("%s-> read error 4! ret=%d, data_len=%d\r\n", 
 				__func__, ret, data_len);
 						
@@ -252,7 +301,8 @@ LOOP:
 				goto LOOP;
 			}
 		
-			for(i=0; i< data_len; i++) {
+			for(i=0; i< data_len; i++) 
+			{
 				*(cmd+LEN+1+i) = mData[i];
 			}
 //0xaa 0xbb len mCmd d0~d3 ide rtr data0... check01 check02			
@@ -279,14 +329,18 @@ LOOP:
 void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId)
 {
 	struct car_event* event = (struct car_event*)mymalloc(0, sizeof(struct car_event));
-	if(event == NULL) {
+	
+	if(event == NULL) 
+	{
 		//if(kfifo_len(debug_fifo) < DEBUG_KFIFO_LEN/2)
 		printf("%s: mymalloc car_event fail!\r\n", __func__);
 		return;
 	}
 	//event->id = (unsigned long)event;
 	event->data = (char *)mymalloc(0, cmd_len);
-	if(event->data == NULL) {
+	
+	if(event->data == NULL) 
+	{
 		//if(kfifo_len(debug_fifo) < DEBUG_KFIFO_LEN/2)
 		printf("%s: CAN1 mymalloc event->data fail!\r\n", __func__);
 		myfree(0, event);
@@ -297,16 +351,20 @@ void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId)
 	event->tim_count = 1;
 	event->state = result;
 	
-	if(hasId) {
+	if(hasId) 
+	{
 		event->ID = 0;
 		event->ID |= ((*(cmd+CAN_ID_0)) << 24);  
 		//必须根据协议修改
 		event->ID |= ((*(cmd+CAN_ID_1)) << 16);
 		event->ID |= ((*(cmd+CAN_ID_2)) << 8);
 		event->ID |=  (*(cmd+CAN_ID_3));	
-	} else {
+	} 
+	else 
+	{
 		event->ID = 0xff00 + *(cmd+CAN_CMD);
 	}
+	
 	add_event_to_list(event);	
 }
 
@@ -314,12 +372,16 @@ void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId)
 int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId)
 {
 	struct car_event* event = (struct car_event*)mymalloc(0, sizeof(struct car_event));
-	if(event == NULL) {
+	
+	if(event == NULL) 
+	{
 		return -1;
 	}
 	//event->id = (unsigned long)event;
 	event->data = (char *)mymalloc(0, cmd_len);
-	if(event->data == NULL) {
+	
+	if(event->data == NULL) 
+	{
 		myfree(0, event);
 		return -1;
 	}				
@@ -328,17 +390,22 @@ int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId)
 	event->tim_count = 1;
 	event->state = result;
 	
-	if(hasId) {
+	if(hasId) 
+	{
 		event->ID = 0;
 		event->ID |= ((*(cmd+CAN_ID_0)) << 24);  
 		//必须根据协议修改
 		event->ID |= ((*(cmd+CAN_ID_1)) << 16);
 		event->ID |= ((*(cmd+CAN_ID_2)) << 8);
 		event->ID |=  (*(cmd+CAN_ID_3));	
-	} else {
+	} 
+	else 
+	{
 		event->ID = 0xff00 + *(cmd+CAN_CMD);
 	}
+	
 	add_event_to_list(event);	
+	
 	return 0;
 }
 
@@ -382,15 +449,21 @@ static void decode_can_fifo(struct kfifo *mfifo, char *cmd)
 	
 	if(kfifo_len(mfifo) > 0)
 	{	
-		if(mfifo == can1_fifo) {
+		if(mfifo == can1_fifo) 
+		{
 			result = parse_can1_fifo(mfifo, cmd, &len);
-		} else if(mfifo == can2_fifo) {
+		} 
+		else if(mfifo == can2_fifo) 
+		{
 			result = parse_can2_fifo(mfifo, cmd, &len);
 		}
 		//处理can总线上获得的数据，解析成功后加入链表头
-		if(result == CAN_EVENT) {
+		if(result == CAN_EVENT) 
+		{
 			make_event_to_list(cmd, len, result, 1);
-		} else {
+		} 
+		else 
+		{
 			printf("%s->r\r\n", __func__);
 		}
 	}		
@@ -401,13 +474,16 @@ void list_event_to_android(void)
 	if(event_sending == NULL) 
 	{
 		event_sending = get_event_from_list();	
-		if(event_sending != NULL && mAndroidRunning == 1) { //只有android在运行的时候才往uart上报数据。
+		
+		if(event_sending != NULL && mAndroidRunning == 1) 
+		{ //只有android在运行的时候才往uart上报数据。
 			report_car_event(event_sending->state, event_sending->data, event_sending->data_len);		
 		}
 	} 
 	else 
 	{
-		if(event_sending->tim_count%(6) == 0 && mAndroidRunning == 1) {
+		if(event_sending->tim_count%(6) == 0 && mAndroidRunning == 1) 
+		{
 			mMcuReportRepeatNum++;
 			event_sending->tim_count++;
 			report_car_event(event_sending->state, event_sending->data, event_sending->data_len);	

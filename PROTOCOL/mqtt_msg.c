@@ -373,32 +373,40 @@ mqtt_message_t* mqtt_msg_publish(mqtt_connection_t* connection, const char* topi
 mqtt_message_t* mqtt_msg_puback(mqtt_connection_t* connection, uint16_t message_id)
 {
   init_message(connection);
+	
   if(append_message_id(connection, message_id) == 0)
     return fail_message(connection);
+	
   return fini_message(connection, MQTT_MSG_TYPE_PUBACK, 0, 0, 0);
 }
 
 mqtt_message_t* mqtt_msg_pubrec(mqtt_connection_t* connection, uint16_t message_id)
 {
   init_message(connection);
+	
   if(append_message_id(connection, message_id) == 0)
     return fail_message(connection);
+	
   return fini_message(connection, MQTT_MSG_TYPE_PUBREC, 0, 0, 0);
 }
 
 mqtt_message_t* mqtt_msg_pubrel(mqtt_connection_t* connection, uint16_t message_id)
 {
   init_message(connection);
+	
   if(append_message_id(connection, message_id) == 0)
     return fail_message(connection);
+	
   return fini_message(connection, MQTT_MSG_TYPE_PUBREL, 0, 1, 0);
 }
 
 mqtt_message_t* mqtt_msg_pubcomp(mqtt_connection_t* connection, uint16_t message_id)
 {
   init_message(connection);
+	
   if(append_message_id(connection, message_id) == 0)
     return fail_message(connection);
+	
   return fini_message(connection, MQTT_MSG_TYPE_PUBCOMP, 0, 0, 0);
 }
 

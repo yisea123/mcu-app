@@ -1,7 +1,7 @@
 ..\obj\bootloader_update.o: ..\PROTOCOL\bootloader_update.c
 ..\obj\bootloader_update.o: ..\PROTOCOL\bootloader_update.h
-..\obj\bootloader_update.o: ..\LIST\list.h
-..\obj\bootloader_update.o: ..\MALLOC\malloc.h
+..\obj\bootloader_update.o: ..\PROTOCOL\list.h
+..\obj\bootloader_update.o: ..\PROTOCOL\malloc.h
 ..\obj\bootloader_update.o: ..\USER\stm32f4xx.h
 ..\obj\bootloader_update.o: ..\CORE\core_cm4.h
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
@@ -40,9 +40,9 @@
 ..\obj\bootloader_update.o: ..\SYSTEM\usart\usart.h
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\bootloader_update.o: ..\SYSTEM\sys\sys.h
-..\obj\bootloader_update.o: ..\KFIFO\kfifo.h
+..\obj\bootloader_update.o: ..\PROTOCOL\kfifo.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\uart_command.h
-..\obj\bootloader_update.o: ..\KFIFO\kfifo.h
+..\obj\bootloader_update.o: ..\PROTOCOL\kfifo.h
 ..\obj\bootloader_update.o: ..\HARDWARE\CAN\can.h
 ..\obj\bootloader_update.o: ..\PROTOCOL\car_event.h
 ..\obj\bootloader_update.o: ..\HARDWARE\RTC\rtc.h

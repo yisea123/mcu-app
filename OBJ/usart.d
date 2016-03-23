@@ -39,11 +39,11 @@
 ..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\usart.o: ..\KFIFO\kfifo.h
 ..\obj\usart.o: ..\PROTOCOL\uart_command.h
-..\obj\usart.o: ..\KFIFO\kfifo.h
+..\obj\usart.o: ..\PROTOCOL\kfifo.h
 ..\obj\usart.o: ..\HARDWARE\CAN\can.h
 ..\obj\usart.o: ..\PROTOCOL\car_event.h
-..\obj\usart.o: ..\LIST\list.h
-..\obj\usart.o: ..\MALLOC\malloc.h
+..\obj\usart.o: ..\PROTOCOL\list.h
+..\obj\usart.o: ..\PROTOCOL\malloc.h
 ..\obj\usart.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\usart.o: ..\PROTOCOL\pending.h
 ..\obj\usart.o: ..\HARDWARE\LED\led.h
@@ -68,3 +68,4 @@
 ..\obj\usart.o: ..\USMART\usmart.h
 ..\obj\usart.o: ..\USMART\usmart_str.h
 ..\obj\usart.o: ..\HARDWARE\STMFLASH\stmflash.h
+..\obj\usart.o: ..\MALLOC\malloc.h

@@ -4,7 +4,7 @@
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
-..\obj\tmodem.o: ..\MALLOC\malloc.h
+..\obj\tmodem.o: ..\PROTOCOL\malloc.h
 ..\obj\tmodem.o: ..\USER\stm32f4xx.h
 ..\obj\tmodem.o: ..\CORE\core_cm4.h
 ..\obj\tmodem.o: ..\CORE\core_cmInstr.h
@@ -39,14 +39,14 @@
 ..\obj\tmodem.o: ..\FWLIB\inc\stm32f4xx_dac.h
 ..\obj\tmodem.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\tmodem.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
-..\obj\tmodem.o: ..\KFIFO\kfifo.h
+..\obj\tmodem.o: ..\PROTOCOL\kfifo.h
 ..\obj\tmodem.o: ..\PROTOCOL\uart_command.h
-..\obj\tmodem.o: ..\KFIFO\kfifo.h
+..\obj\tmodem.o: ..\PROTOCOL\kfifo.h
 ..\obj\tmodem.o: ..\SYSTEM\usart\usart.h
 ..\obj\tmodem.o: ..\SYSTEM\sys\sys.h
 ..\obj\tmodem.o: ..\HARDWARE\CAN\can.h
 ..\obj\tmodem.o: ..\PROTOCOL\car_event.h
-..\obj\tmodem.o: ..\LIST\list.h
+..\obj\tmodem.o: ..\PROTOCOL\list.h
 ..\obj\tmodem.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\tmodem.o: ..\PROTOCOL\pending.h
 ..\obj\tmodem.o: ..\HARDWARE\LED\led.h

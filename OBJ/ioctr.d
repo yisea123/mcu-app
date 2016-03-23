@@ -37,13 +37,13 @@
 ..\obj\ioctr.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\ioctr.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\ioctr.o: ..\PROTOCOL\car_event.h
-..\obj\ioctr.o: ..\LIST\list.h
-..\obj\ioctr.o: ..\MALLOC\malloc.h
+..\obj\ioctr.o: ..\PROTOCOL\list.h
+..\obj\ioctr.o: ..\PROTOCOL\malloc.h
 ..\obj\ioctr.o: ..\SYSTEM\usart\usart.h
 ..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
-..\obj\ioctr.o: ..\KFIFO\kfifo.h
+..\obj\ioctr.o: ..\PROTOCOL\kfifo.h
 ..\obj\ioctr.o: ..\PROTOCOL\uart_command.h
-..\obj\ioctr.o: ..\KFIFO\kfifo.h
+..\obj\ioctr.o: ..\PROTOCOL\kfifo.h
 ..\obj\ioctr.o: ..\HARDWARE\CAN\can.h
 ..\obj\ioctr.o: ..\PROTOCOL\car_event.h
 ..\obj\ioctr.o: ..\HARDWARE\RTC\rtc.h

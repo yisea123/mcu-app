@@ -41,11 +41,11 @@
 ..\obj\can.o: ..\SYSTEM\usart\usart.h
 ..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\can.o: ..\PROTOCOL\uart_command.h
-..\obj\can.o: ..\KFIFO\kfifo.h
+..\obj\can.o: ..\PROTOCOL\kfifo.h
 ..\obj\can.o: ..\PROTOCOL\uart_command.h
-..\obj\can.o: ..\MALLOC\malloc.h
+..\obj\can.o: ..\PROTOCOL\malloc.h
 ..\obj\can.o: ..\PROTOCOL\car_event.h
-..\obj\can.o: ..\LIST\list.h
+..\obj\can.o: ..\PROTOCOL\list.h
 ..\obj\can.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\can.o: ..\PROTOCOL\pending.h
 ..\obj\can.o: ..\HARDWARE\KEY\key.h

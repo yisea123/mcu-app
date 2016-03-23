@@ -28,13 +28,16 @@ uint8_t gmult(uint8_t a, uint8_t b)
 {
 	uint8_t p = 0, i = 0, hbs = 0;
 
-	for (i = 0; i < 8; i++) {
-		if (b & 1) {
+	for (i = 0; i < 8; i++) 
+	{
+		if (b & 1) 
+		{
 			p ^= a;
 		}
 
 		hbs = a & 0x80;
 		a <<= 1;
+		
 		if (hbs) a ^= 0x1b; // 0000 0001 0001 1011	
 		b >>= 1;
 	}
@@ -145,13 +148,17 @@ uint8_t R[] = {0x02, 0x00, 0x00, 0x00};
 
 uint8_t * Rcon(uint8_t i) 
 {
-	if (i == 1) {
+	if (i == 1) 
+	{
 		R[0] = 0x01; // x^(1-1) = x^0 = 1
-	} else if (i > 1) {
+	}
+	else if (i > 1) 
+	{
 		R[0] = 0x02;
 		i--;
 
-		while (i-1 > 0) {
+		while (i-1 > 0) 
+		{
 			R[0] = gmult(R[0], 0x02);
 			i--;
 		}
@@ -170,7 +177,8 @@ void add_round_key(uint8_t *state, uint8_t *w, uint8_t r)
 {
 	uint8_t c;
 	
-	for (c = 0; c < Nb; c++) {
+	for (c = 0; c < Nb; c++) 
+	{
 		state[Nb*0+c] = state[Nb*0+c]^w[4*Nb*r+Nb*c+0];
 		state[Nb*1+c] = state[Nb*1+c]^w[4*Nb*r+Nb*c+1];
 		state[Nb*2+c] = state[Nb*2+c]^w[4*Nb*r+Nb*c+2];
@@ -189,14 +197,17 @@ void mix_columns(uint8_t *state)
 	uint8_t a[] = {0x02, 0x01, 0x01, 0x03}; // a(x) = {02} + {01}x + {01}x2 + {03}x3
 	uint8_t i, j, col[4], res[4];
 
-	for (j = 0; j < Nb; j++) {
-		for (i = 0; i < 4; i++) {
+	for (j = 0; j < Nb; j++) 
+	{
+		for (i = 0; i < 4; i++) 
+		{
 			col[i] = state[Nb*i+j];
 		}
 		
 		coef_mult(a, col, res);
 
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 4; i++) 
+		{
 			state[Nb*i+j] = res[i];
 		}
 	}
@@ -211,14 +222,17 @@ void inv_mix_columns(uint8_t *state)
 	uint8_t a[] = {0x0e, 0x09, 0x0d, 0x0b}; // a(x) = {0e} + {09}x + {0d}x2 + {0b}x3
 	uint8_t i, j, col[4], res[4];
 
-	for (j = 0; j < Nb; j++) {
-		for (i = 0; i < 4; i++) {
+	for (j = 0; j < Nb; j++) 
+	{
+		for (i = 0; i < 4; i++) 
+		{
 			col[i] = state[Nb*i+j];
 		}
 		
 		coef_mult(a, col, res);
 
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < 4; i++) 
+		{
 			state[Nb*i+j] = res[i];
 		}
 	}
@@ -232,14 +246,17 @@ void shift_rows(uint8_t *state)
 {
 	uint8_t i, k, s, tmp;
 
-	for (i = 1; i < 4; i++) {
+	for (i = 1; i < 4; i++) 
+	{
 		// shift(1,4)=1; shift(2,4)=2; shift(3,4)=3
 		// shift(r, 4) = r;
 		s = 0;
-		while (s < i) {
+		while (s < i) 
+		{
 			tmp = state[Nb*i+0];
 
-			for (k = 1; k < Nb; k++) {
+			for (k = 1; k < Nb; k++) 
+			{
 				state[Nb*i+k-1] = state[Nb*i+k];
 			}
 
@@ -257,12 +274,16 @@ void inv_shift_rows(uint8_t *state)
 {
 	uint8_t i, k, s, tmp;
 
-	for (i = 1; i < 4; i++) {
+	for (i = 1; i < 4; i++) 
+	{
 		s = 0;
-		while (s < i) {
+		
+		while (s < i) 
+		{
 			tmp = state[Nb*i+Nb-1];
 
-			for (k = Nb-1; k > 0; k--) {
+			for (k = Nb-1; k > 0; k--) 
+			{
 				state[Nb*i+k] = state[Nb*i+k-1];
 			}
 
@@ -282,8 +303,10 @@ void sub_bytes(uint8_t *state)
 	uint8_t i, j;
 	uint8_t row, col;
 	
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			row = (state[Nb*i+j] & 0xf0) >> 4;
 			col = state[Nb*i+j] & 0x0f;
 			state[Nb*i+j] = s_box[16*row+col];
@@ -300,8 +323,10 @@ void inv_sub_bytes(uint8_t *state)
 	uint8_t i, j;
 	uint8_t row, col;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			row = (state[Nb*i+j] & 0xf0) >> 4;
 			col = state[Nb*i+j] & 0x0f;
 			state[Nb*i+j] = inv_s_box[16*row+col];
@@ -318,7 +343,8 @@ void sub_word(uint8_t *w)
 {
 	uint8_t i;
 	
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) 
+	{
 		w[i] = s_box[16*((w[i] & 0xf0) >> 4) + (w[i] & 0x0f)];
 	}
 }
@@ -334,7 +360,8 @@ void rot_word(uint8_t *w)
 	
 	tmp = w[0];
 	
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++) 
+	{
 		w[i] = w[i+1];
 	}
 
@@ -351,24 +378,29 @@ void key_expansion(uint8_t *key, uint8_t *w)
 	uint8_t i;
 	uint8_t len = Nb*(Nr+1);
 
-	for (i = 0; i < Nk; i++) {
+	for (i = 0; i < Nk; i++) 
+	{
 		w[4*i+0] = key[4*i+0];
 		w[4*i+1] = key[4*i+1];
 		w[4*i+2] = key[4*i+2];
 		w[4*i+3] = key[4*i+3];
 	}
 	
-	for (i = Nk; i < len; i++) {
+	for (i = Nk; i < len; i++) 
+	{
 		tmp[0] = w[4*(i-1)+0];
 		tmp[1] = w[4*(i-1)+1];
 		tmp[2] = w[4*(i-1)+2];
 		tmp[3] = w[4*(i-1)+3];
 
-		if (i%Nk == 0) {
+		if (i%Nk == 0) 
+		{
 			rot_word(tmp);
 			sub_word(tmp);
 			coef_add(tmp, Rcon(i/Nk), tmp);
-		} else if (Nk > 6 && i%Nk == 4) {
+		} 
+		else if (Nk > 6 && i%Nk == 4) 
+		{
 			sub_word(tmp);
 		}
 
@@ -384,15 +416,18 @@ void cipher(uint8_t *in, uint8_t *out, uint8_t *w)
 	uint8_t state[4*Nb];
 	uint8_t r, i, j;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			state[Nb*i+j] = in[i+4*j];
 		}
 	}
 
 	add_round_key(state, w, 0);
 
-	for (r = 1; r < Nr; r++) {
+	for (r = 1; r < Nr; r++) 
+	{
 		sub_bytes(state);
 		shift_rows(state);
 		mix_columns(state);
@@ -403,8 +438,10 @@ void cipher(uint8_t *in, uint8_t *out, uint8_t *w)
 	shift_rows(state);
 	add_round_key(state, w, Nr);
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			out[i+4*j] = state[Nb*i+j];
 		}
 	}
@@ -415,15 +452,18 @@ void inv_cipher(uint8_t *in, uint8_t *out, uint8_t *w)
 	uint8_t state[4*Nb];
 	uint8_t r, i, j;
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			state[Nb*i+j] = in[i+4*j];
 		}
 	}
 
 	add_round_key(state, w, Nr);
 
-	for (r = Nr-1; r >= 1; r--) {
+	for (r = Nr-1; r >= 1; r--) 
+	{
 		inv_shift_rows(state);
 		inv_sub_bytes(state);
 		add_round_key(state, w, r);
@@ -434,8 +474,10 @@ void inv_cipher(uint8_t *in, uint8_t *out, uint8_t *w)
 	inv_sub_bytes(state);
 	add_round_key(state, w, 0);
 
-	for (i = 0; i < 4; i++) {
-		for (j = 0; j < Nb; j++) {
+	for (i = 0; i < 4; i++) 
+	{
+		for (j = 0; j < Nb; j++) 
+		{
 			out[i+4*j] = state[Nb*i+j];
 		}
 	}
@@ -446,6 +488,7 @@ static uint8_t aes_buf[16] = { 0 };
 uint8_t * aes_create_key( uint8_t key[], int len )
 {
 	uint8_t *w;
+	
 	switch (len) 
 	{
 		case 16: Nk = 4; Nr = 10; break;
@@ -456,12 +499,14 @@ uint8_t * aes_create_key( uint8_t key[], int len )
 
 	w = mymalloc(0, Nb*(Nr+1)*4);
 	
-	if(!w) {
+	if(!w) 
+	{
 			printf("%s: mymalloc fail!\r\n", __func__);
 			return NULL;
 	}
 	
 	key_expansion(key, w);
+	
 	return w;
 }
 
@@ -473,20 +518,26 @@ void aes_destory_key(uint8_t * w)
 
 uint8_t* aes_encode_packet(uint8_t* key, uint8_t *packet_data, int packet_length)
 {
-	if( key != NULL && packet_length == 16 ) {
+	if( key != NULL && packet_length == 16 ) 
+	{
 		cipher(packet_data, aes_buf, key);
 		return aes_buf;
-	} else {
+	} 
+	else 
+	{
 		return NULL;
 	}
 }
 
 uint8_t* aes_decode_packet(uint8_t* key, uint8_t *packet_data, int packet_length)
 {
-	if( key != NULL && packet_length == 16 ) {	
+	if( key != NULL && packet_length == 16 ) 
+	{	
 		inv_cipher(packet_data, aes_buf, key);
 		return aes_buf;	
-	} else {	
+	} 
+	else 
+	{	
 		return NULL;	
 	}
 }
@@ -510,7 +561,8 @@ void aes_test(void)
 		0x52, 0x2c, 0x6b, 0x7b};*/
 
 	/* 256 bits */
-	 uint8_t key_value_32[] = {
+	 uint8_t key_value_32[] =
+	{
 		0xa0, 0xfd, 0xe5, 0xf9,
 		0x39, 0xad, 0x89, 0xc8,
 		0x22, 0xf9, 0x8e, 0x70,
@@ -518,20 +570,25 @@ void aes_test(void)
 		0x6f, 0x35, 0xdc, 0xa7,
 		0xfb, 0xb1, 0x54, 0xd7,
 		0xaf, 0x34, 0x17, 0xa3,
-		0xa9, 0x44, 0xff, 0xef };
+		0xa9, 0x44, 0xff, 0xef
+	};
 	
-	uint8_t in[] = {
+	uint8_t in[] = 
+	{
 		0x00, 0x11, 0x22, 0x33,
 		0x44, 0x55, 0x66, 0x77,
 		0x88, 0x99, 0xaa, 0xbb,
-		0xcc, 0xdd, 0xee, 0xff};
+		0xcc, 0xdd, 0xee, 0xff
+	};
 
 	uint8_t *key = NULL, *out	= NULL;
 		
 	int i;
 		
 	key = aes_create_key(key_value_32, sizeof(key_value_32)/sizeof(key_value_32[0]));
-	if(!key) {	
+		
+	if(!key) 
+	{	
 		printf("aes create key fail!\r\n");	
 		return;
 	}
@@ -539,7 +596,8 @@ void aes_test(void)
 	printf("aes create key success.\r\n");
 	out = aes_encode_packet(key, in, sizeof(in)/sizeof(in[0]));
 	
-	if(!out) {	
+	if(!out) 
+	{	
 		printf("aes encode fail!\r\n");
 		aes_destory_key(key);	
 		return;
@@ -547,7 +605,8 @@ void aes_test(void)
 	
 	printf("before encode:\r\n");
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) 
+	{
 		printf("%x %x %x %x \r\n", in[4*i+0], in[4*i+1], in[4*i+2], in[4*i+3]);
 	}
 
@@ -555,26 +614,31 @@ void aes_test(void)
 	
 	printf("aes encode success.\r\n");
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) 
+	{
 		printf("%x %x %x %x \r\n", out[4*i+0], out[4*i+1], out[4*i+2], out[4*i+3]);
 	}
 
 	printf("\r\n");	
 	
-	for(i=0; i<16; i++) {
+	for(i=0; i<16; i++) 
+	{
 		in[i] = out[i];
 	}
 	
 	out = aes_decode_packet(key, in, sizeof(in)/sizeof(in[0]));
 	
-	if(!out) {	
+	if(!out) 
+	{	
 		printf("aes decode fail!\r\n");
 		aes_destory_key(key);	
 		return;
 	} 
 	
 	printf("aes decode success.\r\n");
-	for (i = 0; i < 4; i++) {
+	
+	for (i = 0; i < 4; i++) 
+	{
 		printf("%x %x %x %x \r\n", out[4*i+0], out[4*i+1], out[4*i+2], out[4*i+3]);
 	}
 	

@@ -101,61 +101,84 @@ char devNum=MCU_NUM, session_begin=0, mTmodemTickCount=0,
 static char FileName[FILE_NAME_LENGTH], num_eot = 0, num_ca=0;
 static unsigned int packets_received = 0,  continuity=0, tmp0, tmp1, targetSector=0;	
 
- unsigned int Str2Int(unsigned char *inputstr, unsigned int *intnum)
+unsigned int Str2Int(unsigned char *inputstr, unsigned int *intnum)
 {
   unsigned int i = 0, res = 0;
   unsigned int val = 0;
 
-  if (inputstr[0] == '0' && (inputstr[1] == 'x' || inputstr[1] == 'X')) {
-    if (inputstr[2] == '\0') {
+  if (inputstr[0] == '0' && (inputstr[1] == 'x' || inputstr[1] == 'X')) 
+	{
+    if (inputstr[2] == '\0') 
+		{
       return 0;
     }
-    for (i = 2; i < 11; i++) {
-      if (inputstr[i] == '\0') {
+		
+    for (i = 2; i < 11; i++) 
+		{
+      if (inputstr[i] == '\0') 
+			{
         *intnum = val;
         /* return 1; */
         res = 1;
         break;
       }
-      if (ISVALIDHEX(inputstr[i])) {
+			
+      if (ISVALIDHEX(inputstr[i])) 
+			{
         val = (val << 4) + CONVERTHEX(inputstr[i]);
-      } else {
+      } 
+			else 
+			{
         /* Return 0, Invalid input */
         res = 0;
         break;
       }
     }
     /* Over 8 digit hex --invalid */
-    if (i >= 11) {
+    if (i >= 11) 
+		{
       res = 0;
     }
-  } else {
-    for (i = 0;i < 11;i++) {
-      if (inputstr[i] == '\0') {
+  } 
+	else 
+	{
+    for (i = 0;i < 11;i++) 
+		{
+      if (inputstr[i] == '\0') 
+			{
         *intnum = val;
         /* return 1 */
         res = 1;
         break;
-      } else if ((inputstr[i] == 'k' || inputstr[i] == 'K') && (i > 0)) {
+      } 
+			else if ((inputstr[i] == 'k' || inputstr[i] == 'K') && (i > 0)) 
+			{
         val = val << 10;
         *intnum = val;
         res = 1;
         break;
-      } else if ((inputstr[i] == 'm' || inputstr[i] == 'M') && (i > 0)) {
+      } 
+			else if ((inputstr[i] == 'm' || inputstr[i] == 'M') && (i > 0)) 
+			{
         val = val << 20;
         *intnum = val;
         res = 1;
         break;
-      } else if (ISVALIDDEC(inputstr[i])) {
+      } 
+			else if (ISVALIDDEC(inputstr[i])) 
+			{
         val = val * 10 + CONVERTDEC(inputstr[i]);
-      } else {
+      } 
+			else 
+			{
         /* return 0, Invalid input */
         res = 0;
         break;
       }
     }
     /* Over 10 digit decimal --invalid */
-    if (i >= 11) {
+    if (i >= 11) 
+		{
       res = 0;
     }
   }
@@ -270,6 +293,7 @@ unsigned int FLASH_If_Erase_Sector(unsigned int StartSector)
   /* Get the sector where start the user flash area */
   UserStartSector = GetSector(StartSector);
   printf("%s\r\n", __func__);
+	
   for(i = 0; i <= 10; i++)
   {
     /* Device voltage range supposed to be [2.7V to 3.6V], the operation will
@@ -348,42 +372,58 @@ void reset_tmodem_status(void)
 
 static void cac_CA_num(char *num_ca)
 {
-	if(*num_ca == 0) { 
+	if(*num_ca == 0) 
+	{ 
 		*num_ca = 1, 
 		tmp0 = continuity;
 		//printf("%s: CA!\r\n", __func__);
 	} 
-	if((continuity - tmp0) == 1) {
-		if(*num_ca == 1) *num_ca = 2;
+	
+	if((continuity - tmp0) == 1) 
+	{
+		if(*num_ca == 1) 
+			*num_ca = 2;
 		printf("%s: CA CA!\r\n", __func__);
-	} else if(session_begin) { 
+	} 
+	else if(session_begin) 
+	{ 
 		*num_ca = 1;
 		tmp0 = continuity;
 		//printf("%s: CA X X X CA !\r\n", __func__);
-	} else {
+	} 
+	else 
+	{
 		*num_ca = 0;
 	}	
 }
 
 static int cac_EOT_num(char *num_eot)
 {
-	if(*num_eot == 0) { 
+	if(*num_eot == 0) 
+	{ 
 		*num_eot = 1, 
 		tmp1 = continuity;
 		//printf("EOT!\r\n");
 		return UD3;
 	} 
-	if((continuity - tmp1) == 1) {
-		if(*num_eot == 1) *num_eot = 2;
+	
+	if((continuity - tmp1) == 1) 
+	{
+		if(*num_eot == 1) 
+			*num_eot = 2;
 		//printf("EOT EOT!\r\n");
 		packets_received = 0;
 		return UD4;						
-	} else if(session_begin) { 
+	} 
+	else if(session_begin) 
+	{ 
 		*num_eot = 1;
 		tmp1 = continuity;
 		//printf("EOT X X X EOT!\r\n");
 		return UD3;
-	} else {
+	} 
+	else 
+	{
 		*num_eot = 0;
 		return E3;
 	}	
@@ -438,6 +478,7 @@ static int phase_packet (const char *data, int len, int *length)
   
   *length = packet_size;
   continuity_add(session_begin);
+	
   return 0;
 }
 
@@ -489,9 +530,13 @@ static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char
 	unsigned char data[4], *p;
 	
 	p = md5;
-	if((devNum==MCU_NUM) || (devNum==SCU_NUM)) {
+	
+	if((devNum==MCU_NUM) || (devNum==SCU_NUM)) 
+	{
 		src = APPLICATION_ADDRESS + romSize;
-	} else {
+	} 
+	else 
+	{
 		src = BOOTLOADER_ADDRESS + romSize;
 	}	
 
@@ -542,15 +587,19 @@ int handle_update_bin(const char* packet_data, int len)
 							
 					/* Normal packet */
 				default:				
+					
 					if ((packet_data[PACKET_SEQNO_INDEX] & 0xff) != (packets_received & 0xff)) 
 					{
 						//Send_Byte(NAK);
 						printf("%s: packet_data[PACKET_SEQNO_INDEX](%x)!=(%x)packets_received\r\n", __func__, 
 								(packet_data[PACKET_SEQNO_INDEX] & 0xff), (packets_received & 0xff));
 						
-						if((packets_received & 0xff) - (packet_data[PACKET_SEQNO_INDEX] & 0xff) == 1) {
+						if((packets_received & 0xff) - (packet_data[PACKET_SEQNO_INDEX] & 0xff) == 1) 
+						{
 							return E3;
-						} else {
+						} 
+						else 
+						{
 							return E6;//ERR_PACKET_INDEX
 						}
 						//返回某个指令，让android停止更新。
@@ -565,13 +614,16 @@ int handle_update_bin(const char* packet_data, int len)
 								if((packet_data[PACKET_SEQNO_INDEX] & 0xff) != 0) return E6;//erro file info! packet num error
 								else ;//printf("%s: file info right.\r\n", __func__);
 								/* Filename packet has valid data */
-								for (i = 0, file_ptr = (unsigned char *)(packet_data + PACKET_HEADER); (*file_ptr != 0) && (i < FILE_NAME_LENGTH);) {
+								for (i = 0, file_ptr = (unsigned char *)(packet_data + PACKET_HEADER); (*file_ptr != 0) && (i < FILE_NAME_LENGTH);) 
+								{
 									FileName[i++] = *file_ptr++; 
 								}
 								
 								FileName[i++] = '\0';
 								printf("%s: FileName=%s\r\n", __func__, FileName);
-								for (i = 0, file_ptr ++; (*file_ptr != '\0') && (i < FILE_SIZE_LENGTH);) {
+								
+								for (i = 0, file_ptr ++; (*file_ptr != '\0') && (i < FILE_SIZE_LENGTH);) 
+								{
 									file_size[i++] = *file_ptr++;
 								}
 								file_size[i++] = '\0';
@@ -583,22 +635,27 @@ int handle_update_bin(const char* packet_data, int len)
 								printf("%s: file size = %d, USE_FLASH_SIZE=%d\r\n",__func__, size, USER_FLASH_SIZE);
 								/* Test the size of the image to be sent */
 								/* Image size is greater than Flash size */
-								if (size > (USER_FLASH_SIZE)) {
+								if (size > (USER_FLASH_SIZE)) 
+								{
 									/* End session */
 									printf("%s: file size > flash size\r\n", __func__);
 									return E4; //rom过大，falsh不够保存 ERR_SIZE_EXT
 								}
 								
 								printf("aes_key:\r\n[");
-								for (i = 0, file_ptr ++; i < sizeof(aes_key)/sizeof(aes_key[0]); i++) {
+								
+								for (i = 0, file_ptr ++; i < sizeof(aes_key)/sizeof(aes_key[0]); i++) 
+								{
 									aes_key[i] = *file_ptr++;
 									printf("%02x,", aes_key[i]);
 								}								
 								printf("]\r\n");
 								
 								if(key) { aes_destory_key(key); key = NULL;}
-								key = aes_create_key(aes_key, sizeof(aes_key)/sizeof(aes_key[0]));					
-								if(!key) return E2;
+								key = aes_create_key(aes_key, sizeof(aes_key)/sizeof(aes_key[0]));
+								
+								if(!key) 
+									return E2;
 								
 								/*在此处添加一个定时器，用于计算android 在4秒钟之内是否 还在继续发送rom的packet包，如果没有，调用reset_tmodem_status（）
 								同时用一个变量去标示此定时器, 与uart_command.c中的代码，共用定时器2   TIM2_IRQHandler*/
@@ -609,7 +666,7 @@ int handle_update_bin(const char* packet_data, int len)
 								packets_received ++;
 								
 								if(0X1234 != RTC_ReadBackupRegister(RTC_BKP_DR3) && 
-									(devNum == MCU_NUM || devNum == SCU_NUM)) 
+										(devNum == MCU_NUM || devNum == SCU_NUM)) 
 								{
 									/*如果bootloader已擦除， RTC_BKP_DR3为0X1234*/
 									printf("%s: start Erase Sector for download mcu or scu rom!\r\n", __func__);
@@ -641,16 +698,21 @@ int handle_update_bin(const char* packet_data, int len)
 								session_done = 1;
 								mTmodemTickCount = 0;
 								break;
-							} else {
+							} 
+							else 
+							{
 								return E2;//ERR_TRANSMISS_START
 							}
 						}
 					
 						/* Data packet */
-						else if(session_begin) {
-							if(packets_received==1) printf("%s: flash save addr:%x\r\n", __func__, flashdestination);
+						else if(session_begin) 
+						{
+							if(packets_received==1) 
+								printf("%s: flash save addr:%x\r\n", __func__, flashdestination);
 							//buf_ptr = (unsigned char*)(packet_data+PACKET_HEADER);
-							for(i=0; i< packet_length/AES_DECODE_LEN; i++) {
+							for(i=0; i< packet_length/AES_DECODE_LEN; i++) 
+							{
 								buf_ptr = aes_decode_packet(key, (uint8_t*)(packet_data+PACKET_HEADER+AES_DECODE_LEN*i), AES_DECODE_LEN);
 								
 								/*RSA 脱密后，  有效数据只有packet_length的一半*/
@@ -664,7 +726,9 @@ int handle_update_bin(const char* packet_data, int len)
 								ramsource = (unsigned int)buf_ptr;				
 								preFlashdestination = flashdestination;	
 								flashdestination = STMFLASH_Write(flashdestination, (uint32_t *) ramsource, AES_DECODE_LEN/4);
-								if(flashdestination == preFlashdestination + AES_DECODE_LEN) {
+								
+								if(flashdestination == preFlashdestination + AES_DECODE_LEN) 
+								{
 									//packets_received ++;
 									if(targetSector != GetSector(flashdestination))
 									{
@@ -675,7 +739,9 @@ int handle_update_bin(const char* packet_data, int len)
 									mTmodemTickCount = 0;
 									/**计数清0，在session_begin = 1的情况下，长时间不清0会导致 reset_tmodem_status被调用*/
 									//return UD2;					
-								} else {
+								} 
+								else 
+								{
 									/* End session */
 									printf("%s: STMFLASH_Write error\r\n", __func__);
 									printf("%s: des=0x%x, preDes=0x%x, packet_length=%d\r\n", __func__, flashdestination,
@@ -691,7 +757,9 @@ int handle_update_bin(const char* packet_data, int len)
 							//if(mRecvBytes >= romSize+LEN_MD5) read_md5_from_flash(devNum, romSize, md5);
 							packets_received ++;
 							return UD2;
-						}else {
+						}
+						else 
+						{
 							printf("session_begin=0, but android send rom data...\r\n");
 							return E2; //ERR_TRANSMISS_START
 						}
@@ -705,6 +773,7 @@ int handle_update_bin(const char* packet_data, int len)
 			//update mcu rom request
 			devNum = packet_data[5];
 			printf("%s: want to update dev num = %d\r\n", __func__, devNum);
+		
 		  if(devNum == MCU_NUM || devNum == SCU_NUM) 
 			{
 				/*把需要更新的rom数据保存到不同的位置，根据不同的设备rom!*/
@@ -741,7 +810,7 @@ int handle_update_bin(const char* packet_data, int len)
 			}
 		case -1:
 			/*传输非协议包 do nothing */
-		printf("%s: ERROR E0\r\n", __func__);
+			printf("%s: ERROR E0\r\n", __func__);
 			return E0;
 		
     default:
@@ -849,6 +918,7 @@ extern char mAndroidShutDownPending;
 void handle_tmodem_result(int result, const char* ack, int ack_len)
 {
 	int rand;
+	
 	switch(result)
 	{
 		//处理UPDATE 状态
@@ -871,13 +941,19 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 		case  UD5: report_tmodem_packet(LAST_ACK); report_tmodem_packet(UPDATE_DONE); 
 		/*可直接返回update done， 如果还没完成对flash数据的使用，android再次请求update时， 返回E7错误！*/
 							 printf("%s: UD5 devNum=%d\r\n", __func__, devNum);
-							 if(MCU_NUM == devNum) {
+		
+							 if(MCU_NUM == devNum) 
+							 {
 								 printf("mMcuJumpAppPending=1\r\n");
 								 mAndroidShutDownPending = 1;
 								 mMcuJumpAppPending=1; 
-							 } else if(SCU_NUM == devNum) {
+							 } 
+							 else if(SCU_NUM == devNum) 
+							 {
 								 handle_scu_rom_update();
-							 } else if(BOOTLOADER_NUM == devNum) {
+							 } 
+							 else if(BOOTLOADER_NUM == devNum) 
+							 {
 								 handle_booloader_rom_update();
 							 }
 							 break;//更新完成，请求重启！
@@ -885,18 +961,24 @@ void handle_tmodem_result(int result, const char* ack, int ack_len)
 		//处理错误信息
 		case 	E0:  printf("E0\r\n");
 		case  E1:  printf("E1\r\n");
-		case  E3:  report_tmodem_packet(ACK); printf("E3\r\n"); 
+		case  E3:  report_tmodem_packet(ACK); printf("E3\r\n");
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
 		case 	E2:  report_tmodem_packet(ERR_TRANSMISS_START); printf("E2\r\n"); 
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
-		case  E4:  report_tmodem_packet(ERR_SIZE_EXT);printf("E4\r\n"); 
+		case  E4:  report_tmodem_packet(ERR_SIZE_EXT);printf("E4\r\n");
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
 		case  E5:  report_tmodem_packet(ERR_FLASH_RW); printf("E5\r\n"); 
 							 check_if_need_to_erase(); 
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
 		case  E6:  report_tmodem_packet(ERR_PACKET_INDEX); printf("E6\r\n"); 
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
 		case  E7:  report_tmodem_packet(ERR_UPDATE_REQUEST); printf("E7\r\n"); 
+							 
 							 if(key) {aes_destory_key(key); key=NULL;} break;
 		
 		default:   if(key) {aes_destory_key(key); key=NULL;} break;	

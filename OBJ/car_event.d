@@ -1,7 +1,7 @@
 ..\obj\car_event.o: ..\PROTOCOL\car_event.c
 ..\obj\car_event.o: ..\PROTOCOL\car_event.h
-..\obj\car_event.o: ..\LIST\list.h
-..\obj\car_event.o: ..\MALLOC\malloc.h
+..\obj\car_event.o: ..\PROTOCOL\list.h
+..\obj\car_event.o: ..\PROTOCOL\malloc.h
 ..\obj\car_event.o: ..\USER\stm32f4xx.h
 ..\obj\car_event.o: ..\CORE\core_cm4.h
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
@@ -40,9 +40,9 @@
 ..\obj\car_event.o: ..\SYSTEM\usart\usart.h
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\car_event.o: ..\SYSTEM\sys\sys.h
-..\obj\car_event.o: ..\KFIFO\kfifo.h
+..\obj\car_event.o: ..\PROTOCOL\kfifo.h
 ..\obj\car_event.o: ..\PROTOCOL\uart_command.h
-..\obj\car_event.o: ..\KFIFO\kfifo.h
+..\obj\car_event.o: ..\PROTOCOL\kfifo.h
 ..\obj\car_event.o: ..\HARDWARE\CAN\can.h
 ..\obj\car_event.o: ..\PROTOCOL\car_event.h
 ..\obj\car_event.o: ..\HARDWARE\RTC\rtc.h

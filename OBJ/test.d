@@ -41,10 +41,10 @@
 ..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\test.o: ..\KFIFO\kfifo.h
 ..\obj\test.o: ..\PROTOCOL\uart_command.h
-..\obj\test.o: ..\KFIFO\kfifo.h
+..\obj\test.o: ..\PROTOCOL\kfifo.h
 ..\obj\test.o: ..\PROTOCOL\car_event.h
-..\obj\test.o: ..\LIST\list.h
-..\obj\test.o: ..\MALLOC\malloc.h
+..\obj\test.o: ..\PROTOCOL\list.h
+..\obj\test.o: ..\PROTOCOL\malloc.h
 ..\obj\test.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\test.o: ..\PROTOCOL\pending.h
 ..\obj\test.o: ..\HARDWARE\LED\led.h
@@ -69,3 +69,4 @@
 ..\obj\test.o: ..\USMART\usmart.h
 ..\obj\test.o: ..\USMART\usmart_str.h
 ..\obj\test.o: ..\HARDWARE\STMFLASH\stmflash.h
+..\obj\test.o: ..\MALLOC\malloc.h

@@ -1,6 +1,6 @@
 ..\obj\uart_command.o: ..\PROTOCOL\uart_command.c
 ..\obj\uart_command.o: ..\PROTOCOL\uart_command.h
-..\obj\uart_command.o: ..\KFIFO\kfifo.h
+..\obj\uart_command.o: ..\PROTOCOL\kfifo.h
 ..\obj\uart_command.o: ..\PROTOCOL\uart_command.h
 ..\obj\uart_command.o: ..\SYSTEM\usart\usart.h
 ..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
@@ -40,10 +40,10 @@
 ..\obj\uart_command.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\uart_command.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\uart_command.o: ..\SYSTEM\sys\sys.h
-..\obj\uart_command.o: ..\MALLOC\malloc.h
+..\obj\uart_command.o: ..\PROTOCOL\malloc.h
 ..\obj\uart_command.o: ..\HARDWARE\CAN\can.h
 ..\obj\uart_command.o: ..\PROTOCOL\car_event.h
-..\obj\uart_command.o: ..\LIST\list.h
+..\obj\uart_command.o: ..\PROTOCOL\list.h
 ..\obj\uart_command.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\uart_command.o: ..\PROTOCOL\pending.h
 ..\obj\uart_command.o: ..\HARDWARE\LED\led.h

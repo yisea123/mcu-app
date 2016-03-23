@@ -1,7 +1,7 @@
 ..\obj\kfifo.o: ..\KFIFO\kfifo.c
 ..\obj\kfifo.o: ..\KFIFO\kfifo.h
 ..\obj\kfifo.o: ..\PROTOCOL\uart_command.h
-..\obj\kfifo.o: ..\KFIFO\kfifo.h
+..\obj\kfifo.o: ..\PROTOCOL\kfifo.h
 ..\obj\kfifo.o: ..\SYSTEM\usart\usart.h
 ..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\kfifo.o: ..\USER\stm32f4xx_conf.h
@@ -42,8 +42,8 @@
 ..\obj\kfifo.o: ..\SYSTEM\sys\sys.h
 ..\obj\kfifo.o: ..\HARDWARE\CAN\can.h
 ..\obj\kfifo.o: ..\PROTOCOL\car_event.h
-..\obj\kfifo.o: ..\LIST\list.h
-..\obj\kfifo.o: ..\MALLOC\malloc.h
+..\obj\kfifo.o: ..\PROTOCOL\list.h
+..\obj\kfifo.o: ..\PROTOCOL\malloc.h
 ..\obj\kfifo.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\kfifo.o: ..\PROTOCOL\pending.h
 ..\obj\kfifo.o: ..\HARDWARE\LED\led.h
@@ -68,3 +68,4 @@
 ..\obj\kfifo.o: ..\USMART\usmart.h
 ..\obj\kfifo.o: ..\USMART\usmart_str.h
 ..\obj\kfifo.o: ..\HARDWARE\STMFLASH\stmflash.h
+..\obj\kfifo.o: ..\MALLOC\malloc.h

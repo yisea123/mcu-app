@@ -3,7 +3,7 @@
 ..\obj\aes.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 ..\obj\aes.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 ..\obj\aes.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
-..\obj\aes.o: ..\MALLOC\malloc.h
+..\obj\aes.o: ..\PROTOCOL\malloc.h
 ..\obj\aes.o: ..\USER\stm32f4xx.h
 ..\obj\aes.o: ..\CORE\core_cm4.h
 ..\obj\aes.o: ..\CORE\core_cmInstr.h

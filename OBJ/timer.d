@@ -37,14 +37,14 @@
 ..\obj\timer.o: ..\FWLIB\inc\stm32f4xx_dcmi.h
 ..\obj\timer.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\timer.o: ..\PROTOCOL\uart_command.h
-..\obj\timer.o: ..\KFIFO\kfifo.h
+..\obj\timer.o: ..\PROTOCOL\kfifo.h
 ..\obj\timer.o: ..\PROTOCOL\uart_command.h
 ..\obj\timer.o: ..\SYSTEM\usart\usart.h
 ..\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
-..\obj\timer.o: ..\MALLOC\malloc.h
+..\obj\timer.o: ..\PROTOCOL\malloc.h
 ..\obj\timer.o: ..\HARDWARE\CAN\can.h
 ..\obj\timer.o: ..\PROTOCOL\car_event.h
-..\obj\timer.o: ..\LIST\list.h
+..\obj\timer.o: ..\PROTOCOL\list.h
 ..\obj\timer.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\timer.o: ..\PROTOCOL\pending.h
 ..\obj\timer.o: ..\HARDWARE\LED\led.h

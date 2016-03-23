@@ -51,10 +51,12 @@ void Timer3_Init(u16 arr,u16 psc)
 void TIM5_IRQHandler(void)
 { 		    		  	
 	TIM_Cmd(TIM5, DISABLE);		
+	
 	if(TIM_GetITStatus(TIM5,TIM_IT_Update)==SET)//溢出中断
 	{
 		//printf("T5\r\n");
-		if(mAndroidPower != 0) power_android(0);
+		if(mAndroidPower != 0) 
+			power_android(0);
 	}			
 	
 	TIM_ClearITPendingBit(TIM5,TIM_IT_Update);  //清除中断标志位   
@@ -117,11 +119,14 @@ void TIM2_IRQHandler(void)
 		}
 		
 		/*40m*/
-		if(++lgperiod > 400) {//400 //10其中一个MCU的时钟比较慢！
+		if(++lgperiod > 400) 
+		{//400 //10其中一个MCU的时钟比较慢！
 			lgperiod = 0;
 			notify_longsung_period();
 		}
-		if(++countsecond > 10) {
+		
+		if(++countsecond > 10) 
+		{
 			countsecond = 0;
 			notify_longsung_second();
 		}
@@ -129,7 +134,6 @@ void TIM2_IRQHandler(void)
 		TIM_SetCounter(TIM2,0);		//清空定时器的CNT
 		TIM_SetAutoreload(TIM2,1000);//恢复原来的设置		  
 		//100ms中断一次		
-		
 	}			
 	
 	TIM_ClearITPendingBit(TIM2,TIM_IT_Update);  //清除中断标志位    
@@ -161,8 +165,7 @@ void Timer2_Init(u16 arr,u16 psc)
   NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;//抢占优先级2
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;//子优先级0
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;//使能外部中断通道
-  NVIC_Init(&NVIC_InitStructure);//配置NVIC
-	 							 
+  NVIC_Init(&NVIC_InitStructure);//配置NVIC 							 
 }
 
 

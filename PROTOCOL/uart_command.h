@@ -127,8 +127,9 @@ struct msg_periodic {
 	uint32_t update;
 	uint32_t *periodic; // 指向一个全局的变量，定时器定时 （每100ms）修改此变量的值。
 	u8 n;  //n*100ms send msg to can.
-	u8 is_zero;
+	u8 is_idle;
 	u8 send_status;
+	u8 try_count;
 	struct list_head list;
 };
 //return 0: do nothing

@@ -48,6 +48,7 @@ void cpuidGetId(u32 mcuID[])
 void report_debug_to_android(void)
 {
 	int tmp;
+	
 	for(tmp=0; tmp <14000; tmp++)
 	/*为了把所有的printf都上传到android*/
 	{
@@ -199,6 +200,7 @@ void handle_pending_work(void)
 		
 		/* 前8个BYTES 保存是否更新ROM的标志， 为0x5a5a， 0xa5a5时更新*/
 		flashdestination = STMFLASH_Write(flashdestination, &mUpdate, 1);
+		
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
 		{
 			;//printf("%s: STMFLASH_Write sector 3 mUpdate0 ok.\r\n", __func__);
@@ -212,6 +214,7 @@ void handle_pending_work(void)
 		mUpdate = 0xa5a5;
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, &mUpdate, 1);
+		
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
 		{
 			;//printf("%s: STMFLASH_Write sector 3 mUpdate1 ok.\r\n", __func__);
@@ -225,6 +228,7 @@ void handle_pending_work(void)
 		/* 接下来4个bytes 保存rom包的大小 */
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, &romSize, 1);
+		
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
 		{
 			;//printf("%s: STMFLASH_Write sector 3 rom_size = %d ok.\r\n", __func__, romSize);
@@ -239,6 +243,7 @@ void handle_pending_work(void)
 		tmp = APPLICATION_ADDRESS;
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, &tmp, 1);
+		
 		if(flashdestination == preFlashdestination+sizeof(unsigned int)) 
 		{
 			;//printf("%s: STMFLASH_Write sector 3 rom addr = %X ok.\r\n", __func__, tmp);
@@ -252,6 +257,7 @@ void handle_pending_work(void)
 		/*接下来的16个bytes，保存MD5值*/
 		preFlashdestination = flashdestination;
 		flashdestination = STMFLASH_Write(flashdestination, pData, 4);
+		
 		if(flashdestination == preFlashdestination + 4*sizeof(unsigned int)) 
 		{
 			;//printf("%s: STMFLASH_Write sector 3 md5 ok.\r\n", __func__);

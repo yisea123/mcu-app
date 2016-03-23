@@ -118,14 +118,16 @@ static void list_periodic_wait(struct msg_periodic *msg)
 		if(msg->id == msg_wait->id)
 		{
 			memcpy(msg->msg, msg_wait->msg, msg->len);
-			msg->is_zero = 0;
-			msg->send_status = 0;
-			
-			del_msg_from_list(msg_wait, &periodic_wait_head);
-//			printf("%s: del msg from periodic_wait_head id=0x%04x. [%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x]\r\n", 
-//								__func__, msg->id, 
-//								*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
-//								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));			
+			msg->is_idle = msg_wait->is_idle;
+			msg->send_status = msg_wait->send_status;
+			msg->try_count = msg_wait->try_count;
+	
+			list_del(pos);			
+//			del_msg_from_list(msg_wait, &periodic_wait_head);
+/*			printf("%s: del msg from periodic_wait_head id=0x%04x. [%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x]\r\n", 
+								__func__, msg->id, 
+								*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
+								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));		*/	
 			myfree(0, msg_wait->msg);
 			myfree(0, msg_wait);
 			fr++;fr++;
@@ -148,32 +150,39 @@ static void list_periodic_msg()
 	{
 		msg = (struct msg_periodic *)list_entry(pos, struct msg_periodic, list);
 		
-		if(*(msg->periodic) < msg->update)/*msg->periodic有可能溢出*/ 
-		{
-			msg->update = *(msg->periodic);
-		}
-		
 		if((*(msg->periodic)- msg->update) >= msg->n)/*周期由n指定，1为100MS*/
 		{
 			msg->update = *(msg->periodic);
 			
 			send_can_message(msg->canx, msg->id, msg->ide, msg->rtr, msg->msg, msg->len);
 			
-//			printf("%s: ******** id=0x%04x. [%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x]\r\n", 
-//								__func__, msg->id, 
-//								*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
-//								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));
+			if(!msg->is_idle || (msg->is_idle && !msg->send_status))
+				printf("%s: **** id=0x%03x: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x.\r\n", 
+								__func__, msg->id, 
+								*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
+								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));
 			
-			if(msg->is_zero)
+			if(msg->is_idle)
 			{
-				msg->send_status = 1;	
-				list_periodic_wait(msg);				
+				if(msg->try_count > 0)
+					msg->try_count--;
+
+				if(msg->try_count <= 0)
+				{
+					msg->send_status = 1;	
+					/*发完idle帧后，可以发数据帧*/
+					list_periodic_wait(msg);
+				}	
 			}
-			else if(!msg->is_zero && !msg->send_status)
+			else if(!msg->is_idle && !msg->send_status)
 			{
-				memset(msg->msg, 0, msg->len);
-				msg->is_zero = 1;
-				msg->send_status = 0;
+				if((--msg->try_count) <= 0)
+				{
+					/*发送完数据帧后，发idle帧*/
+					memset(msg->msg, 0, msg->len);
+					msg->is_idle = 1;
+					msg->send_status = 0;
+				}
 			}
 			
 			if(res);
@@ -549,7 +558,7 @@ static void on_can_event_msg(const char* cmd)
 {
 	u8 res, len, canx;
 	uint32_t id=0;
-	uint8_t  ide, rtr;
+	uint8_t  ide, rtr, trys;
 	
 	numRecvAndroidCanCmd++;
 	
@@ -559,8 +568,10 @@ static void on_can_event_msg(const char* cmd)
 	id |= ((*(cmd+CAN_ID_1)) << 16);
 	id |= ((*(cmd+CAN_ID_2)) << 8); 
 	id |=  (*(cmd+CAN_ID_3));	
-	ide = *(cmd+CAN_IDE); 
-	rtr = *(cmd+CAN_RTR);
+	trys = *(cmd+CAN_IDE); 
+	//rtr = *(cmd+CAN_RTR);
+	ide = 0;
+	rtr = 0;
 	
 	res = send_can_message(canx, id, ide, rtr, (u8 *)cmd+CAN_D0, len);
 
@@ -572,7 +583,7 @@ static void on_can_periodic_msg(const char* cmd)
 {
 	u8 len, canx, n;
 	uint32_t id=0;
-	uint8_t  ide, rtr;
+	uint8_t  ide, rtr, trys;
 	struct msg_periodic *msg = NULL;
 	
 	numRecvAndroidCanCmd++;
@@ -585,16 +596,23 @@ static void on_can_periodic_msg(const char* cmd)
 	id |= ((*(cmd+CAN_ID_1_P)) << 16);
 	id |= ((*(cmd+CAN_ID_2_P)) << 8); 
 	id |=  (*(cmd+CAN_ID_3_P));		
-	ide = *(cmd+CAN_IDE_P); 
-	rtr = *(cmd+CAN_RTR_P);	
+	trys = *(cmd+CAN_IDE_P); 
+	//rtr = *(cmd+CAN_RTR_P);	
 
+	ide = 0;
+	rtr = 0;
+	
+	if(trys <= 0)
+		trys = 1;
+	
 	if(len != CAN_DATA_VALUE_LEN)
 	{
-		printf("%s: ERROR CAN DATA VALUE LEN!\r\n", __func__);
+		printf("%s: ERROR CAN DATA VALUE LEN! trys=%d\r\n", __func__, trys);
 	}
 	else 
 	{
-		printf("%s: ########## id=0x%04x. [%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x] ma=%ld, fr=%ld\r\n", __func__, id, 
+		printf("%s: ### trys=%d, id=0x%04x: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x. ma=%ld, fr=%ld\r\n", 
+							__func__, trys, id, 
 							*(cmd+CAN_D0_P),*(cmd+CAN_D0_P+1),*(cmd+CAN_D0_P+2),*(cmd+CAN_D0_P+3),
 							*(cmd+CAN_D0_P+4),*(cmd+CAN_D0_P+5),*(cmd+CAN_D0_P+6),*(cmd+CAN_D0_P+7), ma, fr);
 	}		
@@ -603,12 +621,13 @@ static void on_can_periodic_msg(const char* cmd)
 	/*链表已经有此ID的消息*/	
 	if(msg != NULL) 
 	{
-		/*是否已经发送过*/
-		if(msg->is_zero && msg->send_status)
+		/*是否已经发送过 idle 帧， 两消息帧之间至少要有一帧 idle帧*/
+		if(msg->is_idle && msg->send_status)
 		{
 			memcpy(msg->msg, cmd+CAN_D0_P, len);
-			//printf("%s: zero is sended, copy to msg....\r\n", __func__);
-			msg->is_zero = 0;
+			/*printf("%s: zero is sended, copy to msg....\r\n", __func__);*/
+			msg->try_count = trys;
+			msg->is_idle = 0;
 			msg->send_status = 0;
 		}
 		else
@@ -618,6 +637,7 @@ static void on_can_periodic_msg(const char* cmd)
 			if(msg_wait)
 			{
 				ma++;ma++;
+				msg_wait->try_count = trys;
 				msg_wait->len = len; 
 				msg_wait->id = id; 
 				msg_wait->canx = canx;
@@ -626,12 +646,12 @@ static void on_can_periodic_msg(const char* cmd)
 				msg_wait->periodic = &periodicNum;
 				msg_wait->update = periodicNum; 
 				msg_wait->n = n;
-				msg_wait->is_zero = 0;
+				msg_wait->is_idle = 0;
 				msg_wait->send_status = 0;
 				memcpy(msg_wait->msg, cmd+CAN_D0_P, len);
 				
 				add_msg_to_list(msg_wait, &periodic_wait_head);
-				//printf("%s: add msg to periodic_wait_head\r\n", __func__);							
+				/*printf("%s: add msg to periodic_wait_head\r\n", __func__);*/							
 			}							
 		}
 	} 
@@ -643,10 +663,13 @@ static void on_can_periodic_msg(const char* cmd)
 		msg  = malloc_message(len);
 		msg0 = malloc_message(len);
 		
+		/*send after zero message.*/
 		if(msg)
 		{
 			ma++;ma++;
+			/*idle 帧的数据都是0*/
 			memcpy(msg->msg, cmd+CAN_D0_P, len);
+			msg->try_count = trys;
 			msg->len = len; 
 			msg->id = id; 
 			msg->canx = canx;
@@ -655,16 +678,18 @@ static void on_can_periodic_msg(const char* cmd)
 			msg->periodic = &periodicNum;
 			msg->update = periodicNum; 
 			msg->n = n;
-			msg->is_zero = 0;
+			msg->is_idle = 0;
 			msg->send_status = 0;
 			
 			add_msg_to_list(msg, &periodic_wait_head);
-			//printf("%s: add msg to periodic_wait_head\r\n", __func__);
+			/*printf("%s: add msg to periodic_wait_head\r\n", __func__);*/
 		}
 		
+		/*zero message for first*/
 		if(msg0)
 		{
 			memset(msg0->msg, 0, len);
+			msg0->try_count = 2;
 			msg0->len = len; 
 			msg0->id = id; 
 			msg0->canx = canx;
@@ -673,11 +698,11 @@ static void on_can_periodic_msg(const char* cmd)
 			msg0->periodic = &periodicNum;
 			msg0->update = periodicNum; 
 			msg0->n = n; /*n*100ms send one package*/
-			msg0->is_zero = 1;
+			msg0->is_idle = 1;
 			msg0->send_status = 0;
 			
 			add_msg_to_list(msg0, &periodic_head);
-			//printf("%s: add zero to periodic_head\r\n", __func__);					
+			/*printf("%s: add zero to periodic_head\r\n", __func__);*/					
 		}
 	}			
 }
@@ -711,12 +736,11 @@ static void on_rtc_event(const char* cmd)
 			timeData[8] = mTime.RTC_H12;
 			len = 9;
 			report_rtc_msg(timeData, len);
-			/*
-			printf("%02d-%02d-%02d [WEEK=%d]\r\n", mDate.RTC_Year, mDate.RTC_Month,
+		/*printf("%02d-%02d-%02d [WEEK=%d]\r\n", mDate.RTC_Year, mDate.RTC_Month,
 							mDate.RTC_Date, mDate.RTC_WeekDay);
 			printf("%02d:%02d:%02d [%s]\r\n", mTime.RTC_Hours, mTime.RTC_Minutes,
-				mTime.RTC_Seconds, mTime.RTC_H12==RTC_H12_AM?"AM":"PM");						
-			*/
+				mTime.RTC_Seconds, mTime.RTC_H12==RTC_H12_AM?"AM":"PM");*/						
+			
 			break;
 		
 		case 0x02:
@@ -826,7 +850,8 @@ android系统下发的周期性命令包
 
 0xaa 0xbb len mCmd d0~d3(id) ide rtr data0 data1 ... check01 check02
 ***************************************************************/
-	
+
+//出于can数据发送的需求，ide作为周期性数据的连续发送个数， 0<n<255
 int do_uart_cmd(int result, const char* cmd, int cmd_len)
 {
 	u8 mCmd;

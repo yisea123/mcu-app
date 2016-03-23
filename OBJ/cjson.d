@@ -7,7 +7,7 @@
 ..\obj\cjson.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\cjson.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\cjson.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
-..\obj\cjson.o: ..\MALLOC\malloc.h
+..\obj\cjson.o: ..\PROTOCOL\malloc.h
 ..\obj\cjson.o: ..\USER\stm32f4xx.h
 ..\obj\cjson.o: ..\CORE\core_cm4.h
 ..\obj\cjson.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h

@@ -74,7 +74,7 @@ void Decode(UINT4 *output, unsigned char *input, unsigned int len)
   
   for(i = 0, j = 0; j < len; i++, j += 4)  
     output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |  
-  (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);  
+			(((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);  
 }  
 
 void MD5Transform(UINT4 state[4], unsigned char block[64])  
@@ -239,7 +239,8 @@ int check_md5(u32 src, unsigned int binSize, unsigned char* md5)
 			calMD5[0], calMD5[1],calMD5[2], calMD5[3],calMD5[4], calMD5[5],calMD5[6], calMD5[7],
 			calMD5[8], calMD5[9],calMD5[10], calMD5[11],calMD5[12], calMD5[13],calMD5[14], calMD5[15]); 
 	
-	for(i=0; i<LEN_MD5; i++) {
+	for(i=0; i<LEN_MD5; i++) 
+	{
 		if(md5[i] != calMD5[i])
 			result = -1;
 	}
