@@ -10,11 +10,16 @@ void report_mcu_software_version(void);
 void report_mcu_id_version(void);
 
 long numRecvAndroidCanCmd = 0;
-uint32_t periodicNum = 0;
+
+static uint32_t periodicNum = 0;
+static uint32_t mEventCount	 = 0;
+static TIMER2* mEventTimer = NULL;
+
 char mReportMcuStatusPending=0;
+
 struct list_head periodic_head;
+struct list_head mEventHead;
 struct list_head periodic_wait_head;
-static long ma=0, fr=0;
 
 static const unsigned short crctable[256] =
 {
@@ -66,10 +71,9 @@ static u8 send_can_message(u8 canx, uint32_t id, uint8_t ide, uint8_t rtr, u8* m
 	return res;
 }
 
-static void add_msg_to_list(struct msg_periodic *msg, struct list_head *head)
+static void add_msg_to_list(struct list_head* list, struct list_head *head)
 {
-	if(msg)
-		list_add_tail(&msg->list, head);
+	list_add_tail(list, head);
 }
 
 static void del_msg_from_list(struct msg_periodic *msg, struct list_head *head)
@@ -130,7 +134,6 @@ static void list_periodic_wait(struct msg_periodic *msg)
 								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));		*/	
 			myfree(0, msg_wait->msg);
 			myfree(0, msg_wait);
-			fr++;fr++;
 			break;
 		}
 	}	
@@ -150,7 +153,7 @@ static void list_periodic_msg()
 	{
 		msg = (struct msg_periodic *)list_entry(pos, struct msg_periodic, list);
 		
-		if((*(msg->periodic)- msg->update) >= msg->n)/*周期由n指定，1为100MS*/
+		if((*(msg->periodic)- msg->update) >= msg->n)
 		{
 			msg->update = *(msg->periodic);
 			
@@ -170,7 +173,6 @@ static void list_periodic_msg()
 				if(msg->try_count <= 0)
 				{
 					msg->send_status = 1;	
-					/*发完idle帧后，可以发数据帧*/
 					list_periodic_wait(msg);
 				}	
 			}
@@ -178,7 +180,6 @@ static void list_periodic_msg()
 			{
 				if((--msg->try_count) <= 0)
 				{
-					/*发送完数据帧后，发idle帧*/
 					memset(msg->msg, 0, msg->len);
 					msg->is_idle = 1;
 					msg->send_status = 0;
@@ -187,9 +188,93 @@ static void list_periodic_msg()
 			
 			if(res);
 			else ;
-			/*printf("CAN1_Send_Msg2 error!\r\n");*/
 		}	
 	}	
+}
+
+static void list_periodic_message()
+{
+	u8 res;
+	struct msg_periodic *msg = NULL;
+	struct list_head *pos = NULL, *n = NULL;
+	
+	list_for_each_safe(pos, n, &periodic_head)
+	{
+		msg = (struct msg_periodic *)list_entry(pos, struct msg_periodic, list);
+		
+		if((*(msg->periodic)- msg->update) >= msg->n)
+		{
+			msg->update = *(msg->periodic);
+			send_can_message(msg->canx, msg->id, msg->ide, msg->rtr, msg->msg, msg->len);
+			
+			if(!msg->send_status)
+				printf("%s: **** id=0x%03x: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x.\r\n", 
+								__func__, msg->id, 
+								*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
+								*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));			
+			msg->send_status = 1;
+			
+			if(res);
+			else ;
+		}	
+	}	
+}
+
+/*base on xiaopeng DOC*/
+static void list_event_message(void)
+{
+	u8 res;
+	MSGEVENT* msg = NULL;	
+	unsigned int total = 0;
+	struct list_head *pos = NULL, *n = NULL;
+	
+	list_for_each_safe(pos, n, &mEventHead)
+	{
+		total++;
+		msg = (MSGEVENT *)list_entry(pos, MSGEVENT, list);
+		
+		if((*(msg->pEventCount)- msg->update) >= msg->n)
+		{
+			msg->update = *(msg->pEventCount);
+			
+			if(msg->step == STEP0)
+			{
+					msg->step = STEP1;
+					msg->n = 2;/*call in 40ms later*/
+					msg->trys--;
+					send_can_message(msg->canx, msg->id, msg->ide, msg->rtr, msg->msg, msg->len);
+				
+					/*printf must after send_can_message for fix bug. because cost 6ms to printf*/
+					printf("%s: ****trys(%02d) [0x%03x]: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x.\r\n", 
+									__func__, msg->trys, msg->id, 
+									*(msg->msg),*(msg->msg+1),*(msg->msg+2),*(msg->msg+3),
+									*(msg->msg+4),*(msg->msg+5),*(msg->msg+6),*(msg->msg+7));					
+					continue;
+			}
+			else
+			{
+				if(msg->trys > 0)
+				{		
+						msg->trys--;
+						send_can_message(msg->canx, msg->id, msg->ide, msg->rtr, msg->msg, msg->len);
+				}
+				else
+				{
+						list_del(pos);			
+						myfree(0, msg);	
+				}
+			}
+		}	
+	}
+
+	/*if there haves not Event Message, delete timer.*/	
+  if(mEventTimer && total == 0)
+	{
+		 if(unregister_timer2(mEventTimer) == 0)
+		 {
+				mEventTimer = NULL;
+		 }
+	}
 }
 
 /*******************************************************************
@@ -214,7 +299,25 @@ static struct msg_periodic * check_periodic_msg(uint32_t id, struct list_head *h
 	return NULL;
 }
 
-static struct msg_periodic* malloc_message(int len)
+static MSGEVENT * check_event_msg(uint32_t id, struct list_head *head)
+{
+	MSGEVENT *msg = NULL;
+	struct list_head *pos=NULL, *n=NULL;
+	
+	list_for_each_safe(pos, n, head) 
+	{
+		msg = (MSGEVENT *)list_entry(pos, MSGEVENT, list);
+		
+		if(msg->id == id) 
+		{
+			return msg;
+		}
+	}		
+	
+	return NULL;
+}
+
+static struct msg_periodic* malloc_periodic_message(int len)
 {
 	struct msg_periodic* msg = NULL;
 	
@@ -236,6 +339,19 @@ static struct msg_periodic* malloc_message(int len)
 		} 
 	}
 
+	return msg;
+}
+
+static MSGEVENT* malloc_event_message(void)
+{
+	MSGEVENT* msg = NULL;
+	
+	msg = (MSGEVENT *)mymalloc(0, sizeof(MSGEVENT));
+
+	if(msg == NULL)
+	{
+		printf("%s: MSGEVENT mymalloc fail.\r\n", __func__);
+	}
 	return msg;
 }
 
@@ -501,7 +617,6 @@ void parse_cmd_ack(const char* ack, int ack_len)
 
 	if(event_sending != NULL) 
 	{
-#if ACK2	
 		/*0xaa 0xbb 0x03(LEN) 0x80(CMD) c1 c2 check1 check2 -> ack message*/
 		if(ack_len == ACK_LEN) 
 		{
@@ -526,10 +641,7 @@ void parse_cmd_ack(const char* ack, int ack_len)
 		else 
 		{
 			printf("%s->ack_len(%d) != ACK_LEN\r\n", __func__, ack_len);
-		}		
-#else
-			
-#endif				
+		}			
 	}	
 	else 
 	{
@@ -554,8 +666,20 @@ void send_cmd_ack(const char* ack, int ack_len)
 	}			
 }
 
-static void on_can_event_msg(const char* cmd)
+static void update_eventcount_timer(void *argc)
 {
+		uint32_t *mEventCount = (uint32_t*)argc;
+		
+		(*mEventCount)++;
+		//++mEventCount;
+		
+		if((*mEventCount%1000) == 0)
+			printf("%s: *** mEventCount=%d\r\n", __func__, *mEventCount);
+}
+
+static void can_event_message(const char* cmd)
+{
+	MSGEVENT *msg = NULL;
 	u8 res, len, canx;
 	uint32_t id=0;
 	uint8_t  ide, rtr, trys;
@@ -569,17 +693,47 @@ static void on_can_event_msg(const char* cmd)
 	id |= ((*(cmd+CAN_ID_2)) << 8); 
 	id |=  (*(cmd+CAN_ID_3));	
 	trys = *(cmd+CAN_IDE); 
-	//rtr = *(cmd+CAN_RTR);
 	ide = 0;
 	rtr = 0;
 	
-	res = send_can_message(canx, id, ide, rtr, (u8 *)cmd+CAN_D0, len);
-
-	if(res);
-	else ;			
+	if(sizeof(msg->msg) != len)
+		printf("%s: len = %d error.\r\n", __func__, len);
+	
+	msg = check_event_msg(id, &mEventHead);
+	
+	if(msg)
+	{
+		memcpy(msg->msg, cmd+CAN_D0, len);
+		msg->trys = EVENT_MSG_TRYS;//4;
+	} 
+	else
+	{
+		msg = malloc_event_message();
+		
+		if(msg)
+		{
+			msg->canx = canx;
+			msg->id = id;
+			msg->ide = ide;
+			msg->rtr = rtr;
+			memcpy(msg->msg, cmd+CAN_D0, sizeof(msg->msg));
+			msg->len = len;
+			msg->step = STEP0;
+			msg->pEventCount = &mEventCount;
+			msg->update = mEventCount;
+			msg->n = 1; /*call in 1ms~20ms most*/
+			msg->trys = EVENT_MSG_TRYS;//4;//trys;
+			add_msg_to_list(&(msg->list), &mEventHead);
+		}
+	}
+	
+	if(mEventTimer == NULL)
+	{
+		mEventTimer = register_timer2("event_can", TIMER2PERIOD, update_eventcount_timer, REPEAT, &mEventCount);		
+	}			
 }
 
-static void on_can_periodic_msg(const char* cmd)
+static void can_periodic_message(const char* cmd)
 {
 	u8 len, canx, n;
 	uint32_t id=0;
@@ -597,8 +751,6 @@ static void on_can_periodic_msg(const char* cmd)
 	id |= ((*(cmd+CAN_ID_2_P)) << 8); 
 	id |=  (*(cmd+CAN_ID_3_P));		
 	trys = *(cmd+CAN_IDE_P); 
-	//rtr = *(cmd+CAN_RTR_P);	
-
 	ide = 0;
 	rtr = 0;
 	
@@ -608,66 +760,29 @@ static void on_can_periodic_msg(const char* cmd)
 	if(len != CAN_DATA_VALUE_LEN)
 	{
 		printf("%s: ERROR CAN DATA VALUE LEN! trys=%d\r\n", __func__, trys);
+		return;
 	}
 	else 
 	{
-		printf("%s: ### trys=%d, id=0x%04x: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x. ma=%ld, fr=%ld\r\n", 
+		printf("%s: ### trys=%d, id=0x%04x: %02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x.\r\n", 
 							__func__, trys, id, 
-							*(cmd+CAN_D0_P),*(cmd+CAN_D0_P+1),*(cmd+CAN_D0_P+2),*(cmd+CAN_D0_P+3),
-							*(cmd+CAN_D0_P+4),*(cmd+CAN_D0_P+5),*(cmd+CAN_D0_P+6),*(cmd+CAN_D0_P+7), ma, fr);
+							*(cmd+CAN_D0_P),*(cmd+CAN_D1_P),*(cmd+CAN_D2_P),*(cmd+CAN_D3_P),
+							*(cmd+CAN_D4_P),*(cmd+CAN_D5_P),*(cmd+CAN_D6_P),*(cmd+CAN_D7_P));
 	}		
 	msg = check_periodic_msg(id, &periodic_head);
 
-	/*链表已经有此ID的消息*/	
 	if(msg != NULL) 
 	{
-		/*是否已经发送过 idle 帧， 两消息帧之间至少要有一帧 idle帧*/
-		if(msg->is_idle && msg->send_status)
-		{
-			memcpy(msg->msg, cmd+CAN_D0_P, len);
-			/*printf("%s: zero is sended, copy to msg....\r\n", __func__);*/
-			msg->try_count = trys;
-			msg->is_idle = 0;
-			msg->send_status = 0;
-		}
-		else
-		{
-			struct msg_periodic* msg_wait = malloc_message(len);
-			
-			if(msg_wait)
-			{
-				ma++;ma++;
-				msg_wait->try_count = trys;
-				msg_wait->len = len; 
-				msg_wait->id = id; 
-				msg_wait->canx = canx;
-				msg_wait->ide = ide; 
-				msg_wait->rtr = rtr; 
-				msg_wait->periodic = &periodicNum;
-				msg_wait->update = periodicNum; 
-				msg_wait->n = n;
-				msg_wait->is_idle = 0;
-				msg_wait->send_status = 0;
-				memcpy(msg_wait->msg, cmd+CAN_D0_P, len);
-				
-				add_msg_to_list(msg_wait, &periodic_wait_head);
-				/*printf("%s: add msg to periodic_wait_head\r\n", __func__);*/							
-			}							
-		}
+		memcpy(msg->msg, cmd+CAN_D0_P, len);
+		msg->try_count = trys;
+		msg->send_status = 0;
 	} 
-	/*链表无此ID的消息*/
 	else 
 	{
-		struct msg_periodic *msg0 = NULL;
+		msg  = malloc_periodic_message(len);
 		
-		msg  = malloc_message(len);
-		msg0 = malloc_message(len);
-		
-		/*send after zero message.*/
 		if(msg)
 		{
-			ma++;ma++;
-			/*idle 帧的数据都是0*/
 			memcpy(msg->msg, cmd+CAN_D0_P, len);
 			msg->try_count = trys;
 			msg->len = len; 
@@ -678,31 +793,9 @@ static void on_can_periodic_msg(const char* cmd)
 			msg->periodic = &periodicNum;
 			msg->update = periodicNum; 
 			msg->n = n;
-			msg->is_idle = 0;
 			msg->send_status = 0;
 			
-			add_msg_to_list(msg, &periodic_wait_head);
-			/*printf("%s: add msg to periodic_wait_head\r\n", __func__);*/
-		}
-		
-		/*zero message for first*/
-		if(msg0)
-		{
-			memset(msg0->msg, 0, len);
-			msg0->try_count = 2;
-			msg0->len = len; 
-			msg0->id = id; 
-			msg0->canx = canx;
-			msg0->ide = ide; 
-			msg0->rtr = rtr; 
-			msg0->periodic = &periodicNum;
-			msg0->update = periodicNum; 
-			msg0->n = n; /*n*100ms send one package*/
-			msg0->is_idle = 1;
-			msg0->send_status = 0;
-			
-			add_msg_to_list(msg0, &periodic_head);
-			/*printf("%s: add zero to periodic_head\r\n", __func__);*/					
+			add_msg_to_list(&(msg->list), &periodic_head);
 		}
 	}			
 }
@@ -861,11 +954,11 @@ int do_uart_cmd(int result, const char* cmd, int cmd_len)
 	switch(mCmd)
 	{
 		case CMD_CAN_EVENT:
-			on_can_event_msg(cmd);
+			can_event_message(cmd);
 			break;
 				
 		case CMD_CAN_PERIODIC:
-			on_can_periodic_msg(cmd);
+			can_periodic_message(cmd);
 			break;
 		
 		case CMD_RTC:
@@ -916,7 +1009,9 @@ void handle_downstream_work(char* cmd, char *ack)
 	}
 	
 	/*处理定期下发到can的链表  periodic head.*/
-	list_periodic_msg();
+	//list_periodic_msg();
+	list_periodic_message();
+	list_event_message();
 }
 
 static int report_rtc_msg(unsigned char *msg, unsigned char len)
@@ -967,7 +1062,7 @@ static int report_mcu_version_msg(unsigned char *msg, unsigned char len)
   return 0;	
 }
 
-const char mSoftVer[] = {'X', 'i', 'a', 'o', 'P','e', 'n', 'g', ' ', '2', '0', '1', '5', '-', '0', '1', '-', '0', '6'};
+const char mSoftVer[] = {'X', 'i', 'a', 'o', 'P','e', 'n', 'g', ' ', '2', '0', '1', '6', '-', '0', '4', '-', '2', '5'};
 	
 void report_mcu_software_version(void)
 {
@@ -1000,7 +1095,27 @@ void report_mcu_id_version(void)
 	report_mcu_version_msg(cmd, 13);
 }
 
+/*need to invoved in every 100ms.*/
+static void update_periodicnum_timer(void *argc)
+{
+		uint32_t *periodicNum = (uint32_t *) argc;
+		
+		(*periodicNum)++;
+		
+		/*if((*periodicNum%100) == 0)
+			printf("%s: *** periodicNum=%d\r\n", __func__, *periodicNum);
+		*/
+}
 
+void uart_command_init(void)
+{
+		INIT_LIST_HEAD(&mEventHead);
+		INIT_LIST_HEAD(&periodic_head);   	
+		/*用于存放要下发的事件，事件从uart6发过来，下发到can上，为固定周期事件。*/	
+	
+		/*register_timer2("uart_command0", TIMER2PERIOD, eventcount_update_timer, REPEAT);*/
+		register_timer2("periodic_num", TIMER2SECOND/10, update_periodicnum_timer, REPEAT, &periodicNum);
+}
 
 
 

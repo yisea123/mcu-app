@@ -68,4 +68,5 @@
 ..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\ioctr.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\ioctr.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\ioctr.o: ..\PROTOCOL\timer.h

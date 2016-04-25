@@ -26,6 +26,7 @@ extern void del_event_from_list(struct car_event *event);
 //extern struct car_event* check_event(struct car_event *event);
 extern struct car_event* get_event_from_list(void);
 extern int list_event(void);
+extern void car_event_init(void);
 //extern int parse_can1_fifo(void *fifo, char cmd[], int *cmd_len);
 //extern int parse_can2_fifo(void *fifo, char cmd[], int *cmd_len);
 extern void make_event_to_list(const char *cmd, int cmd_len, int result, char hasId);

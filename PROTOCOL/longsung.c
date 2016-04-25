@@ -5,6 +5,7 @@
 
 static uint32_t uartlost = 0;
 static unsigned char tcp_read[750];
+static TIMER2 *timer1 = NULL, *timer2 = NULL; 
 DevStatus dev[1];
 static UartReader reader[1];
 mqtt_dev_status mqtt_dev[1];
@@ -1599,27 +1600,35 @@ void handle_longsung_uart_msg( void )
 	}
 }
 
-void notify_longsung_period(void)
+/*need to invoved in every 40s.*/
+void notify_longsung_period(void *argc)
 {	
+		DevStatus *dev = (DevStatus *)argc;
+		//printf("%s in 40 second.\r\n", __func__);
 		dev->period_tick = 1;
 }
 
-void notify_longsung_second(void)
+/*need to invoved in every 1s.*/
+void notify_longsung_second(void *argc)
 {	
 	static int i = 0;
+	DevStatus *dev = (DevStatus *)argc;
+	mqtt_dev_status *mqtt = dev->mqtt_dev;
 	
+	//printf("%s\r\n", __func__);	
 	dev->sys_time++;
-	if(dev->sys_time%360==0 && mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT)
+	
+	if(dev->sys_time%360==0 && mqtt->connect_status == MQTT_DEV_STATUS_CONNECT)
 	{
-		memset(mqtt_dev->mqtt_state->jsonbuff, '\0', sizeof(mqtt_dev->mqtt_state->jsonbuff));
-		sprintf(mqtt_dev->mqtt_state->jsonbuff, "IN360s: time:[%llds]. mqtt_bytes=%lld, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
+		memset(mqtt->mqtt_state->jsonbuff, '\0', sizeof(mqtt->mqtt_state->jsonbuff));
+		sprintf(mqtt->mqtt_state->jsonbuff, "IN360s: time:[%llds]. mqtt_bytes=%lld, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
 		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d", 
-					dev->sys_time, mqtt_dev->recv_bytes, uart3_fifo->lostBytes,mqtt_dev->reset_count,mqtt_dev->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
-					mqtt_dev->in_waitting,mqtt_dev->in_pos,dev->malloc_count,dev->free_count,dev->simcard_type, 
+					dev->sys_time, mqtt->recv_bytes, uart3_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
+					mqtt->in_waitting, mqtt->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
 					get_at_command_count(&dev->atcmd_head));		
 		
-		mqtt_publish_test(i, "/xp/publish", mqtt_dev->mqtt_state->jsonbuff);
+		mqtt_publish_test(i, "/xp/publish", mqtt->mqtt_state->jsonbuff);
 		if(++i > 2) i = 0;
 	}
 
@@ -2785,6 +2794,10 @@ void handle_longsung_setting(void)
 		/*android¹Ø±Õ£¬ÖØÆô4GÄ£¿é*/
 		if(dev->reset_request) 
 		{	
+			/*register timer when android power down.*/
+			if(timer1 == NULL)
+				timer1 = register_timer2("longsung_40s", 40*TIMER2SECOND,  notify_longsung_period, REPEAT, dev);	
+		
 			init_longsung_status(0);
 			init_mqtt_dev(mqtt_dev);					
 			//reset 4g modules by gpio
@@ -2855,6 +2868,12 @@ void handle_longsung_setting(void)
 	{
 		if(!dev->is_inited)
 		{
+			if(timer1)
+			{
+				if(unregister_timer2(timer1) == 0)
+					timer1 = NULL;
+			}
+	
 			clean_mqtt_connect();
 					
 			if((--dev->clean_interval) > 0) 
@@ -2892,6 +2911,11 @@ void longsung_init()
 	dev->sys_time = 0;
 	uartlost = uart3_fifo->lostBytes;
 	mqtt_dev->recv_bytes = 0;
+	dev->mqtt_dev = mqtt_dev;
+	mqtt_dev->pDev = dev;
+	
+	if(timer2 == NULL)
+		timer2 = register_timer2("longsung_1s", TIMER2SECOND,  notify_longsung_second, REPEAT, dev);			
 }
 
 

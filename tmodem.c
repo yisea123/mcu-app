@@ -90,7 +90,6 @@
 																									UPDATE_DONE                            
 ***********************************************************************/
 
-static TIMER2* timer = NULL;
 static uint8_t *key = NULL;
 extern char mMcuJumpAppPending;
 static unsigned char aes_key[32];
@@ -101,8 +100,6 @@ char devNum=MCU_NUM, session_begin=0, mTmodemTickCount=0,
 
 static char FileName[FILE_NAME_LENGTH], num_eot = 0, num_ca=0;
 static unsigned int packets_received = 0,  continuity=0, tmp0, tmp1, targetSector=0;	
-
-static void tmodem_timer(void* argc);
 
 unsigned int Str2Int(unsigned char *inputstr, unsigned int *intnum)
 {
@@ -691,9 +688,6 @@ int handle_update_bin(const char* packet_data, int len)
 								}
 								
 								targetSector = GetSector(flashdestination);
-								
-								if(timer == NULL)
-									timer = register_timer2("tmodem_timer", TIMER2SECOND, tmodem_timer, REPEAT, &session_begin);
 								/*±ØÐë²ÁÐ´ÉÈÇøÎª0XFFFFFFFF*/
 								return UD1;
 							}     
@@ -828,18 +822,6 @@ int handle_update_bin(const char* packet_data, int len)
 	if (session_done != 0)
 	{
 		u32 src;
-		
-		if(timer)
-		{
-				if(unregister_timer2(timer) == 0)
-				{
-					timer = NULL;
-				}
-				else
-				{
-					printf("%s: fail to delete timer\r\n", __func__);
-				}
-		}
 		
 		read_md5_from_flash(devNum, romSize, tmodem_md5);
 		
@@ -1020,26 +1002,6 @@ void handle_booloader_rom_update(void)
 	init_bootloaderUpdateState(&mBootloaderUpdatePending, romSize, tmodem_md5);
 }
 
-/*need to invoved in every 1s.*/
-void tmodem_timer(void* argc)
-{
-		char *begin = (char *)argc;
-		
-		printf("%s\r\n", __func__);
-		
-		if(*begin)
-		{
-				if(++mTmodemTickCount > 6)
-				{
-						reset_tmodem_status();
-				}
-		}	
-}
-
-void tmodem_init(void)
-{
-		;//register_timer2("tmodem_timer", TIMER2SECOND, tmodem_timer, REPEAT, &session_begin);		
-}
 
 
 

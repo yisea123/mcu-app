@@ -622,6 +622,21 @@
               <FileType>1</FileType>
               <FilePath>..\PROTOCOL\pending.c</FilePath>
             </File>
+            <File>
+              <FileName>aes.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\aes.c</FilePath>
+            </File>
+            <File>
+              <FileName>mqtt_msg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\mqtt_msg.c</FilePath>
+            </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\cJSON.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -661,6 +676,11 @@
               <FileName>test.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\TEST\test.c</FilePath>
+            </File>
+            <File>
+              <FileName>jsontest.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\TEST\jsontest.c</FilePath>
             </File>
           </Files>
         </Group>

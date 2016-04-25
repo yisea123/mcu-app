@@ -142,7 +142,8 @@ void test_func(void)
 		//printf("%s: request update rom.bin.\r\n", __func__);
 		printf("%s:-\r\n", __func__);
 		rand = rand_count%5;
-		mPACKETSIZE = 64+rand*16;		
+		mPACKETSIZE = 64+rand*16;	
+		mPACKETSIZE=128;		
 		printf("rand=%d, mPACKETSIZE=%d\r\n", rand, mPACKETSIZE);
 		
 		report_tmodem_packet0(UPDATE, mPACKETSIZE);

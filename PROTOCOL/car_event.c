@@ -499,4 +499,23 @@ void handle_upstream_work(char *cmd1, char *cmd2)
 	list_event_to_android();
 }
 
+/*need to invoved in every 100ms.*/
+void car_event_timer(void *argc)
+{
+		struct car_event** event = (struct car_event**)(argc);
+
+		if(*event != NULL)
+			(*event)->tim_count++;		
+}
+
+void car_event_init(void)
+{
+		INIT_LIST_HEAD(&event_head);   
+		/*用于存放要的上报事件，事件从CAN总线上获得*/	
+	
+		register_timer2("car_event", TIMER2SECOND/10, car_event_timer, REPEAT, &event_sending);	
+}
+
+
+
 

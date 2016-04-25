@@ -98,6 +98,16 @@ void handle_powerup_android_request(void)
 	}	
 }
 
+void ioctr_timer(void *argc)
+{
+	char *mAndroidPower = (char *)argc;
+	
+	if(*mAndroidPower != 0) 
+		power_android(0);	
+
+	printf("%s: call in 2.2 seconds.\r\n", __func__);	
+}
+
 void handle_shutdown_android_request(void)
 {
 	char cmd[7];
@@ -119,7 +129,8 @@ void handle_shutdown_android_request(void)
 		make_event_to_list(cmd, 6, CAN_EVENT, 0);		
 		//插入关机命令
 		//如果关机命令在2.2秒内无作用，则强制断电。
-		Timer5_Init(22000, (u32)84*100-1); 
+		//Timer5_Init(22000, (u32)84*100-1);
+		register_timer2("ioctr_timer", (TIMER2SECOND/10)*22, ioctr_timer, REPEATNOT, &mAndroidPower);		
 	}		
 }
 

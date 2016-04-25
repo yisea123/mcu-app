@@ -25,7 +25,7 @@
 #define START_LOG   \
 printf(" \
 \r\n/******       MCU   -   START        ******/ \
-\r\n/***** LOADER FROM ANDROID RELEASE-15 *****/ \
+\r\n/***** LOADER FROM ANDROID RELEASE-19 *****/ \
 \r\n/*****  WAIT TO UPDATE FROM ANDROID *******/ \
 \r\n\r\n");
 
@@ -48,7 +48,7 @@ int main(void)
 	cmd=data0; cmd1=data1; cmd2=data2; ack=data3;
  
 	mDebugUartPrintfEnable = 1;
-	//mAndroidPowerUpPending = 1;
+	mAndroidPowerUpPending = 1;
 	
 	init_work();
 
@@ -61,8 +61,8 @@ int main(void)
  所有与大屏的串口通讯都在此循环中，不断的遍历所有要处理的数据，
  所以不会有发送数据包不完整的情况
 ****************************************************************/
-	json_test();
-	aes_test();
+	//json_test();
+	//aes_test();
 	//erase_flash();
 
 	while(1)
@@ -96,6 +96,9 @@ int main(void)
 		handle_longsung_setting();
 		/*设置4G的网络、连接服务器等状态*/
 		
+		handle_timer_callback();
+		/*轮训定时器是否到时*/
+		
 		handle_pending_work();
 		/*遍历其它一些需要遍历的事情，以后可以往里面添加事件*/	
 	}
@@ -126,26 +129,21 @@ static int init_work(void)
 	******************************************************************/
 	my_mem_init(SRAMIN);	
 	
-	INIT_LIST_HEAD(&bootloader_event_head);   
-	
-	INIT_LIST_HEAD(&event_head);   
-	/*用于存放要的上报事件，事件从CAN总线上获得*/
-	
-	INIT_LIST_HEAD(&periodic_head);   	
-	/*用于存放要下发的事件，事件从uart6发过来，下发到can上，为固定周期事件。*/
-	
 	uart3_fifo = kfifo_alloc(UART_4G_KFIFO_LEN, NULL);		
 	uart6_fifo = kfifo_alloc(UART_KFIFO_LEN, NULL);	
 	debug_fifo = kfifo_alloc(DEBUG_KFIFO_LEN, NULL);
 	/*存放从uart6中断中读到的串口数据，数据从大屏发过来*/
-	if(1) {
+	if(1) 
+	{
 		/*用于大屏功能板*/
-		uart3_init(115200);
+		uart3_init(115000);//4G的波特率有点偏差，所以使用115000
 		uart4_init(115200);
-		uart6_init(503000); 
+		uart6_init(503000); //1500000
 		//t8 230400 的波特率不准，MCU这边调整为214550
 		//t8 460800 的波特率不准， MCU这边调整为503000
-	} else {
+	} 
+	else 
+	{
 		/*初始化串口2跟串口6，用于开发板*/
 		uart_init(115200);	
 		/*串口初始化波特率为115200 230400  460800*/
@@ -161,9 +159,6 @@ static int init_work(void)
 	can1_fifo = kfifo_alloc(CAN_KFIFO_LEN, NULL);	
 	can2_fifo = kfifo_alloc(CAN_KFIFO_LEN, NULL);	
 	/* 用于存放从can1、can2中断中读到的数据帧，数据帧格式已完成 */
-	
-	Timer2_Init(1000,(u32)84*100-1); 
-	/* 100MS中断一次 , 目前定时器4被usmart模块使用， 定时器5被ioctl模块使用*/	
 
 	CAN1_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,6, CAN_Mode_Normal);	
 	CAN2_Mode_Init(CAN_SJW_1tq,CAN_BS2_6tq,CAN_BS1_7tq,6, CAN_Mode_Normal);	
@@ -173,15 +168,25 @@ static int init_work(void)
 	My_RTC_Init();	
 	/* 初始化RTC，之后就可以进行读写 RTC */
 	
-	for(t=0;t<10;t++) {
+	/*********************
+	for(t=0;t<10;t++) 
+	{
 		//delay_ms(60);
 		LED0=!LED0;
 	}
-	
+	*********************/
 	//Tout=((4*2^prer)*rlr)/32 (ms).  4*16*500
 	IWDG_Init(6,750);
 	/* 溢出时间为6s	代码需要定时喂狗！ 此6S是经过测试的数据，请勿随意更改
 	否则会导致看门狗重启，当数据量大时*/
+	
+	uart_command_init();
+	
+	car_event_init();
+	
+	tmodem_init();
+	
+	bootloader_init();
 	
 	longsung_init();
 	/*初始化4G串口相关的数据结构*/
@@ -194,6 +199,9 @@ static int init_work(void)
 	}
 	else 
 	{
+		Timer2_Init(1000, (u32)84*100-1); 
+		/* 100MS中断一次 , 目前定时器4被usmart模块使用， 定时器5被ioctl模块使用*/			
+		
 		return 1;
 	}
 	

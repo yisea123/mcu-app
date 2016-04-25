@@ -31,9 +31,9 @@ struct bootloaderUpdateEvent {
 		struct list_head list;
 };
 
+extern void bootloader_init(void);
 extern struct list_head bootloader_event_head;
 extern struct bootloaderUpdateState bootloaderState;
 extern void handle_bootloader_update_work(void);
 extern void init_bootloaderUpdateState(char* mBootloaderUpdatePending, unsigned int romSize, const unsigned char* md5);
-
 #endif

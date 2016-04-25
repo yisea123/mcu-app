@@ -7,7 +7,7 @@
 ..\obj\jsontest.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\jsontest.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\jsontest.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
-..\obj\jsontest.o: ..\MALLOC\malloc.h
+..\obj\jsontest.o: ..\PROTOCOL\malloc.h
 ..\obj\jsontest.o: ..\USER\stm32f4xx.h
 ..\obj\jsontest.o: ..\CORE\core_cm4.h
 ..\obj\jsontest.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h

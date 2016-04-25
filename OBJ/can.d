@@ -64,6 +64,7 @@
 ..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\can.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\can.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\can.o: ..\USMART\usmart.h
 ..\obj\can.o: ..\USMART\usmart_str.h
 ..\obj\can.o: ..\HARDWARE\STMFLASH\stmflash.h

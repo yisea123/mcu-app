@@ -65,6 +65,7 @@
 ..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\pending.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\pending.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\pending.o: ..\USMART\usmart.h
 ..\obj\pending.o: ..\USMART\usmart_str.h
 ..\obj\pending.o: ..\HARDWARE\STMFLASH\stmflash.h

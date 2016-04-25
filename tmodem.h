@@ -148,6 +148,5 @@ extern unsigned char tmodem_md5[16];
 extern unsigned int romSize;
 extern char session_begin, mTmodemTickCount;
 extern void erase_flash(void);
-extern void tmodem_init(void);
 
 #endif

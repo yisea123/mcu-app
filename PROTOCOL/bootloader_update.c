@@ -210,6 +210,9 @@ void handle_bootloader_update_work(void)
 	}
 }
 
-
+void bootloader_init(void)
+{
+		INIT_LIST_HEAD(&bootloader_event_head);   	
+}
 
 

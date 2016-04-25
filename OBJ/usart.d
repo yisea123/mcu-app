@@ -37,7 +37,7 @@
 ..\obj\usart.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\usart.o: ..\SYSTEM\usart\usart.h
 ..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
-..\obj\usart.o: ..\KFIFO\kfifo.h
+..\obj\usart.o: ..\PROTOCOL\kfifo.h
 ..\obj\usart.o: ..\PROTOCOL\uart_command.h
 ..\obj\usart.o: ..\PROTOCOL\kfifo.h
 ..\obj\usart.o: ..\HARDWARE\CAN\can.h
@@ -65,7 +65,7 @@
 ..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\usart.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\usart.o: ..\USMART\usmart.h
 ..\obj\usart.o: ..\USMART\usmart_str.h
 ..\obj\usart.o: ..\HARDWARE\STMFLASH\stmflash.h
-..\obj\usart.o: ..\MALLOC\malloc.h

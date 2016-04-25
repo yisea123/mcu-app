@@ -66,6 +66,7 @@
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\bootloader_update.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\bootloader_update.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\bootloader_update.o: ..\USMART\usmart.h
 ..\obj\bootloader_update.o: ..\USMART\usmart_str.h
 ..\obj\bootloader_update.o: ..\HARDWARE\STMFLASH\stmflash.h

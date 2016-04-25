@@ -70,4 +70,5 @@
 ..\obj\longsung.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\longsung.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
 ..\obj\longsung.o: ..\PROTOCOL\mqtt_msg.h
+..\obj\longsung.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\longsung.o: ..\PROTOCOL\md5.h

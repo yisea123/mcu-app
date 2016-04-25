@@ -65,6 +65,7 @@
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\tmodem.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\tmodem.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\tmodem.o: ..\USMART\usmart.h
 ..\obj\tmodem.o: ..\USMART\usmart_str.h
 ..\obj\tmodem.o: ..\HARDWARE\STMFLASH\stmflash.h

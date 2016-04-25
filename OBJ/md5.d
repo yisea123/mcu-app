@@ -66,6 +66,7 @@
 ..\obj\md5.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\md5.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\md5.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\md5.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\md5.o: ..\USMART\usmart.h
 ..\obj\md5.o: ..\USMART\usmart_str.h
 ..\obj\md5.o: ..\HARDWARE\STMFLASH\stmflash.h

@@ -39,7 +39,7 @@
 ..\obj\test.o: ..\FWLIB\inc\stm32f4xx_fsmc.h
 ..\obj\test.o: ..\SYSTEM\usart\usart.h
 ..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
-..\obj\test.o: ..\KFIFO\kfifo.h
+..\obj\test.o: ..\PROTOCOL\kfifo.h
 ..\obj\test.o: ..\PROTOCOL\uart_command.h
 ..\obj\test.o: ..\PROTOCOL\kfifo.h
 ..\obj\test.o: ..\PROTOCOL\car_event.h
@@ -66,7 +66,7 @@
 ..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\test.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\test.o: ..\USMART\usmart.h
 ..\obj\test.o: ..\USMART\usmart_str.h
 ..\obj\test.o: ..\HARDWARE\STMFLASH\stmflash.h
-..\obj\test.o: ..\MALLOC\malloc.h

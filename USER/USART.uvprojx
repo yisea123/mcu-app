@@ -555,26 +555,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>MALLOC</GroupName>
-          <Files>
-            <File>
-              <FileName>malloc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\MALLOC\malloc.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>KFIFO</GroupName>
-          <Files>
-            <File>
-              <FileName>kfifo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\KFIFO\kfifo.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>PROTOCOL</GroupName>
           <Files>
             <File>
@@ -637,6 +617,21 @@
               <FileType>1</FileType>
               <FilePath>..\PROTOCOL\cJSON.c</FilePath>
             </File>
+            <File>
+              <FileName>kfifo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\kfifo.c</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\list.c</FilePath>
+            </File>
+            <File>
+              <FileName>malloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\PROTOCOL\malloc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -656,16 +651,6 @@
               <FileName>usmart_str.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\USMART\usmart_str.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>LIST</GroupName>
-          <Files>
-            <File>
-              <FileName>list.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\LIST\list.c</FilePath>
             </File>
           </Files>
         </Group>

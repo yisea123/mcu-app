@@ -64,6 +64,7 @@
 ..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\uart_command.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\uart_command.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\uart_command.o: ..\USMART\usmart.h
 ..\obj\uart_command.o: ..\USMART\usmart_str.h
 ..\obj\uart_command.o: ..\HARDWARE\STMFLASH\stmflash.h

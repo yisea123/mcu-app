@@ -66,6 +66,7 @@
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\car_event.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\car_event.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\car_event.o: ..\USMART\usmart.h
 ..\obj\car_event.o: ..\USMART\usmart_str.h
 ..\obj\car_event.o: ..\HARDWARE\STMFLASH\stmflash.h

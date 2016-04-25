@@ -41,7 +41,7 @@
 ..\obj\main.o: ..\HARDWARE\RTC\rtc.h
 ..\obj\main.o: ..\PROTOCOL\list.h
 ..\obj\main.o: ..\HARDWARE\BEEP\beep.h
-..\obj\main.o: ..\KFIFO\kfifo.h
+..\obj\main.o: ..\PROTOCOL\kfifo.h
 ..\obj\main.o: ..\PROTOCOL\uart_command.h
 ..\obj\main.o: ..\PROTOCOL\kfifo.h
 ..\obj\main.o: ..\SYSTEM\usart\usart.h
@@ -65,10 +65,10 @@
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\main.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\main.o: ..\USMART\usmart.h
 ..\obj\main.o: ..\USMART\usmart_str.h
 ..\obj\main.o: ..\HARDWARE\STMFLASH\stmflash.h
-..\obj\main.o: ..\MALLOC\malloc.h
 ..\obj\main.o: ..\PROTOCOL\bootloader_update.h
 ..\obj\main.o: ..\PROTOCOL\md5.h
 ..\obj\main.o: ..\TEST\test.h

@@ -1,6 +1,8 @@
 #ifndef __UART_COMMAND_H
 #define __UART_COMMAND_H	 
 
+#define EVENT_MSG_TRYS		4
+
 #define CMD_ADD_END 0 // 1
 
 #define CHAR_END 0xFF //can't equal 0x00
@@ -116,7 +118,7 @@
 #include "pending.h"
 
 //uint32_t id, uint8_t ide, uint8_t rtr, u8* msg,u8 len
-struct msg_periodic {
+typedef struct msg_periodic {
 	uint32_t id;
 	uint8_t ide;
 	uint8_t rtr;
@@ -129,9 +131,30 @@ struct msg_periodic {
 	u8 n;  //n*100ms send msg to can.
 	u8 is_idle;
 	u8 send_status;
-	u8 try_count;
+	int try_count;
 	struct list_head list;
-};
+} MSGPERIODIC;
+
+#define	STEP0			1
+#define	STEP1			2
+
+typedef struct msg_event {
+	u8				step;
+	uint32_t 	id;
+	uint8_t 	ide;
+	uint8_t 	rtr;	
+	u8 				msg[8];
+	u8				len;
+	u8				canx;
+	
+	uint32_t 	update;
+	uint32_t	*pEventCount;
+	u8				n;
+	
+	int			trys;
+	struct list_head list;
+} MSGEVENT;
+
 //return 0: do nothing
 
 //return 1: 接收到上报的命令所返回的确认信号,把发送成功的命令包从链表中去除
@@ -143,7 +166,7 @@ struct msg_periodic {
 
 extern long numRecvAndroidCanCmd;
 extern char mReportMcuStatusPending;
-extern uint32_t periodicNum;
+//extern uint32_t periodicNum;
 extern struct list_head periodic_head;
 extern struct list_head periodic_wait_head;
 extern int parse_uart6_fifo(void *fifo, char cmd[], int *cmd_len, char ack[], int *ack_len);
@@ -154,4 +177,5 @@ extern unsigned short calculate_crc(unsigned char *p, unsigned short n);
 //extern void list_periodic_msg(void);
 extern void handle_downstream_work(char* cmd, char *ack);
 extern int make_event_to_list0(const char *cmd, int cmd_len, int result, char hasId);
+extern void uart_command_init(void);
 #endif

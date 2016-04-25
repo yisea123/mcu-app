@@ -1,5 +1,5 @@
 Dependencies for Project 'USART', Target 'USART': (DO NOT MODIFY !)
-F (.\main.c)(0x56DAB08C)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
+F (.\main.c)(0x571DBDE4)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -41,21 +41,20 @@ I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
-I (..\KFIFO\kfifo.h)(0x56E7CC3E)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -63,11 +62,11 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\MALLOC\malloc.h)(0x56CAACED)
-I (..\PROTOCOL\bootloader_update.h)(0x5671272C)
+I (..\PROTOCOL\bootloader_update.h)(0x571DA82C)
 I (..\PROTOCOL\md5.h)(0x56DD1068)
 I (..\TEST\test.h)(0x56CEBAB5)
 F (.\stm32f4xx_it.c)(0x5426CDF6)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\stm32f4xx_it.o --omf_browse ..\obj\stm32f4xx_it.crf --depend ..\obj\stm32f4xx_it.d)
@@ -180,7 +179,7 @@ I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-F (..\HARDWARE\CAN\can.c)(0x56CAB5C3)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\can.o --omf_browse ..\obj\can.crf --depend ..\obj\can.d)
+F (..\HARDWARE\CAN\can.c)(0x56EA77E6)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\can.o --omf_browse ..\obj\can.crf --depend ..\obj\can.d)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
@@ -221,21 +220,21 @@ I (..\HARDWARE\LED\led.h)(0x53B53724)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
 I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -243,6 +242,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
@@ -285,7 +285,7 @@ I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\HARDWARE\LED\led.h)(0x53B53724)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
-F (..\HARDWARE\IOCTR\ioctr.c)(0x56CEB926)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\ioctr.o --omf_browse ..\obj\ioctr.crf --depend ..\obj\ioctr.d)
+F (..\HARDWARE\IOCTR\ioctr.c)(0x571C9A2F)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\ioctr.o --omf_browse ..\obj\ioctr.crf --depend ..\obj\ioctr.d)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
@@ -322,13 +322,13 @@ I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -338,19 +338,20 @@ I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
+I (..\PROTOCOL\timer.h)(0x571C9538)
 F (..\HARDWARE\STMFLASH\stmflash.c)(0x56CAAE7D)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\stmflash.o --omf_browse ..\obj\stmflash.crf --depend ..\obj\stmflash.d)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
@@ -539,11 +540,10 @@ I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\KFIFO\kfifo.h)(0x56E7CC3E)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
@@ -553,11 +553,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -565,10 +565,10 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\MALLOC\malloc.h)(0x56CAACED)
 F (..\CORE\startup_stm32f40_41xxx.s)(0x53DBBC54)(--cpu Cortex-M4.fp -g --apcs=interwork -I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include--list ..\obj\startup_stm32f40_41xxx.lst --xref -o ..\obj\startup_stm32f40_41xxx.o --depend ..\obj\startup_stm32f40_41xxx.d)
 F (..\FWLIB\src\misc.c)(0x53DBB016)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\misc.o --omf_browse ..\obj\misc.crf --depend ..\obj\misc.d)
 I (..\FWLIB\inc\misc.h)(0x53DBAFAE)
@@ -990,112 +990,8 @@ I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-F (..\MALLOC\malloc.c)(0x56CAACDC)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\malloc.o --omf_browse ..\obj\malloc.crf --depend ..\obj\malloc.d)
-I (..\MALLOC\malloc.h)(0x56CAACED)
-I (..\USER\stm32f4xx.h)(0x542BA484)
-I (..\CORE\core_cm4.h)(0x53C7D532)
-I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
-I (..\CORE\core_cmInstr.h)(0x53C7D532)
-I (..\CORE\core_cmFunc.h)(0x53C7D532)
-I (..\CORE\core_cm4_simd.h)(0x53C7D532)
-I (..\USER\system_stm32f4xx.h)(0x53DBA49A)
-I (..\USER\stm32f4xx_conf.h)(0x53DBB3CC)
-I (..\FWLIB\inc\stm32f4xx_adc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_crc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dbgmcu.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dma.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_exti.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_flash.h)(0x53DF9332)
-I (..\FWLIB\inc\stm32f4xx_gpio.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_i2c.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_iwdg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_pwr.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rcc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rtc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_sdio.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_spi.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_syscfg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_tim.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_usart.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_wwdg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\misc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_cryp.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_hash.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rng.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-F (..\KFIFO\kfifo.c)(0x56CEAC85)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\kfifo.o --omf_browse ..\obj\kfifo.crf --depend ..\obj\kfifo.d)
-I (..\KFIFO\kfifo.h)(0x56E7CC3E)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
-I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
-I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\USER\stm32f4xx_conf.h)(0x53DBB3CC)
-I (..\FWLIB\inc\stm32f4xx_adc.h)(0x53DBAFAE)
-I (..\USER\stm32f4xx.h)(0x542BA484)
-I (..\CORE\core_cm4.h)(0x53C7D532)
-I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
-I (..\CORE\core_cmInstr.h)(0x53C7D532)
-I (..\CORE\core_cmFunc.h)(0x53C7D532)
-I (..\CORE\core_cm4_simd.h)(0x53C7D532)
-I (..\USER\system_stm32f4xx.h)(0x53DBA49A)
-I (..\FWLIB\inc\stm32f4xx_crc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dbgmcu.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dma.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_exti.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_flash.h)(0x53DF9332)
-I (..\FWLIB\inc\stm32f4xx_gpio.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_i2c.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_iwdg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_pwr.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rcc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rtc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_sdio.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_spi.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_syscfg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_tim.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_usart.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_wwdg.h)(0x53DBAFAE)
-I (..\FWLIB\inc\misc.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_cryp.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_hash.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_rng.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
-I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-I (..\SYSTEM\sys\sys.h)(0x53B52F60)
-I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
-I (..\PROTOCOL\list.h)(0x56CAA4DF)
-I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
-I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
-I (..\PROTOCOL\pending.h)(0x56CEBA47)
-I (..\HARDWARE\LED\led.h)(0x53B53724)
-I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
-I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
-I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
-I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
-I (..\PROTOCOL\aes.h)(0x56D7CCB8)
-I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
-I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
-I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
-I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
-I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
-I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
-I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-I (..\USMART\usmart.h)(0x528CCEDC)
-I (..\USMART\usmart_str.h)(0x56CAAB59)
-I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\MALLOC\malloc.h)(0x56CAACED)
-F (..\PROTOCOL\uart_command.c)(0x56F26FC4)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\uart_command.o --omf_browse ..\obj\uart_command.crf --depend ..\obj\uart_command.d)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+F (..\PROTOCOL\uart_command.c)(0x571DCF0B)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\uart_command.o --omf_browse ..\obj\uart_command.crf --depend ..\obj\uart_command.d)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
@@ -1136,7 +1032,7 @@ I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1145,11 +1041,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1157,11 +1053,12 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-F (..\PROTOCOL\car_event.c)(0x56EBC5EF)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\car_event.o --omf_browse ..\obj\car_event.crf --depend ..\obj\car_event.d)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+F (..\PROTOCOL\car_event.c)(0x571DA7C3)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\car_event.o --omf_browse ..\obj\car_event.crf --depend ..\obj\car_event.d)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\USER\stm32f4xx.h)(0x542BA484)
@@ -1202,7 +1099,7 @@ I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1211,11 +1108,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1223,11 +1120,12 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-F (..\PROTOCOL\tmodem.c)(0x56ECC180)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\tmodem.o --omf_browse ..\obj\tmodem.crf --depend ..\obj\tmodem.d)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+F (..\PROTOCOL\tmodem.c)(0x571D7F0F)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\tmodem.o --omf_browse ..\obj\tmodem.crf --depend ..\obj\tmodem.d)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
@@ -1267,11 +1165,11 @@ I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1280,8 +1178,8 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1289,14 +1187,15 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\PROTOCOL\bootloader_update.h)(0x5671272C)
+I (..\PROTOCOL\bootloader_update.h)(0x571DA82C)
 I (..\PROTOCOL\md5.h)(0x56DD1068)
 I (..\PROTOCOL\rsa.h)(0x5671272C)
-F (..\PROTOCOL\bootloader_update.c)(0x56EBC668)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\bootloader_update.o --omf_browse ..\obj\bootloader_update.crf --depend ..\obj\bootloader_update.d)
-I (..\PROTOCOL\bootloader_update.h)(0x5671272C)
+F (..\PROTOCOL\bootloader_update.c)(0x571DA7FF)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\bootloader_update.o --omf_browse ..\obj\bootloader_update.crf --depend ..\obj\bootloader_update.d)
+I (..\PROTOCOL\bootloader_update.h)(0x571DA82C)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\USER\stm32f4xx.h)(0x542BA484)
@@ -1337,9 +1236,9 @@ I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
 I (..\HARDWARE\LED\led.h)(0x53B53724)
@@ -1347,11 +1246,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1359,6 +1258,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
@@ -1439,11 +1339,11 @@ I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
@@ -1453,11 +1353,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1465,11 +1365,12 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-F (..\PROTOCOL\timer.c)(0x56EBC95A)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\timer.o --omf_browse ..\obj\timer.crf --depend ..\obj\timer.d)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
+F (..\PROTOCOL\timer.c)(0x571DBDB7)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\timer.o --omf_browse ..\obj\timer.crf --depend ..\obj\timer.d)
+I (..\PROTOCOL\timer.h)(0x571C9538)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -1505,13 +1406,13 @@ I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1522,20 +1423,21 @@ I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-F (..\PROTOCOL\longsung.c)(0x56E958DC)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
+F (..\PROTOCOL\longsung.c)(0x571DA60E)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\longsung.o --omf_browse ..\obj\longsung.crf --depend ..\obj\longsung.d)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -1575,9 +1477,9 @@ I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1586,8 +1488,8 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\USMART\usmart.h)(0x528CCEDC)
@@ -1600,7 +1502,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-I (..\PROTOCOL\mqtt_msg.h)(0x56E95659)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\PROTOCOL\md5.h)(0x56DD1068)
 F (..\PROTOCOL\pending.c)(0x56EBC95C)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\pending.o --omf_browse ..\obj\pending.crf --depend ..\obj\pending.d)
 I (..\PROTOCOL\pending.h)(0x56CEBA47)
@@ -1646,18 +1548,18 @@ I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1665,6 +1567,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
@@ -1709,7 +1612,7 @@ I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 F (..\PROTOCOL\mqtt_msg.c)(0x56EBC953)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\mqtt_msg.o --omf_browse ..\obj\mqtt_msg.crf --depend ..\obj\mqtt_msg.d)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-I (..\PROTOCOL\mqtt_msg.h)(0x56E95659)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
 F (..\PROTOCOL\cJSON.c)(0x56ECC2FB)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\cjson.o --omf_browse ..\obj\cjson.crf --depend ..\obj\cjson.d)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
@@ -1720,6 +1623,111 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
+I (..\USER\stm32f4xx.h)(0x542BA484)
+I (..\CORE\core_cm4.h)(0x53C7D532)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
+I (..\CORE\core_cmInstr.h)(0x53C7D532)
+I (..\CORE\core_cmFunc.h)(0x53C7D532)
+I (..\CORE\core_cm4_simd.h)(0x53C7D532)
+I (..\USER\system_stm32f4xx.h)(0x53DBA49A)
+I (..\USER\stm32f4xx_conf.h)(0x53DBB3CC)
+I (..\FWLIB\inc\stm32f4xx_adc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_crc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dbgmcu.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dma.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_exti.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_flash.h)(0x53DF9332)
+I (..\FWLIB\inc\stm32f4xx_gpio.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_i2c.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_iwdg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_pwr.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rcc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rtc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_sdio.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_spi.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_syscfg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_tim.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_usart.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_wwdg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\misc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_cryp.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_hash.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rng.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
+F (..\PROTOCOL\kfifo.c)(0x56EBC954)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\kfifo.o --omf_browse ..\obj\kfifo.crf --depend ..\obj\kfifo.d)
+I (..\PROTOCOL\kfifo.h)(0x56E95381)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
+I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
+I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
+I (..\USER\stm32f4xx_conf.h)(0x53DBB3CC)
+I (..\FWLIB\inc\stm32f4xx_adc.h)(0x53DBAFAE)
+I (..\USER\stm32f4xx.h)(0x542BA484)
+I (..\CORE\core_cm4.h)(0x53C7D532)
+I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)
+I (..\CORE\core_cmInstr.h)(0x53C7D532)
+I (..\CORE\core_cmFunc.h)(0x53C7D532)
+I (..\CORE\core_cm4_simd.h)(0x53C7D532)
+I (..\USER\system_stm32f4xx.h)(0x53DBA49A)
+I (..\FWLIB\inc\stm32f4xx_crc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dbgmcu.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dma.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_exti.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_flash.h)(0x53DF9332)
+I (..\FWLIB\inc\stm32f4xx_gpio.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_i2c.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_iwdg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_pwr.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rcc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rtc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_sdio.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_spi.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_syscfg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_tim.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_usart.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_wwdg.h)(0x53DBAFAE)
+I (..\FWLIB\inc\misc.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_cryp.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_hash.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_rng.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_can.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
+I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
+I (..\SYSTEM\sys\sys.h)(0x53B52F60)
+I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
+I (..\PROTOCOL\list.h)(0x56CAA4DF)
+I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
+I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
+I (..\PROTOCOL\pending.h)(0x56CEBA47)
+I (..\HARDWARE\LED\led.h)(0x53B53724)
+I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
+I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
+I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
+I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
+I (..\PROTOCOL\aes.h)(0x56D7CCB8)
+I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
+I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
+I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
+I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
+I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
+I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
+I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
+I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
+I (..\USMART\usmart.h)(0x528CCEDC)
+I (..\USMART\usmart_str.h)(0x56CAAB59)
+I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
+F (..\PROTOCOL\list.c)(0x56CAA4DF)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\list.o --omf_browse ..\obj\list.crf --depend ..\obj\list.d)
+I (..\PROTOCOL\list.h)(0x56CAA4DF)
+F (..\PROTOCOL\malloc.c)(0x56D6C5E3)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\malloc.o --omf_browse ..\obj\malloc.crf --depend ..\obj\malloc.d)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
@@ -1872,9 +1880,7 @@ I (..\FWLIB\inc\stm32f4xx_dac.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\USMART\usmart.h)(0x528CCEDC)
-F (..\LIST\list.c)(0x565E88FF)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\list.o --omf_browse ..\obj\list.crf --depend ..\obj\list.d)
-I (..\LIST\list.h)(0x562F530E)
-F (..\TEST\test.c)(0x56D7EE6B)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\test.o --omf_browse ..\obj\test.crf --depend ..\obj\test.d)
+F (..\TEST\test.c)(0x56FBF5D1)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\test.o --omf_browse ..\obj\test.crf --depend ..\obj\test.d)
 I (..\TEST\test.h)(0x56CEBAB5)
 I (..\HARDWARE\CAN\can.h)(0x56CEACA7)
 I (..\SYSTEM\sys\sys.h)(0x53B52F60)
@@ -1914,10 +1920,9 @@ I (..\FWLIB\inc\stm32f4xx_dcmi.h)(0x53DBAFAE)
 I (..\FWLIB\inc\stm32f4xx_fsmc.h)(0x53DBAFAE)
 I (..\SYSTEM\usart\usart.h)(0x56CAB5F0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
-I (..\KFIFO\kfifo.h)(0x56E7CC3E)
-I (..\PROTOCOL\uart_command.h)(0x56F11337)
 I (..\PROTOCOL\kfifo.h)(0x56E95381)
-I (..\PROTOCOL\car_event.h)(0x56CEB966)
+I (..\PROTOCOL\uart_command.h)(0x571DA13B)
+I (..\PROTOCOL\car_event.h)(0x571A0564)
 I (..\PROTOCOL\list.h)(0x56CAA4DF)
 I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\HARDWARE\RTC\rtc.h)(0x5441E8B2)
@@ -1927,11 +1932,11 @@ I (..\HARDWARE\KEY\key.h)(0x53C0BE24)
 I (..\HARDWARE\BEEP\beep.h)(0x53660F52)
 I (..\SYSTEM\delay\delay.h)(0x56CAAF65)
 I (..\HARDWARE\IOCTR\ioctr.h)(0x56DD66F1)
-I (..\PROTOCOL\timer.h)(0x56C52FFB)
-I (..\PROTOCOL\tmodem.h)(0x56D8E3C7)
+I (..\PROTOCOL\timer.h)(0x571C9538)
+I (..\PROTOCOL\tmodem.h)(0x571A0B82)
 I (..\PROTOCOL\aes.h)(0x56D7CCB8)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\PROTOCOL\longsung.h)(0x56E7976B)
+I (..\PROTOCOL\longsung.h)(0x571C9830)
 I (..\HARDWARE\IWDG\iwdg.h)(0x56CAAE57)
 I (..\PROTOCOL\cjson.h)(0x56D7F9E5)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
@@ -1939,10 +1944,10 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
+I (..\PROTOCOL\mqtt_msg.h)(0x571CA003)
 I (..\USMART\usmart.h)(0x528CCEDC)
 I (..\USMART\usmart_str.h)(0x56CAAB59)
 I (..\HARDWARE\STMFLASH\stmflash.h)(0x565AA6B8)
-I (..\MALLOC\malloc.h)(0x56CAACED)
 F (..\TEST\jsontest.c)(0x56D7F977)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\CORE -I..\SYSTEM\delay -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\FWLIB\STM32F4xx_StdPeriph_Driver\inc -I..\USER -I..\HARDWARE\LED -I..\HARDWARE\BEEP -I..\HARDWARE\KEY -I..\FWLIB\inc -I..\MALLOC -I..\KFIFO -I..\PROTOCOL -I..\HARDWARE\CAN -I..\USMART -I..\HARDWARE\RTC -I..\LIST -I..\TEST -I..\HARDWARE\DMA -I..\HARDWARE\IOCTR -I..\HARDWARE\STMFLASH -I..\HARDWARE\IWDG -I..\HARDWARE\RNG-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER-o ..\obj\jsontest.o --omf_browse ..\obj\jsontest.crf --depend ..\obj\jsontest.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
@@ -1952,7 +1957,7 @@ I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\float.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\limits.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\ctype.h)(0x53463A44)
-I (..\MALLOC\malloc.h)(0x56CAACED)
+I (..\PROTOCOL\malloc.h)(0x56D6C5E3)
 I (..\USER\stm32f4xx.h)(0x542BA484)
 I (..\CORE\core_cm4.h)(0x53C7D532)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)

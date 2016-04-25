@@ -10,6 +10,7 @@
 #include "delay.h"
 #include "list.h"
 #include "cjson.h"
+#include "mqtt_msg.h"
 #include <string.h>
 
 #define ONE_SECOND		110000
@@ -189,14 +190,15 @@ typedef struct {
 	uint32_t malloc_count;
 	uint32_t free_count;
 	long long sys_time;
+	mqtt_dev_status *mqtt_dev;
 }DevStatus;
 
 extern void longsung_init(void);
 extern void handle_longsung_uart_msg(void);
 extern int str2int(const char* p, const char* end);
-extern void notify_longsung_period(void);
+//extern void notify_longsung_period(void);
 extern void handle_longsung_setting(void);
-extern void notify_longsung_second(void);
+//extern void notify_longsung_second(void);
 extern DevStatus dev[1];
 #endif
 

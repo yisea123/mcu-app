@@ -1,5 +1,5 @@
-..\obj\kfifo.o: ..\KFIFO\kfifo.c
-..\obj\kfifo.o: ..\KFIFO\kfifo.h
+..\obj\kfifo.o: ..\PROTOCOL\kfifo.c
+..\obj\kfifo.o: ..\PROTOCOL\kfifo.h
 ..\obj\kfifo.o: ..\PROTOCOL\uart_command.h
 ..\obj\kfifo.o: ..\PROTOCOL\kfifo.h
 ..\obj\kfifo.o: ..\SYSTEM\usart\usart.h
@@ -65,7 +65,7 @@
 ..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\float.h
 ..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\limits.h
 ..\obj\kfifo.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\ctype.h
+..\obj\kfifo.o: ..\PROTOCOL\mqtt_msg.h
 ..\obj\kfifo.o: ..\USMART\usmart.h
 ..\obj\kfifo.o: ..\USMART\usmart_str.h
 ..\obj\kfifo.o: ..\HARDWARE\STMFLASH\stmflash.h
-..\obj\kfifo.o: ..\MALLOC\malloc.h

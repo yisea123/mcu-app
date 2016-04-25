@@ -170,7 +170,8 @@ typedef struct mqtt_state_t
 	char jsonbuff[750];
 } mqtt_state_t;
 
-typedef struct {
+typedef struct mqtt_dev_status
+{
 	enum mqtt_dev_statu connect_status;
 	/*由于4G模块的原因，最多支持1500个字节，也就750个hex!*/
   uint8_t in_buffer[1500];//750 1024
@@ -189,7 +190,8 @@ typedef struct {
 	long long recv_bytes;
 	char reboot;
 	char iot;
-}mqtt_dev_status;
+	void *pDev;
+} mqtt_dev_status;
 
 static int mqtt_get_type(uint8_t* buffer)   { return (buffer[0] & 0xf0) >> 4; }
 static int mqtt_get_dup(uint8_t* buffer)    { return (buffer[0] & 0x08) >> 3; }
