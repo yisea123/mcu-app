@@ -1,0 +1,39 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\mcu\mcu-app\USER\USART.uvprojx
+Project File Date:  04/25/2016
+
+<h2>Output:</h2>
+Build target 'USART'
+compiling rfifo.c...
+..\PROTOCOL\rfifo.c(12): warning:  #223-D: function "printf" declared implicitly
+                 printf("ring_buf is NULL\r\n");
+..\PROTOCOL\rfifo.c(16): warning:  #223-D: function "printf" declared implicitly
+                 printf("size must be power of 2\r\n");
+..\PROTOCOL\rfifo.c: 2 warnings, 0 errors
+linking...
+Program Size: Code=92068 RO-data=6140 RW-data=1580 ZI-data=1228916  
+FromELF: creating hex file...
+After Build - User command #1: C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=C:\mcu\mcu-app\Bin\USART.bin C:\mcu\mcu-app\OBJ\USART.axf
+"..\OBJ\USART.axf" - 0 Error(s), 2 Warning(s).
+</pre>
+</body>
+</html>
+ --output=C:\mcu\mcu-app\Bin\USART.bin C:\mcu\mcu-app\OBJ\USART.axf
+"..\OBJ\USART.axf" - 0 Error(s), 3 Warning(s).
+
+"..\OBJ\USART.axf" - 3 Error(s), 2 Warning(s).
+Target not created
+#223-D: function "memcpy" declared implicitly
+        memcpy((char*)ring->buffer + (ring->in & (ring->size - 1)), buffer, len);
+..\PROTOCOL\rfifo.c(56): error:  #147-D: declaration is incompatible with "unsigned int rfifo_len(struct rfifo *)" (declared at line 22 of "..\PROTOCOL\rfifo.h")
+  unsigned int rfifo_len(const struct rfifo *ring)
+..\PROTOCOL\rfifo.c: 4 warnings, 4 errors
+"..\OBJ\USART.axf" - 4 Error(s), 4 Warning(s).
+Target not created
+OTOCOL\rfifo.c: 4 warnings, 5 errors
+"..\OBJ\USART.axf" - 5 Error(s), 4 Warning(s).
+Target not created
