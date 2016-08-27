@@ -70,3 +70,4 @@
 .\obj\minibalance.o: ..\Protocol\pwm.h
 .\obj\minibalance.o: ..\Protocol\rtc.h
 .\obj\minibalance.o: ..\minibalance\madc.h
+.\obj\minibalance.o: ..\Protocol\malloc.h

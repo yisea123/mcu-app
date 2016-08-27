@@ -373,7 +373,8 @@ void MiniBalance_PWM_Init(u16 arr,u16 psc)
 void poll_led_display(void *timer)
 {
 		unsigned char index[25];	
-		static unsigned int tmp;	
+		static unsigned int tmp;
+		SYSTIMER *pointer = (SYSTIMER*)timer;
 	
 		Voltage = Get_battery_volt();
 		OLED_ShowString(5,20, "              ");
@@ -403,11 +404,12 @@ void poll_led_display(void *timer)
 		snprintf((char*)index, sizeof(index), "Ang:%3.03f", Angle_Balance);	
 		OLED_ShowString(5,40,index);
 
-		//	OLED_ShowString(5,50, "            ");
-		//	memset(index, '\0', sizeof(index));
-		//snprintf((char*)index, sizeof(index), "%4d | %4d", Encoder_Left_total, Encoder_Right_total);
-		//	strcpy(index, "xiaopeng");
-		//	OLED_ShowString(5,50, index);
+		//OLED_ShowString(5,50, "            ");
+		//memset(index, '\0', sizeof(index));
+		//snprintf((char*)index, sizeof(index), "p=%p", *((char **)((pointer)->argc)));
+		//strcpy(index, "xiaopeng");
+		//OLED_ShowString(5,50, index);
+	
 		OLED_Refresh_Gram();	
 		tmp++;
 }

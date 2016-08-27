@@ -46,6 +46,7 @@
 ".\obj\uart.o"
 ".\obj\wdg.o"
 ".\obj\pwm.o"
+".\obj\malloc.o"
 ".\obj\ioi2c.o"
 ".\obj\minibalance.o"
 ".\obj\oled.o"

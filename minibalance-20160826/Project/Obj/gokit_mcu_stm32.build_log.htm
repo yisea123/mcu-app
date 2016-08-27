@@ -3,25 +3,19 @@
 <pre>
 <h1>µVision Build Log</h1>
 <h2>Project:</h2>
-C:\Users\lex\Desktop\Á¦ìû\stm32\minibalance-20160826\Project\gokit_mcu_stm32.uvproj
-Project File Date:  08/27/2016
+C:\mcu\mcu-app\minibalance-20160826\Project\gokit_mcu_stm32.uvproj
+Project File Date:  08/28/2016
 
 <h2>Output:</h2>
 Build target 'gokit_stm32'
 compiling minibalance.c...
+..\Protocol\minibalance.c(377): warning:  #177-D: variable "pointer" was declared but never referenced
+                SYSTIMER *pointer = (SYSTIMER*)timer;
+..\Protocol\minibalance.c: 1 warning, 0 errors
 linking...
-Program Size: Code=48368 RO-data=6872 RW-data=788 ZI-data=3980  
+Program Size: Code=48940 RO-data=6900 RW-data=820 ZI-data=14920  
 FromELF: creating hex file...
-".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 0 Warning(s).
+".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 1 Warning(s).
 </pre>
 </body>
 </html>
- "ch" was set but never used
-        uint8_t ch = 0;
-..\User\stm32f10x_it.c: 2 warnings, 0 errors
-compiling timer.c...
-compiling minibalance.c...
-linking...
-Program Size: Code=48376 RO-data=6872 RW-data=788 ZI-data=3980  
-FromELF: creating hex file...
-".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 2 Warning(s).

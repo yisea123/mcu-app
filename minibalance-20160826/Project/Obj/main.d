@@ -61,4 +61,5 @@
 .\obj\main.o: ..\minibalance\IOI2C.h
 .\obj\main.o: ..\minibalance\madc.h
 .\obj\main.o: ..\minibalance\encoder.h
+.\obj\main.o: ..\Protocol\malloc.h
 .\obj\main.o: ..\Protocol\minibalance.h

@@ -364,7 +364,7 @@
               <MiscControls>--c99</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,MOTOR_16</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Lib\STM32F10x_StdPeriph_Driver\inc;..\Lib\CMSIS\CM3\CoreSupport;..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;..\User;..\Hal;..\Protocol</IncludePath>
+              <IncludePath>..\Lib\STM32F10x_StdPeriph_Driver\inc;..\Lib\CMSIS\CM3\CoreSupport;..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;..\User;..\Hal;..\Protocol;..\minibalance</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -608,16 +608,6 @@
           <GroupName>Protocol</GroupName>
           <Files>
             <File>
-              <FileName>Protocol.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Protocol\Protocol.c</FilePath>
-            </File>
-            <File>
-              <FileName>ringbuffer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Protocol\ringbuffer.c</FilePath>
-            </File>
-            <File>
               <FileName>rfifo.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Protocol\rfifo.c</FilePath>
@@ -676,6 +666,66 @@
               <FileName>pwm.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Protocol\pwm.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>minibalance</GroupName>
+          <Files>
+            <File>
+              <FileName>IOI2C.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\IOI2C.c</FilePath>
+            </File>
+            <File>
+              <FileName>minibalance.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Protocol\minibalance.c</FilePath>
+            </File>
+            <File>
+              <FileName>oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\oled.c</FilePath>
+            </File>
+            <File>
+              <FileName>madc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\madc.c</FilePath>
+            </File>
+            <File>
+              <FileName>sys.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\sys.c</FilePath>
+            </File>
+            <File>
+              <FileName>DataScope_DP.C</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\DataScope_DP.C</FilePath>
+            </File>
+            <File>
+              <FileName>inv_mpu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\inv_mpu.c</FilePath>
+            </File>
+            <File>
+              <FileName>inv_mpu_dmp_motion_driver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\inv_mpu_dmp_motion_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>MPU6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\MPU6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\minibalance\encoder.c</FilePath>
             </File>
           </Files>
         </Group>

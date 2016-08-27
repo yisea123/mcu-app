@@ -14,7 +14,8 @@ SYSTIMER *timer1 = NULL, *wdTimer = NULL;
 void printf_systemrccClocks(void);
 void hw_init(void);
 void sw_init(void);
-
+static char *pointer = NULL;
+	
 void poll_uart3_fifo(Ringfifo *mfifo) 
 {
 		char ch;
@@ -88,6 +89,14 @@ void hw_init(void)
 
 void led_flash_callback(void *timer)
 {
+	/*
+		if (pointer == NULL) {
+				pointer = mymalloc(0, 33);
+		} else {
+				myfree(0, pointer);
+				pointer = NULL;
+		}
+		*/
 		if (get_led_status(LED1)) {
 				led_off(LED1);
 		} else { 
@@ -127,6 +136,7 @@ void msecond_callback(void *timer)
 
 void sw_init(void)
 {
+	 	my_mem_init(SRAMIN);
 		rfifo_init(&uart3fifo);	
 		init_system_timer();
 		wdTimer = register_system_timer("feedDog", 400, feed_watchdog_peroid, REPEAT, NULL);
@@ -134,7 +144,7 @@ void sw_init(void)
 		timer1 = register_system_timer("LedFlash", TIMERSECOND/10, led_flash_callback, REPEAT, &SystemTimeCount);
 		//register_system_timer("mSecond", 1, msecond_callback, REPEAT, &SystemTimeCount);
 		register_system_timer("KeyScan", 7, keyevent_detect, REPEAT, NULL);
-		register_system_timer("LcdDisplay", 100, poll_led_display, REPEAT, NULL);
+		register_system_timer("LcdDisplay", 100, poll_led_display, REPEAT, &pointer);
 		register_system_timer("miniCore", 5, poll_minibalance_core, REPEAT, NULL);
 		printf("Minibalance Init Ok ...\r\n");
 }
