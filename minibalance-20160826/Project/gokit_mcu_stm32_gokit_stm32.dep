@@ -698,7 +698,7 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_spi.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_tim.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
-F (..\User\main.c)(0x57C28266)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
+F (..\User\main.c)(0x57C28E53)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\main.o --omf_browse .\obj\main.crf --depend .\obj\main.d)
 I (..\User\gokit.h)(0x57C26B0C)
 I (..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h)(0x57C1C49D)
 I (..\Lib\CMSIS\CM3\CoreSupport\core_cm3.h)(0x57C1C49D)
@@ -741,11 +741,11 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x53463A44)
 I (..\Hal\Hal_Usart/hal_uart.h)(0x57C1C49D)
 I (..\Protocol\ringbuffer.h)(0x57C1C49E)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
-I (..\Protocol\timer.h)(0x57C2691B)
+I (..\Protocol\timer.h)(0x57C28EEF)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\Protocol\Protocol.h)(0x57C1C49E)
 I (..\Protocol\list.h)(0x57C1C49E)
-I (..\Protocol\message.h)(0x57C27D4F)
+I (..\Protocol\message.h)(0x57C28EDF)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (..\Protocol\malloc.h)(0x57C1E35D)
 I (..\Protocol\rfifo.h)(0x57C1C49E)
@@ -1057,8 +1057,8 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_tim.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
-F (..\Protocol\timer.c)(0x57C274C6)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\timer.o --omf_browse .\obj\timer.crf --depend .\obj\timer.d)
-I (..\Protocol\timer.h)(0x57C2691B)
+F (..\Protocol\timer.c)(0x57C28F5E)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\timer.o --omf_browse .\obj\timer.crf --depend .\obj\timer.d)
+I (..\Protocol\timer.h)(0x57C28EEF)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\Protocol\Protocol.h)(0x57C1C49E)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
@@ -1092,7 +1092,7 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
 I (..\Protocol\list.h)(0x57C1C49E)
-I (..\Protocol\message.h)(0x57C27D4F)
+I (..\Protocol\message.h)(0x57C28EDF)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (..\Protocol\malloc.h)(0x57C1E35D)
@@ -1302,11 +1302,11 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
 I (..\Protocol\uart.h)(0x57C1C49E)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-I (..\Protocol\timer.h)(0x57C2691B)
+I (..\Protocol\timer.h)(0x57C28EEF)
 I (..\Protocol\Protocol.h)(0x57C1C49E)
 I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x53463A44)
 I (..\Protocol\list.h)(0x57C1C49E)
-I (..\Protocol\message.h)(0x57C27D4F)
+I (..\Protocol\message.h)(0x57C28EDF)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x53463A44)
 I (..\Protocol\malloc.h)(0x57C1E35D)
@@ -1434,8 +1434,8 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_tim.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
-F (..\Protocol\message.c)(0x57C27D3C)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\message.o --omf_browse .\obj\message.crf --depend .\obj\message.d)
-I (..\Protocol\message.h)(0x57C27D4F)
+F (..\Protocol\message.c)(0x57C28EAB)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\message.o --omf_browse .\obj\message.crf --depend .\obj\message.d)
+I (..\Protocol\message.h)(0x57C28EDF)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
@@ -1470,7 +1470,7 @@ I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_tim.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h)(0x57C1C49D)
 I (..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x57C1C49D)
-I (..\Protocol\timer.h)(0x57C2691B)
+I (..\Protocol\timer.h)(0x57C28EEF)
 I (..\Protocol\Protocol.h)(0x57C1C49E)
 I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x53463A44)
 F (..\minibalance\IOI2C.c)(0x57C1C49E)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\Lib\STM32F10x_StdPeriph_Driver\inc -I..\Lib\CMSIS\CM3\CoreSupport -I..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I..\User -I..\Hal -I..\Protocol -I..\minibalance --c99-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DUSE_STDPERIPH_DRIVER -DSTM32F10X_MD -DMOTOR_16-o .\obj\ioi2c.o --omf_browse .\obj\ioi2c.crf --depend .\obj\ioi2c.d)
@@ -1570,10 +1570,10 @@ I (..\Hal\Hal_infrared/Hal_infrared.h)(0x57C1C49D)
 I (C:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x53463A44)
 I (..\Hal\Hal_Usart/hal_uart.h)(0x57C1C49D)
 I (..\Protocol\ringbuffer.h)(0x57C1C49E)
-I (..\Protocol\timer.h)(0x57C2691B)
+I (..\Protocol\timer.h)(0x57C28EEF)
 I (..\Protocol\Protocol.h)(0x57C1C49E)
 I (..\Protocol\list.h)(0x57C1C49E)
-I (..\Protocol\message.h)(0x57C27D4F)
+I (..\Protocol\message.h)(0x57C28EDF)
 I (..\Protocol\malloc.h)(0x57C1E35D)
 I (..\Protocol\rfifo.h)(0x57C1C49E)
 I (..\Protocol\keydetect.h)(0x57C1C49E)

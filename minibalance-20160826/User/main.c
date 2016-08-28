@@ -176,7 +176,7 @@ void sw_init(void)
 		wdTimer = register_system_timer("feedDog", 400, feed_watchdog_peroid, REPEAT, NULL);
 		usmart_dev.init();	
 		timer1 = register_system_timer("LedFlash", TIMERSECOND/10, led_flash_callback, REPEAT, &SystemTimeCount);
-		timerTest = register_system_timer("mSecond", 10000, second_callback, REPEAT, &SystemTimeCount);
+		timerTest = register_system_timer("Second", 10000, second_callback, REPEAT, &SystemTimeCount);
 		register_system_timer("KeyScan", 7, keyevent_detect, REPEAT, NULL);
 		register_system_timer("LcdDisplay", 100, poll_led_display, REPEAT, &pointer);
 		miniTimer = register_system_timer("miniCore", 5, poll_minibalance_core, REPEAT, NULL);

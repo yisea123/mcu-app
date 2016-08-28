@@ -280,7 +280,7 @@ void poll_system_timer(void)
 			t = count;
 			while ((*mPtr) != NULL) {
 					(*mPtr)->message = NULL;
-					while(msg = get_message(*mPtr)) {
+					while((msg = get_message(*mPtr))) {
 							(*mPtr)->isMessage = 1;
 							(*mPtr)->message = msg;
 							(*mPtr)->callback(*mPtr);	

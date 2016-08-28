@@ -25,19 +25,19 @@
 typedef void (* timer_callback)(void *timer);
 
 typedef struct sysTimer {
-	char name[25];
-	char isUse;	
-	char repeat;
-	signed char destory;
-	/*set destory to -1, will delete timer!*/
-	unsigned int times;
-  unsigned int timesSave;
-	timer_callback callback;
-	char isMessage;
-	MESSAGE* message;
-	void *argc;
-	struct list_head msgHead;	
-	struct sysTimer *next;
+		char name[25];
+		char isUse;	
+		char repeat;
+		signed char destory;
+		/*set destory to -1, will delete timer!*/
+		unsigned int times;
+		unsigned int timesSave;
+		timer_callback callback;
+		char isMessage;
+		MESSAGE* message;
+		void *argc;
+		struct list_head msgHead;	
+		struct sysTimer *next;
 } SYSTIMER;
 
 extern SYSTIMER* register_system_timer(const char name[], unsigned int times, 

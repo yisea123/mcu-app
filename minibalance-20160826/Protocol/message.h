@@ -24,13 +24,13 @@ typedef enum
 } HANDLESTATUS;
 
 typedef struct message {
-	int size;
-	char *data;
-	char cmd;
-	HANDLETYPE handleType;
-	HANDLESTATUS handleStatus;
-	void *timer;
-	struct list_head list;
+		int size;
+		char *data;
+		char cmd;
+		HANDLETYPE handleType;
+		HANDLESTATUS handleStatus;
+		void *timer;
+		struct list_head list;
 } MESSAGE;
 
 extern MESSAGE* get_message(void *timer);
