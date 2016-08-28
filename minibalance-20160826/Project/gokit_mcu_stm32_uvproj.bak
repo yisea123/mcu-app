@@ -672,6 +672,11 @@
               <FileType>1</FileType>
               <FilePath>..\Protocol\malloc.c</FilePath>
             </File>
+            <File>
+              <FileName>message.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Protocol\message.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

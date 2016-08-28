@@ -24,6 +24,8 @@
 #include "encoder.h"
 #include "gokit.h"
 
+SYSTIMER *miniTimer = NULL;
+	
 u8 Way_Angle=2;                             //获取角度的算法，1：四元数  2：卡尔曼  3：互补滤波 
 u8 Flag_Qian,Flag_Hou,Flag_Left,Flag_Right,Flag_sudu=1; //蓝牙遥控相关的变量
 u8 irq_qian, irq_hou, irq_left, irq_right, irq_sudu;
@@ -46,15 +48,21 @@ float mTurnKp = 20, mTurnKd = 0;
 extern int Get_battery_volt(void);
 static int remoteCmd = 0;
 
-void poll_minibalance_core(void *timer) 
+void minibalance_core_task(void *timer) 
 {    
 		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
+		if (argc && argc->isMessage) {
 				if (argc->message) {
-					switch(argc->message->cmd) {
+					switch(argc->message->cmd) 
+					{
+						case CMD_RUNNING_CONTROL:
+							Flag_Stop = !Flag_Stop;
+							break;
+						
 						case CMD_REMOTE_CONTROL:
 							handle_remote_control(*(argc->message->data));
 							break;
+						
 						default:
 							break;
 					}
@@ -136,9 +144,9 @@ int velocity(int encoder_left,int encoder_right)
 	  //=============遥控前进后退部分=======================// 
  
 		if(/*Bi_zhang==1&&*/Flag_sudu==1)  
-				Target_Velocity=60 + mVelocityAdd;//75;                 //如果进入避障模式,自动进入低速模式
+				Target_Velocity=50 + mVelocityAdd;//75;                 //如果进入避障模式,自动进入低速模式
 		else
-				Target_Velocity=90 + mVelocityAdd;//130;                 
+				Target_Velocity=80 + mVelocityAdd;//130;                 
 	
 		if(1==Flag_Qian)    	
 		 	Movement=-Target_Velocity/(Flag_sudu);	         //===前进标志位置1 
@@ -388,13 +396,14 @@ void MiniBalance_PWM_Init(u16 arr,u16 psc)
 		TIM1->CR1|=0x01;          //使能定时器1 			
 } 
 
-void poll_led_display(void *timer)
+SYSTIMER *lcdTimer = NULL;
+void lcd_display_task(void *timer)
 {
 		unsigned char index[25];	
 		static unsigned int tmp;
 
 		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
+		if (argc && argc->isMessage) {
 				if (argc->message) {
 					release_message(argc->message);
 				} 
@@ -464,11 +473,11 @@ void handle_remote_control(int uart_receive)
 			else if(uart_receive==0x72)
 					mTurnKp = 20;
 			else if(uart_receive==0x73)
-					mTurnKp = 28;
+					mTurnKp = 25;
 			else if(uart_receive==0x74)
-					mTurnKp = 33;
+					mTurnKp = 30;
 			else if(uart_receive==0x75)
-					mTurnKp = 38;
+					mTurnKp = 33;
 			else if(uart_receive==0x76)
 					mTurnKp = 43;
 			else if(uart_receive==0x77)

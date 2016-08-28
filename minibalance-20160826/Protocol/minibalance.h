@@ -3,11 +3,15 @@
 
 #include "stdlib.h"
 #include "delay.h"
+#include "timer.h"
 
 #define CMD_REMOTE_CONTROL    99
+#define CMD_RUNNING_CONTROL		100
 
-extern void poll_led_display(void *timer);
+extern SYSTIMER *miniTimer;
+extern SYSTIMER *lcdTimer;
+void lcd_display_task(void *timer);
 extern void MiniBalance_PWM_Init(u16 arr,u16 psc);
-extern void poll_minibalance_core(void *timer);
+extern void minibalance_core_task(void *timer);
 extern void handle_remote_control(int uart_receive);
 #endif

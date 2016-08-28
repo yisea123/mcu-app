@@ -64,4 +64,7 @@
 .\obj\main.o: ..\minibalance\IOI2C.h
 .\obj\main.o: ..\minibalance\madc.h
 .\obj\main.o: ..\minibalance\encoder.h
+.\obj\main.o: ..\Protocol\test.h
+.\obj\main.o: ..\Protocol\led.h
 .\obj\main.o: ..\Protocol\minibalance.h
+.\obj\main.o: ..\Protocol\uprotocol.h

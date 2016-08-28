@@ -1,7 +1,8 @@
-#include "Hal_led/Hal_led.h"
+#include "led.h"
 #include "timer.h"
 
 char led1Status = 0;
+SYSTIMER *ledTimer = NULL;
 
 void led_gpio_init(void)
 {

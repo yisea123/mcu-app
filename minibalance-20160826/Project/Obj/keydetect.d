@@ -1,9 +1,7 @@
 .\obj\keydetect.o: ..\Protocol\keydetect.c
 .\obj\keydetect.o: ..\Protocol\keydetect.h
 .\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
-.\obj\keydetect.o: ..\Protocol\Protocol.h
 .\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
-.\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
 .\obj\keydetect.o: ..\Lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h
 .\obj\keydetect.o: ..\Lib\CMSIS\CM3\CoreSupport\core_cm3.h
 .\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
@@ -33,3 +31,15 @@
 .\obj\keydetect.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\obj\keydetect.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\obj\keydetect.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h
+.\obj\keydetect.o: ..\Protocol\timer.h
+.\obj\keydetect.o: ..\Protocol\Protocol.h
+.\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
+.\obj\keydetect.o: ..\Protocol\list.h
+.\obj\keydetect.o: ..\Protocol\message.h
+.\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\obj\keydetect.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\keydetect.o: ..\Protocol\malloc.h
+.\obj\keydetect.o: ..\Protocol\led.h
+.\obj\keydetect.o: ..\Protocol\minibalance.h
+.\obj\keydetect.o: ..\User\delay.h
+.\obj\keydetect.o: ..\Protocol\wdg.h

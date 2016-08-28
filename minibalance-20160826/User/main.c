@@ -7,31 +7,11 @@ printf(" \
 \r\n/******************************************/ \
 \r\n");
 
-extern u8 Flag_Stop;
 Ringfifo uart3fifo;
 uint32_t SystemTimeCount;
-SYSTIMER *timer1 = NULL, *wdTimer = NULL,
-	*miniTimer = NULL, *timerTest = NULL;
-void printf_systemrccClocks(void);
 void hw_init(void);
 void sw_init(void);
-static char *pointer = NULL;
 	
-void poll_uart3_fifo(Ringfifo *mfifo) 
-{
-		char ch;
-		static char pre = 0; 
-		if (rfifo_len(mfifo) > 0) {
-				if (rfifo_get(mfifo, &ch, 1) == 1) {
-						if (miniTimer && pre != ch) {
-							deliver_message(make_message(CMD_REMOTE_CONTROL, &ch, 1),
-									miniTimer);
-						}
-						pre = ch;
-				}
-		}
-}
-
 int main(void)
 {	
 		SystemInit();	
@@ -44,25 +24,6 @@ int main(void)
 		}	
 }
 
-void key_gpioA_pin5_callback(KEY_VALUE value)
-{
-		if (get_led_status(LED1)) {
-				led_off(LED1);
-		} else { 
-				led_on(LED1);
-		}
-		
-		if (value == KEY_SINGLE) {
-			  Flag_Stop = !Flag_Stop;
-				printf("%s 1\r\n", __func__);
-		} else if (value == KEY_DOUBLE) {
-				Flag_Stop = !Flag_Stop;
-				printf("%s 2\r\n", __func__);
-		} else if (value == KEY_LONG_PRESS) {
-				printf("%s 3\r\n", __func__);
-		}
-}
-
 void hw_init(void)
 {
 		delay_init(72);
@@ -71,7 +32,7 @@ void hw_init(void)
 		interrupt_priority_init(NVIC_PriorityGroup_2);
 		uarts_init();
 		watchdog_init(3);  
-		timer3_int_init(9, 7199);//ms interrupt	 
+		timer3_int_init(8, 7000);//9, 7199 ms interrupt	 
 		//timer4_int_init(1000-1, 7199);//5s interrupt is max!	
 		BOOT_LOG	
 		printf_systemrccClocks();		
@@ -90,119 +51,20 @@ void hw_init(void)
 		//timer1_int_init(1000-1, 7199);
 }
 
-void led_flash_callback(void *timer)
-{
-		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
-				if (argc->message) {
-					release_message(argc->message);
-				} 
-				return;
-		}	
-		
-		if (get_led_status(LED1)) {
-				led_off(LED1);
-		} else { 
-				led_on(LED1);
-		}
-}
-
-void keyevent_detect(void *timer)
-{
-		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
-				if (argc->message) {
-					release_message(argc->message);
-				} 
-				return;
-		}	
-		
-		key_scan();
-}
-
-void feed_watchdog_peroid(void *timer)
-{
-		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
-				if (argc->message) {
-					release_message(argc->message);
-				} 
-				return;
-		}	
-		watchdog_feed();
-}
-
-void usmart_test(void)
-{
-		if (get_led_status(LED1)) {
-				led_off(LED1);
-		} else { 
-				led_on(LED1);
-		}
-		printf("%s\r\n", __func__);
-}
-
-void second_callback(void *timer)
-{
-		static unsigned int count = 0;
-	
-		SYSTIMER* argc = (SYSTIMER*) timer;
-		if (argc->isMessage) {
-				if (argc->message) {
-					printf("%s: msg->data=%s, size=%d, cmd=%d\r\n", __func__,
-							argc->message->data, argc->message->size, argc->message->cmd);
-					release_message(argc->message);
-				} 
-				return;
-		}	
-		
-		count++;
-		if ( count%1 == 0) {
-				count = 0;
-				printf("sysTick=%d\r\n", SystemTimeCount);
-		}
-}
-
-void test_put_msg(char cmd, char *text)
-{
-		deliver_message(make_message(cmd, text, strlen(text)), timerTest);
-}
-
 void sw_init(void)
 {
 	 	my_mem_init(SRAMIN);
 		rfifo_init(&uart3fifo);	
 		init_system_timer();
-		wdTimer = register_system_timer("feedDog", 400, feed_watchdog_peroid, REPEAT, NULL);
 		usmart_dev.init();	
-		timer1 = register_system_timer("LedFlash", TIMERSECOND/10, led_flash_callback, REPEAT, &SystemTimeCount);
-		timerTest = register_system_timer("Second", 10000, second_callback, REPEAT, &SystemTimeCount);
-		register_system_timer("KeyScan", 7, keyevent_detect, REPEAT, NULL);
-		register_system_timer("LcdDisplay", 100, poll_led_display, REPEAT, &pointer);
-		miniTimer = register_system_timer("miniCore", 5, poll_minibalance_core, REPEAT, NULL);
+		wdTimer = register_system_timer("FeedDogTask", 200, feed_watchdog_task, REPEAT, NULL);	
+		ledTimer = register_system_timer("LedFlashTask", TIMERSECOND/10, led_flash_task, REPEAT, &SystemTimeCount);
+		timerTest = register_system_timer("TestTask", 10000, test_task_callback, REPEAT, &SystemTimeCount);
+		keyTimer = register_system_timer("KeyScanTask", 5, keyevent_detect_task, REPEAT, NULL);
+		lcdTimer = register_system_timer("LcdDisplay", 100, lcd_display_task, REPEAT, NULL);
+		miniTimer = register_system_timer("MiniBalanceCore", 999999999, minibalance_core_task, REPEAT, NULL);
 		printf("Minibalance Init Ok ...\r\n");
 }
 
-void printf_systemrccClocks(void)
-{
-		uint8_t SYSCLKSource;
-
-		RCC_ClocksTypeDef  SystemRCC_Clocks;
-		printf("System start...\r\n");
-		SYSCLKSource = RCC_GetSYSCLKSource();
-		if (SYSCLKSource==0x04)
-			printf("SYSCLKSource is HSE\r\n");
-		else if (SYSCLKSource==0x00)
-		  printf ("SYSCLKSource is HSI\r\n");
-		else if (SYSCLKSource==0x08)
-			printf("SYSCLKSource is PL!\r\n");
-		
-		RCC_GetClocksFreq(&SystemRCC_Clocks);
-		printf("SYS clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.SYSCLK_Frequency/1000000);
-		printf("HCLK clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.HCLK_Frequency/1000000);
-		printf("PCLK1 clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.PCLK1_Frequency/1000000);
-		printf("PCLK2_clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.PCLK2_Frequency/1000000);	
-		printf("SADCCLK_Frequencyclock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.ADCCLK_Frequency/1000000);
-}
 
 

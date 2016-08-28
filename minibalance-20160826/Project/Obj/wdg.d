@@ -30,3 +30,13 @@
 .\obj\wdg.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\obj\wdg.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\obj\wdg.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h
+.\obj\wdg.o: ..\Protocol\timer.h
+.\obj\wdg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+.\obj\wdg.o: ..\Protocol\Protocol.h
+.\obj\wdg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+.\obj\wdg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
+.\obj\wdg.o: ..\Protocol\list.h
+.\obj\wdg.o: ..\Protocol\message.h
+.\obj\wdg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\obj\wdg.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\wdg.o: ..\Protocol\malloc.h

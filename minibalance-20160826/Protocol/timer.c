@@ -107,8 +107,8 @@ void timer3_int_init(u16 arr,u16 psc)
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;  //TIM3中断
 		/*系统时钟，优先级最高*/
 		/* will not be interrupt by same NVIC_IRQChannelPreemptionPriority interrupt*/
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;  //先占优先级0级
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;  //从优先级3级
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  //先占优先级0级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;  //从优先级3级
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; //IRQ通道被使能
     NVIC_Init(&NVIC_InitStructure);  //初始化NVIC寄存器
     TIM_Cmd(TIM3, ENABLE);  //使能TIMx
@@ -124,9 +124,9 @@ void TIM3_IRQHandler(void)
         TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
         SystemTimeCount++;
 				sysTimerTick++;		
-				//if (SystemTimeCount%5 == 0) {
-				//		poll_minibalance_core(NULL);
-				//}
+				if (SystemTimeCount%4 == 0) {
+						minibalance_core_task(NULL);
+				}
     }
 }  
 

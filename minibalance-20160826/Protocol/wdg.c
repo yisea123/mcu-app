@@ -1,5 +1,6 @@
 #include "wdg.h"
 
+SYSTIMER *wdTimer = NULL;
 //初始化独立看门狗
 //prer:分频数:0~7(只有低3位有效!)
 //分频因子=4*2^prer.但最大值只能是256!
@@ -23,6 +24,18 @@ void watchdog_init(int second)
 void watchdog_feed(void)
 {   
 		IWDG_ReloadCounter();//reload										   
+}
+
+void feed_watchdog_task(void *timer)
+{
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		watchdog_feed();
 }
 
 

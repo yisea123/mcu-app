@@ -38,5 +38,10 @@
 .\obj\stm32f10x_it.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 .\obj\stm32f10x_it.o: ..\Protocol\minibalance.h
 .\obj\stm32f10x_it.o: ..\User\delay.h
+.\obj\stm32f10x_it.o: ..\Protocol\timer.h
+.\obj\stm32f10x_it.o: ..\Protocol\list.h
+.\obj\stm32f10x_it.o: ..\Protocol\message.h
+.\obj\stm32f10x_it.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\stm32f10x_it.o: ..\Protocol\malloc.h
 .\obj\stm32f10x_it.o: ..\Hal\Hal_infrared/Hal_infrared.h
 .\obj\stm32f10x_it.o: ..\Hal\Hal_key/Hal_key.h

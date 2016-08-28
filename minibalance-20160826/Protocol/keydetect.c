@@ -1,5 +1,10 @@
 #include "keydetect.h"
+#include "timer.h"
+#include "led.h"
+#include "minibalance.h"
+#include "wdg.h"
 
+extern SYSTIMER *miniTimer;
 unsigned int keyEventTotal = 0;
 KEYEVENT keyEvent[10];
 /*
@@ -97,6 +102,52 @@ void key_scan(void)
 				keyEvent[i].callback(KEY_LONG_PRESS);
 			}
 		}
+}
+
+void key_gpioA_pin5_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				//printf("%s 1\r\n", __func__);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				//printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				//printf("%s 3\r\n", __func__);
+		}
+
+		deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+SYSTIMER *keyTimer = NULL;
+void keyevent_detect_task(void *timer)
+{
+/*		static int i = 0;
+		
+		if (++i > 10) {
+			 i = 0;
+			 lcd_display_task(NULL);
+		}
+*/		
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
+//		watchdog_feed();
+		key_scan();
 }
 
 /*

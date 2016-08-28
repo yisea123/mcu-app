@@ -30,3 +30,12 @@
 .\obj\hal_led.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\obj\hal_led.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\obj\hal_led.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h
+.\obj\hal_led.o: ..\Protocol\timer.h
+.\obj\hal_led.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+.\obj\hal_led.o: ..\Protocol\Protocol.h
+.\obj\hal_led.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
+.\obj\hal_led.o: ..\Protocol\list.h
+.\obj\hal_led.o: ..\Protocol\message.h
+.\obj\hal_led.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\obj\hal_led.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\hal_led.o: ..\Protocol\malloc.h

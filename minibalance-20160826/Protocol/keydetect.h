@@ -2,9 +2,9 @@
 #define __KEYDETECT_H	 
 
 #include <string.h>
-#include "Protocol.h"
 #include <stdio.h>
 #include <stm32f10x.h>
+#include "timer.h"
 
 #define KEY(port, pin) 					GPIO_ReadInputDataBit(port, pin)
 
@@ -33,6 +33,9 @@ typedef struct KeyEvent {
 	u16 long_press;	
 }KEYEVENT;
 
+extern SYSTIMER *keyTimer;
 extern void key_scan(void);
-void register_key_event(GPIO_TypeDef* port, uint16_t pin, keyevent_callback callback);
+extern void register_key_event(GPIO_TypeDef* port, uint16_t pin, keyevent_callback callback);
+extern void keyevent_detect_task(void *timer);
+extern void key_gpioA_pin5_callback(KEY_VALUE value);
 #endif

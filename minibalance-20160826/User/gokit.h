@@ -28,8 +28,9 @@
 #include "malloc.h"
 #include "sys.h"
 #include "message.h"
-//#include "oled.h"
+#include "test.h"
 #include "minibalance.h"
+#include "uprotocol.h"
 
 __packed	typedef struct	
 {

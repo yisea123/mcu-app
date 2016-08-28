@@ -1,8 +1,11 @@
-#ifndef _HAL_LED_H
-#define _HAL_LED_H
+#ifndef _LED_H
+#define _LED_H
 
 #include <stdio.h>
 #include <stm32f10x.h>
+#include "timer.h"
+
+extern SYSTIMER *ledTimer;
 
 #define GPIO_LED1_CLK    RCC_APB2Periph_GPIOA
 #define GPIO_LED1_PORT   GPIOA
