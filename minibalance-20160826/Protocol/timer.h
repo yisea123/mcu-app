@@ -3,6 +3,8 @@
 
 #include <string.h>
 #include "Protocol.h"
+#include "list.h"
+#include "message.h"
 
 #define NUMTIMER				15
 
@@ -31,7 +33,10 @@ typedef struct sysTimer {
 	unsigned int times;
   unsigned int timesSave;
 	timer_callback callback;
+	char isMessage;
+	MESSAGE* message;
 	void *argc;
+	struct list_head msgHead;	
 	struct sysTimer *next;
 } SYSTIMER;
 

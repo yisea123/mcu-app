@@ -10,7 +10,8 @@ printf(" \
 extern u8 Flag_Stop;
 Ringfifo uart3fifo;
 uint32_t SystemTimeCount;
-SYSTIMER *timer1 = NULL, *wdTimer = NULL;
+SYSTIMER *timer1 = NULL, *wdTimer = NULL,
+	*miniTimer = NULL, *timerTest = NULL;
 void printf_systemrccClocks(void);
 void hw_init(void);
 void sw_init(void);
@@ -22,8 +23,10 @@ void poll_uart3_fifo(Ringfifo *mfifo)
 		static char pre = 0; 
 		if (rfifo_len(mfifo) > 0) {
 				if (rfifo_get(mfifo, &ch, 1) == 1) {
-						if (pre != ch)
-							handle_remote_control(ch);
+						if (miniTimer && pre != ch) {
+							deliver_message(make_message(CMD_REMOTE_CONTROL, &ch, 1),
+									miniTimer);
+						}
 						pre = ch;
 				}
 		}
@@ -89,14 +92,14 @@ void hw_init(void)
 
 void led_flash_callback(void *timer)
 {
-	/*
-		if (pointer == NULL) {
-				pointer = mymalloc(0, 33);
-		} else {
-				myfree(0, pointer);
-				pointer = NULL;
-		}
-		*/
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
 		if (get_led_status(LED1)) {
 				led_off(LED1);
 		} else { 
@@ -106,11 +109,26 @@ void led_flash_callback(void *timer)
 
 void keyevent_detect(void *timer)
 {
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
 		key_scan();
 }
 
 void feed_watchdog_peroid(void *timer)
 {
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
 		watchdog_feed();
 }
 
@@ -124,14 +142,30 @@ void usmart_test(void)
 		printf("%s\r\n", __func__);
 }
 
-void msecond_callback(void *timer)
+void second_callback(void *timer)
 {
 		static unsigned int count = 0;
+	
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					printf("%s: msg->data=%s, size=%d, cmd=%d\r\n", __func__,
+							argc->message->data, argc->message->size, argc->message->cmd);
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
 		count++;
-		if ( count%500 == 0) {
+		if ( count%1 == 0) {
 				count = 0;
 				printf("sysTick=%d\r\n", SystemTimeCount);
 		}
+}
+
+void test_put_msg(char cmd, char *text)
+{
+		deliver_message(make_message(cmd, text, strlen(text)), timerTest);
 }
 
 void sw_init(void)
@@ -142,10 +176,10 @@ void sw_init(void)
 		wdTimer = register_system_timer("feedDog", 400, feed_watchdog_peroid, REPEAT, NULL);
 		usmart_dev.init();	
 		timer1 = register_system_timer("LedFlash", TIMERSECOND/10, led_flash_callback, REPEAT, &SystemTimeCount);
-		//register_system_timer("mSecond", 1, msecond_callback, REPEAT, &SystemTimeCount);
+		timerTest = register_system_timer("mSecond", 10000, second_callback, REPEAT, &SystemTimeCount);
 		register_system_timer("KeyScan", 7, keyevent_detect, REPEAT, NULL);
 		register_system_timer("LcdDisplay", 100, poll_led_display, REPEAT, &pointer);
-		register_system_timer("miniCore", 5, poll_minibalance_core, REPEAT, NULL);
+		miniTimer = register_system_timer("miniCore", 5, poll_minibalance_core, REPEAT, NULL);
 		printf("Minibalance Init Ok ...\r\n");
 }
 

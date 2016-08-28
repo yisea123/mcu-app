@@ -36,3 +36,8 @@
 .\obj\usmart.o: ..\Protocol\timer.h
 .\obj\usmart.o: ..\Protocol\Protocol.h
 .\obj\usmart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
+.\obj\usmart.o: ..\Protocol\list.h
+.\obj\usmart.o: ..\Protocol\message.h
+.\obj\usmart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\obj\usmart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\usmart.o: ..\Protocol\malloc.h

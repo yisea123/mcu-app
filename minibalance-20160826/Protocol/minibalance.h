@@ -4,6 +4,8 @@
 #include "stdlib.h"
 #include "delay.h"
 
+#define CMD_REMOTE_CONTROL    99
+
 extern void poll_led_display(void *timer);
 extern void MiniBalance_PWM_Init(u16 arr,u16 psc);
 extern void poll_minibalance_core(void *timer);

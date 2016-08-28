@@ -27,6 +27,7 @@
 #include "oled.h"
 #include "malloc.h"
 #include "sys.h"
+#include "message.h"
 //#include "oled.h"
 #include "minibalance.h"
 

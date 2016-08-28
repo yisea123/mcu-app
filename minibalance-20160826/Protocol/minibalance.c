@@ -44,9 +44,27 @@ int Balance_Pwm,Velocity_Pwm,Turn_Pwm;
 u8 Flag_Target;
 float mTurnKp = 20, mTurnKd = 0;
 extern int Get_battery_volt(void);
+static int remoteCmd = 0;
 
 void poll_minibalance_core(void *timer) 
 {    
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					switch(argc->message->cmd) {
+						case CMD_REMOTE_CONTROL:
+							handle_remote_control(*(argc->message->data));
+							break;
+						default:
+							break;
+					}
+					release_message(argc->message);
+				} else {
+					printf("poll_minibalance_core message error!\r\n");
+				}
+				return;
+		}
+		
 		Flag_Qian = irq_qian;
 		Flag_Hou = irq_hou;
 		Flag_Right = irq_right;
@@ -374,8 +392,15 @@ void poll_led_display(void *timer)
 {
 		unsigned char index[25];	
 		static unsigned int tmp;
-		SYSTIMER *pointer = (SYSTIMER*)timer;
-	
+
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
 		Voltage = Get_battery_volt();
 		OLED_ShowString(5,20, "              ");
 		memset(index, '\0', sizeof(index));
@@ -404,11 +429,11 @@ void poll_led_display(void *timer)
 		snprintf((char*)index, sizeof(index), "Ang:%3.03f", Angle_Balance);	
 		OLED_ShowString(5,40,index);
 
-		//OLED_ShowString(5,50, "            ");
-		//memset(index, '\0', sizeof(index));
-		//snprintf((char*)index, sizeof(index), "p=%p", *((char **)((pointer)->argc)));
+		OLED_ShowString(5,50, "            ");
+		memset(index, '\0', sizeof(index));
+		snprintf((char*)index, sizeof(index), "Cmd=%02X", remoteCmd);
 		//strcpy(index, "xiaopeng");
-		//OLED_ShowString(5,50, index);
+		OLED_ShowString(5,50, index);
 	
 		OLED_Refresh_Gram();	
 		tmp++;
@@ -416,6 +441,9 @@ void poll_led_display(void *timer)
 
 void handle_remote_control(int uart_receive)
 {
+		//printf("cmd = %02x\r\n", uart_receive);
+		remoteCmd = uart_receive;
+	
 		if (uart_receive > 10)
 		{			
 			if(uart_receive==0x5A)	

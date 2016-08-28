@@ -33,6 +33,10 @@
 .\obj\timer.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\obj\timer.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\obj\timer.o: ..\Lib\STM32F10x_StdPeriph_Driver\inc\misc.h
-.\obj\timer.o: ..\Protocol\minibalance.h
+.\obj\timer.o: ..\Protocol\list.h
+.\obj\timer.o: ..\Protocol\message.h
 .\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
+.\obj\timer.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\timer.o: ..\Protocol\malloc.h
+.\obj\timer.o: ..\Protocol\minibalance.h
 .\obj\timer.o: ..\User\delay.h

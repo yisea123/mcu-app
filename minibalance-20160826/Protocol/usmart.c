@@ -225,6 +225,14 @@ u32 usmart_get_runtime(void)
 //定时器4中断服务程序	 
 void usamrt_timer_callback(void *timer) 
 {
+		SYSTIMER* argc = (SYSTIMER*) timer;
+		if (argc->isMessage) {
+				if (argc->message) {
+					release_message(argc->message);
+				} 
+				return;
+		}	
+		
 		usmart_dev.scan();	//执行usmart扫描	
 }
 

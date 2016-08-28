@@ -216,6 +216,7 @@ SYSTIMER* register_system_timer(const char name[], unsigned int times,
 						//DISABLE_INT();
 						timer->next = sysTimerHead;
 						sysTimerHead = timer;
+						INIT_LIST_HEAD(&(timer->msgHead)); 
 						//ENABLE_INT();		
 						sysTimerTotal++;	
 						printf("%s: add timer[%s] success. sysTimerTotal=%d, i=%d\r\n",
@@ -247,7 +248,8 @@ int unregister_system_timer(SYSTIMER* timer)
 						sysTimerTotal--;
 						printf("%s: delete timer [%s]. sysTimerTotal=%d\r\n",
 							__func__, cur->name, sysTimerTotal);
-						clean_system_timer(cur);				
+						clean_system_timer(cur);
+						clean_message(cur);					
 						ret = 0;
 						break;
 				} else {
@@ -267,6 +269,7 @@ int unregister_system_timer(SYSTIMER* timer)
 void poll_system_timer(void)
 {
 		unsigned int t;
+		MESSAGE* msg = NULL;	
 		SYSTIMER **mPtr = &sysTimerHead, *cur = NULL;	
 	  static unsigned int systimes = 0;
 		unsigned int temp = sysTimerTick;
@@ -276,7 +279,14 @@ void poll_system_timer(void)
 		if (count > 0) {
 			t = count;
 			while ((*mPtr) != NULL) {
+					(*mPtr)->message = NULL;
+					while(msg = get_message(*mPtr)) {
+							(*mPtr)->isMessage = 1;
+							(*mPtr)->message = msg;
+							(*mPtr)->callback(*mPtr);	
+					}			
 					if ((*mPtr)->times <= t) {
+							(*mPtr)->isMessage = 0;
 							(*mPtr)->callback(*mPtr);	
 							t = t - (*mPtr)->times;
 							(*mPtr)->times = (*mPtr)->timesSave;						
@@ -288,10 +298,9 @@ void poll_system_timer(void)
 										cur = *mPtr;
 										(*mPtr) = (*mPtr)->next;
 										t = count;
-										sysTimerTotal--;
-										printf("%s: delete timer %s. mReady=%d, sysTimerTotal=%d\r\n", 
-												__func__, cur->name, cur->destory, sysTimerTotal);													
+										sysTimerTotal--;												
 										clean_system_timer(cur);
+										clean_message(cur);
 										continue;
 									} else {
 											mPtr = &((*mPtr)->next);
@@ -301,10 +310,9 @@ void poll_system_timer(void)
 									cur = *mPtr;
 									(*mPtr) = (*mPtr)->next;
 									t = count;
-									sysTimerTotal--;
-									printf("%s: delete timer %s. not repeat, sysTimerTotal=%d\r\n", 
-											__func__, cur->name, sysTimerTotal);												
+									sysTimerTotal--;											
 									clean_system_timer(cur);
+									clean_message(cur);
 									continue;										
 							}									
 					} else {

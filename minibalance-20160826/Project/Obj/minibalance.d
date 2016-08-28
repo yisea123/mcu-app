@@ -62,6 +62,9 @@
 .\obj\minibalance.o: ..\Protocol\ringbuffer.h
 .\obj\minibalance.o: ..\Protocol\timer.h
 .\obj\minibalance.o: ..\Protocol\Protocol.h
+.\obj\minibalance.o: ..\Protocol\list.h
+.\obj\minibalance.o: ..\Protocol\message.h
+.\obj\minibalance.o: ..\Protocol\malloc.h
 .\obj\minibalance.o: ..\Protocol\rfifo.h
 .\obj\minibalance.o: ..\Protocol\keydetect.h
 .\obj\minibalance.o: ..\Protocol\wdg.h
@@ -70,4 +73,3 @@
 .\obj\minibalance.o: ..\Protocol\pwm.h
 .\obj\minibalance.o: ..\Protocol\rtc.h
 .\obj\minibalance.o: ..\minibalance\madc.h
-.\obj\minibalance.o: ..\Protocol\malloc.h

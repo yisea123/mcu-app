@@ -45,6 +45,10 @@
 .\obj\main.o: ..\Protocol\timer.h
 .\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 .\obj\main.o: ..\Protocol\Protocol.h
+.\obj\main.o: ..\Protocol\list.h
+.\obj\main.o: ..\Protocol\message.h
+.\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
+.\obj\main.o: ..\Protocol\malloc.h
 .\obj\main.o: ..\Protocol\rfifo.h
 .\obj\main.o: ..\Protocol\keydetect.h
 .\obj\main.o: ..\Protocol\uart.h
@@ -57,9 +61,7 @@
 .\obj\main.o: ..\minibalance\sys.h
 .\obj\main.o: ..\minibalance\oled.h
 .\obj\main.o: ..\minibalance\sys.h
-.\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
 .\obj\main.o: ..\minibalance\IOI2C.h
 .\obj\main.o: ..\minibalance\madc.h
 .\obj\main.o: ..\minibalance\encoder.h
-.\obj\main.o: ..\Protocol\malloc.h
 .\obj\main.o: ..\Protocol\minibalance.h
