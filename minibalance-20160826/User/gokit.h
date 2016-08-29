@@ -31,6 +31,7 @@
 #include "test.h"
 #include "minibalance.h"
 #include "uprotocol.h"
+#include "ostimer.h"
 
 __packed	typedef struct	
 {

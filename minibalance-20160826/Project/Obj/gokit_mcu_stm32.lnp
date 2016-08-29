@@ -50,6 +50,7 @@
 ".\obj\led.o"
 ".\obj\test.o"
 ".\obj\uprotocol.o"
+".\obj\ostimer.o"
 ".\obj\ioi2c.o"
 ".\obj\minibalance.o"
 ".\obj\oled.o"

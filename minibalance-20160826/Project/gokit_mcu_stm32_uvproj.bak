@@ -578,11 +578,6 @@
               <FilePath>..\Hal\Hal_key\hal_key.c</FilePath>
             </File>
             <File>
-              <FileName>Hal_led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Hal\Hal_led\Hal_led.c</FilePath>
-            </File>
-            <File>
               <FileName>hal_motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Hal\hal_motor\hal_motor.c</FilePath>
@@ -676,6 +671,26 @@
               <FileName>message.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Protocol\message.c</FilePath>
+            </File>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Protocol\led.c</FilePath>
+            </File>
+            <File>
+              <FileName>test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Protocol\test.c</FilePath>
+            </File>
+            <File>
+              <FileName>uprotocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Protocol\uprotocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>ostimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ostimer.c</FilePath>
             </File>
           </Files>
         </Group>

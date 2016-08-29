@@ -20,6 +20,7 @@ int main(void)
 		
 		while(1) {
 				poll_system_timer();
+				poll_os_timer();
 				poll_uart3_fifo(&uart3fifo);
 		}	
 }
@@ -56,6 +57,7 @@ void sw_init(void)
 	 	my_mem_init(SRAMIN);
 		rfifo_init(&uart3fifo);	
 		init_system_timer();
+		init_os_timer();
 		usmart_dev.init();	
 		wdTimer = register_system_timer("FeedDogTask", 200, feed_watchdog_task, REPEAT, NULL);	
 		ledTimer = register_system_timer("LedFlashTask", TIMERSECOND/10, led_flash_task, REPEAT, &SystemTimeCount);

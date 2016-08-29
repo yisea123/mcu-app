@@ -76,3 +76,4 @@
 .\obj\minibalance.o: ..\Protocol\test.h
 .\obj\minibalance.o: ..\Protocol\led.h
 .\obj\minibalance.o: ..\Protocol\uprotocol.h
+.\obj\minibalance.o: ..\Protocol\ostimer.h

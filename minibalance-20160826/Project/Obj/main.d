@@ -68,3 +68,4 @@
 .\obj\main.o: ..\Protocol\led.h
 .\obj\main.o: ..\Protocol\minibalance.h
 .\obj\main.o: ..\Protocol\uprotocol.h
+.\obj\main.o: ..\Protocol\ostimer.h

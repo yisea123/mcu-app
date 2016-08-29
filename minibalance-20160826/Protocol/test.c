@@ -1,4 +1,5 @@
 #include "test.h"
+#include "ostimer.h"
 
 extern uint32_t SystemTimeCount;
 SYSTIMER *timerTest = NULL;
@@ -59,6 +60,31 @@ void printf_systemrccClocks(void)
 		printf("PCLK1 clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.PCLK1_Frequency/1000000);
 		printf("PCLK2_clock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.PCLK2_Frequency/1000000);	
 		printf("SADCCLK_Frequencyclock =%dMHz \r\n",(uint32_t)SystemRCC_Clocks.ADCCLK_Frequency/1000000);
+}
+
+void os_timer_callback_test(void *ptmr, void *parg)
+{
+		printf("%s: %s -SystemTimeCount=%d\r\n", __func__, ((OS_TMR*)ptmr)->OSTmrName, SystemTimeCount);
+}
+
+void test_os_timer(void)
+{
+		unsigned char err;
+	
+		OS_TMR  *ostimer = create_os_timer(5000,
+                      20,
+                      OS_TMR_OPT_PERIODIC,
+                      os_timer_callback_test,
+                      &SystemTimeCount,
+                      "osTimerTest",
+                      &err);
+
+		if (err == OS_ERR_NONE) {
+				printf("%s| create osTimerTest scueess\r\n", __func__);
+				start_os_timer(ostimer, &err);
+		} else {
+				printf("%s| create osTimerTest fail\r\n", __func__);
+		}
 }
 
 

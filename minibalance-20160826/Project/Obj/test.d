@@ -40,3 +40,4 @@
 .\obj\test.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
 .\obj\test.o: ..\Protocol\malloc.h
 .\obj\test.o: ..\Protocol\led.h
+.\obj\test.o: ..\Protocol\ostimer.h
