@@ -8,42 +8,40 @@ Project File Date:  08/29/2016
 
 <h2>Output:</h2>
 Build target 'gokit_stm32'
-compiling test.c...
 linking...
-Program Size: Code=25258 RO-data=834 RW-data=668 ZI-data=14632  
+Program Size: Code=51080 RO-data=6968 RW-data=860 ZI-data=15840  
 FromELF: creating hex file...
 ".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 0 Warning(s).
 </pre>
 </body>
 </html>
-\Protocol\test.c: 0 warnings, 1 error
-".\Obj\gokit_mcu_stm32.axf" - 1 Error(s), 0 Warning(s).
-Target not created
-ex file...
-".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 1 Warning(s).
-ed (by inv_mpu.o and test.o).
-Not enough information to list image symbols.
-Not enough information to list the image map.
-Finished: 2 information, 0 warning and 1 error messages.
-".\Obj\gokit_mcu_stm32.axf" - 1 Error(s), 2 Warning(s).
-Target not created
- not created
-INT32U" is undefined
-      INT32U           OSTmrPeriod;                     /* Period to repeat timer                                        */
-..\Protocol\ostimer.h(77): error:  #20: identifier "INT8U" is undefined
-      INT8U           *OSTmrName;                       /* Name to give the timer                                        */
-..\Protocol\ostimer.h(78): error:  #20: identifier "INT8U" is undefined
-      INT8U            OSTmrOpt;                        /* Options (see OS_TMR_OPT_xxx)                                  */
-..\Protocol\ostimer.h(79): error:  #20: identifier "INT8U" is undefined
-      INT8U            OSTmrState;                      /* Indicates the state of the timer:                             */
-..\Protocol\ostimer.h(87): error:  #20: identifier "INT16U" is undefined
-      INT16U           OSTmrEntries;
-..\Protocol\ostimer.c(356): warning:  #177-D: variable "err" was declared but never referenced
-      unsigned char err;
-..\Protocol\ostimer.c(392): warning:  #177-D: variable "err" was declared but never referenced
-      unsigned char err;
-..\Protocol\ostimer.c(399): warning:  #177-D: variable "t" was declared but never referenced
-                unsigned int t;
-..\Protocol\ostimer.c: 3 warnings, 8 errors
-".\Obj\gokit_mcu_stm32.axf" - 8 Error(s), 3 Warning(s).
-Target not created
+ warning:  #550-D: variable "ch" was set but never used
+        uint8_t ch = 0;
+..\User\stm32f10x_it.c: 2 warnings, 0 errors
+compiling timer.c...
+..\Protocol\timer.c(283): warning:  #1293-D: assignment in condition
+                                        while((msg = get_message(*mPtr))) {
+..\Protocol\timer.c: 1 warning, 0 errors
+compiling keydetect.c...
+compiling uprotocol.c...
+..\Protocol\uprotocol.c(6): warning:  #550-D: variable "pre" was set but never used
+                static char pre = 0; 
+..\Protocol\uprotocol.c: 1 warning, 0 errors
+compiling minibalance.c...
+linking...
+Program Size: Code=51080 RO-data=6968 RW-data=860 ZI-data=15840  
+FromELF: creating hex file...
+".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 4 Warning(s).
+ statement at end of non-void function "get_led_status"
+  }
+..\Protocol\led.c: 2 warnings, 0 errors
+compiling test.c...
+compiling uprotocol.c...
+..\Protocol\uprotocol.c(6): warning:  #550-D: variable "pre" was set but never used
+                static char pre = 0; 
+..\Protocol\uprotocol.c: 1 warning, 0 errors
+compiling minibalance.c...
+linking...
+Program Size: Code=51080 RO-data=6968 RW-data=860 ZI-data=15840  
+FromELF: creating hex file...
+".\Obj\gokit_mcu_stm32.axf" - 0 Error(s), 7 Warning(s).

@@ -5,6 +5,8 @@
 #include "delay.h"
 #include "timer.h"
 
+//#define MINIBALANCE			1	
+
 #define CMD_REMOTE_CONTROL    99
 #define CMD_RUNNING_CONTROL		100
 

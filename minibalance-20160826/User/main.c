@@ -33,13 +33,18 @@ void hw_init(void)
 		interrupt_priority_init(NVIC_PriorityGroup_2);
 		uarts_init();
 		watchdog_init(3);  
+#ifdef MINIBALANCE		
 		timer3_int_init(8, 7000);//9, 7199 ms interrupt	 
+#else
+		timer3_int_init(9, 7199);//9, 7199 ms interrupt	
+#endif	
 		//timer4_int_init(1000-1, 7199);//5s interrupt is max!	
 		BOOT_LOG	
 		printf_systemrccClocks();		
 		led_gpio_init();//PA4
 		register_key_event(GPIOA, GPIO_Pin_5, key_gpioA_pin5_callback);
-		
+
+#ifdef MINIBALANCE	
 		OLED_Init();
 		Adc_Init();
 		IIC_Init();
@@ -48,6 +53,7 @@ void hw_init(void)
 		Encoder_Init_TIM2();//use TIME2
 		Encoder_Init_TIM4();//use TIME4
 		MiniBalance_PWM_Init(7199, 0);
+#endif
 		//timer2_int_init(1000-1, 7199);
 		//timer1_int_init(1000-1, 7199);
 }
@@ -63,9 +69,15 @@ void sw_init(void)
 		ledTimer = register_system_timer("LedFlashTask", TIMERSECOND/10, led_flash_task, REPEAT, &SystemTimeCount);
 		timerTest = register_system_timer("TestTask", 10000, test_task_callback, REPEAT, &SystemTimeCount);
 		keyTimer = register_system_timer("KeyScanTask", 5, keyevent_detect_task, REPEAT, NULL);
+	
+#ifdef MINIBALANCE	
 		lcdTimer = register_system_timer("LcdDisplay", 100, lcd_display_task, REPEAT, NULL);
 		miniTimer = register_system_timer("MiniBalanceCore", 999999999, minibalance_core_task, REPEAT, NULL);
 		printf("Minibalance Init Ok ...\r\n");
+#else
+		printf("STM32F103C8T6 Init Ok ...\r\n");
+		test_os_timer();
+#endif	
 }
 
 

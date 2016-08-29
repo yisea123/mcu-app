@@ -72,7 +72,7 @@ void test_os_timer(void)
 		unsigned char err;
 	
 		OS_TMR  *ostimer = create_os_timer(5000,
-                      20,
+                      10000,
                       OS_TMR_OPT_PERIODIC,
                       os_timer_callback_test,
                       &SystemTimeCount,

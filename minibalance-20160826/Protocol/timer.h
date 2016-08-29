@@ -6,6 +6,8 @@
 #include "list.h"
 #include "message.h"
 
+//#define MINIBALANCE			1		
+
 #define NUMTIMER				15
 
 #define TIMERPERIOD		1
