@@ -1,0 +1,49 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\mcu\mcu-app\FreeRTOS-stm32f103\USER\UCOSII-1.uvprojx
+Project File Date:  09/08/2016
+
+<h2>Output:</h2>
+Build target 'UCOSII-1'
+compiling tasks.c...
+..\OS\tasks.c(2856): warning:  #223-D: function "printf" declared implicitly
+        printf("%s: pcTaskName = %s\r\n", __func__, pTCB->pcTaskName);
+..\OS\tasks.c: 1 warning, 0 errors
+linking...
+Program Size: Code=23180 RO-data=608 RW-data=196 ZI-data=19200  
+FromELF: creating hex file...
+"..\OBJ\FreeRTOS_STM32F103.axf" - 0 Error(s), 1 Warning(s).
+</pre>
+</body>
+</html>
+askStatusArray, xmem_used_pecent(0));
+main.c(98): warning:  #223-D: function "xmem_used_pecent" declared implicitly
+                printf("xmem_used_pecent=%d%%\r\n", xmem_used_pecent(0));
+main.c(118): warning:  #177-D: variable "num" was declared but never referenced
+        UBaseType_t num;
+main.c(309): warning:  #223-D: function "timer3_int_init" declared implicitly
+            timer3_int_init(10-1, 720-1);
+main.c: 5 warnings, 0 errors
+linking...
+Program Size: Code=23180 RO-data=608 RW-data=196 ZI-data=19200  
+FromELF: creating hex file...
+"..\OBJ\FreeRTOS_STM32F103.axf" - 0 Error(s), 5 Warning(s).
+rintf" declared implicitly
+                                printf("xqueue copy data here\r\n");
+..\OS\queue.c(1451): warning:  #223-D: function "printf" declared implicitly
+                                        printf("xqueue read block here!\r\n");
+..\OS\queue.c: 2 warnings, 0 errors
+compiling tasks.c...
+..\OS\tasks.c(2856): warning:  #223-D: function "printf" declared implicitly
+        printf("%s: pcTaskName = %s\r\n", __func__, pTCB->pcTaskName);
+..\OS\tasks.c: 1 warning, 0 errors
+compiling timers.c...
+compiling port.c...
+compiling xmalloc.c...
+linking...
+Program Size: Code=23044 RO-data=580 RW-data=196 ZI-data=19200  
+FromELF: creating hex file...
+"..\OBJ\FreeRTOS_STM32F103.axf" - 0 Error(s), 8 Warning(s).
