@@ -247,18 +247,43 @@ static void prvTaskExitError( void )
 }
 /*-----------------------------------------------------------*/
 
+static unsigned int aaa = 0;
+void vTaskTest(vTaskTest)
+{
+	printf("@@@@@@@@@@@@%s invoke one time!@@@@@@@@@@\r\n", __func__);
+	//aaa++;
+}
+
+/*调用第一个任务前，进入SVC中断*/
 __asm void SVC_Handler( void )
 {
+//	extern vTaskTest;
+
 	PRESERVE8
+
 
 	ldr	r3, =pxCurrentTCB	/* Restore the context. */
 	ldr r1, [r3]			/* Use pxCurrentTCBConst to get the pxCurrentTCB address. */
 	ldr r0, [r1]			/* The first item in pxCurrentTCB is the task top of stack. */
 	ldmia r0!, {r4-r11}		/* Pop the registers that are not automatically saved on exception entry and the critical nesting count. */
 	msr psp, r0				/* Restore the task stack pointer. */
+
 	isb
 	mov r0, #0
 	msr	basepri, r0
+
+/****************** add for test*****
+	stmdb sp!, {r3, r14}
+	mov r0, #configMAX_SYSCALL_INTERRUPT_PRIORITY
+	msr basepri, r0
+	dsb
+	isb
+	bl vTaskTest
+	mov r0, #0
+	msr basepri, r0
+	ldmia sp!, {r3, r14}
+****************** add for test*****/
+	
 	orr r14, #0xd
 	bx r14
 }

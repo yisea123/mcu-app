@@ -1,5 +1,5 @@
 Dependencies for Project 'UCOSII-1', Target 'UCOSII-1': (DO NOT MODIFY !)
-F (.\main.c)(0x57D2705A)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
+F (.\main.c)(0x57D4198E)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\main.o --omf_browse ..\obj\main.crf --depend ..\obj\main.d)
 I (..\SYSTEM\sys\sys.h)(0x57C5B1D7)
 I (..\USER\stm32f10x.h)(0x4D783CB4)
 I (..\CORE\core_cm3.h)(0x4D523B58)
@@ -35,19 +35,20 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdio.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\timers.h)(0x57D24B43)
 I (..\OS\stm32f103\include\timer.h)(0x57CF03DF)
 I (..\OS\stm32f103\include\xlist.h)(0x57CF02AD)
 I (..\OS\include\queue.h)(0x57D25CF9)
 I (..\OS\stm32f103\include\xmalloc.h)(0x57D03406)
+I (..\OS\include\semphr.h)(0x57D2624A)
 F (.\stm32f10x_it.c)(0x57CDB230)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\stm32f10x_it.o --omf_browse ..\obj\stm32f10x_it.crf --depend ..\obj\stm32f10x_it.d)
 I (stm32f10x_it.h)(0x4D99A426)
 I (stm32f10x.h)(0x4D783CB4)
@@ -272,7 +273,7 @@ I (..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
 F (..\CORE\core_cm3.c)(0x4C0C587E)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\core_cm3.o --omf_browse ..\obj\core_cm3.crf --depend ..\obj\core_cm3.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-F (..\CORE\startup_stm32f10x_hd.s)(0x4D783CDE)(--cpu Cortex-M3 -g --apcs=interwork --pd "__MICROLIB SETA 1"-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x--list .\listings\startup_stm32f10x_hd.lst --xref -o ..\obj\startup_stm32f10x_hd.o --depend ..\obj\startup_stm32f10x_hd.d)
+F (..\CORE\startup_stm32f10x_hd.s)(0x57D3BE64)(--cpu Cortex-M3 -g --apcs=interwork --pd "__MICROLIB SETA 1"-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x--list .\listings\startup_stm32f10x_hd.lst --xref -o ..\obj\startup_stm32f10x_hd.o --depend ..\obj\startup_stm32f10x_hd.d)
 F (..\STM32F10x_FWLib\src\misc.c)(0x4D783BB4)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\misc.o --omf_browse ..\obj\misc.crf --depend ..\obj\misc.d)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
 I (..\USER\stm32f10x.h)(0x4D783CB4)
@@ -505,18 +506,18 @@ I (..\STM32F10x_FWLib\inc\stm32f10x_spi.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\stm32f10x_usart.h)(0x504F415E)
 I (..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
-F (..\README.TXT)(0x5540623F)()
+F (..\README.TXT)(0x57D29646)()
 F (..\OS\croutine.c)(0x573F3A16)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\croutine.o --omf_browse ..\obj\croutine.crf --depend ..\obj\croutine.d)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\croutine.h)(0x573F3A16)
 F (..\OS\event_groups.c)(0x573F3A16)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\event_groups.o --omf_browse ..\obj\event_groups.crf --depend ..\obj\event_groups.d)
@@ -524,13 +525,13 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\timers.h)(0x57D24B43)
 I (..\OS\include\event_groups.h)(0x573F3A16)
@@ -539,54 +540,54 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 F (..\OS\list.c)(0x57CD2732)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\list.o --omf_browse ..\obj\list.crf --depend ..\obj\list.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
 I (..\OS\include\list.h)(0x57CC2EF5)
-F (..\OS\queue.c)(0x57D24A0C)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\queue.o --omf_browse ..\obj\queue.crf --depend ..\obj\queue.d)
+F (..\OS\queue.c)(0x57D4170C)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\queue.o --omf_browse ..\obj\queue.crf --depend ..\obj\queue.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\queue.h)(0x57D25CF9)
-F (..\OS\tasks.c)(0x57D28149)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\tasks.o --omf_browse ..\obj\tasks.crf --depend ..\obj\tasks.d)
+F (..\OS\tasks.c)(0x57D3A69B)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\tasks.o --omf_browse ..\obj\tasks.crf --depend ..\obj\tasks.d)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\timers.h)(0x57D24B43)
 I (..\OS\include\StackMacros.h)(0x573F3A16)
@@ -595,27 +596,27 @@ I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 I (..\OS\include\queue.h)(0x57D25CF9)
 I (..\OS\include\timers.h)(0x57D24B43)
-F (..\OS\stm32f103\port.c)(0x57CDB261)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\port.o --omf_browse ..\obj\port.crf --depend ..\obj\port.d)
+F (..\OS\stm32f103\port.c)(0x57D40F77)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\port.o --omf_browse ..\obj\port.crf --depend ..\obj\port.d)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)
-I (..\OS\include\task.h)(0x573F3A16)
+I (..\OS\include\task.h)(0x57D30AE8)
 I (..\OS\include\list.h)(0x57CC2EF5)
 F (..\OS\stm32f103\xmalloc.c)(0x57D04E61)(-c --cpu Cortex-M3 -D__MICROLIB -g -O0 --apcs=interwork -I..\USER -I..\CORE -I..\STM32F10x_FWLib\inc -I..\SYSTEM\sys -I..\SYSTEM\usart -I..\HARDWARE\LED -I..\OS\include -I..\OS\stm32f103\include-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\Inc\ST\STM32F10x-DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER-o ..\obj\xmalloc.o --omf_browse ..\obj\xmalloc.crf --depend ..\obj\xmalloc.d)
 I (..\OS\stm32f103\xmalloc.h)(0x57D03B17)
@@ -647,11 +648,11 @@ I (..\STM32F10x_FWLib\inc\stm32f10x_tim.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\stm32f10x_usart.h)(0x504F415E)
 I (..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
-I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D2672B)
+I (..\OS\stm32f103\include\FreeRTOSConfig.h)(0x57D41583)
 I (..\OS\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (..\OS\include\projdefs.h)(0x573F3A16)
 I (..\OS\include\portable.h)(0x57CEEF14)
 I (..\OS\include\deprecated_definitions.h)(0x573F3A16)
-I (..\OS\stm32f103\include\portmacro.h)(0x57CD2630)
+I (..\OS\stm32f103\include\portmacro.h)(0x57D3A791)
 I (..\OS\include\mpu_wrappers.h)(0x57CEEF6E)

@@ -177,7 +177,16 @@ extern void vPortExitCritical( void );
 	#define portRESET_READY_PRIORITY( uxPriority, uxReadyPriorities ) ( uxReadyPriorities ) &= ~( 1UL << ( uxPriority ) )
 
 	/*-----------------------------------------------------------*/
+/*
+__clz( (uxTopReadyPriority)是什么意思，
+__clz()会被汇编指令CLZ替换掉，这个指令用来计算一个变
+量从最高位开始的连续零的个数。举个例子，假如变量
+uxTopReadyPriority为0x09（二进制为：0000 0000 0000 0000 0000 0000 0000 1001）
+，即bit3和bit0为1，表示存在优先级为0和3的就绪任务。则
+__clz( (uxTopReadyPriority)的值为28，uxTopPriority =31-28=3，即优先级为
+3的任务是就绪态最高优先级任务。
 
+*/
 	#define portGET_HIGHEST_PRIORITY( uxTopPriority, uxReadyPriorities ) uxTopPriority = ( 31UL - ( uint32_t ) __clz( ( uxReadyPriorities ) ) )
 
 #endif /* taskRECORD_READY_PRIORITY */

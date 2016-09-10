@@ -170,7 +170,7 @@ a statically allocated stack and a dynamically allocated TCB. */
 	} /* taskRECORD_READY_PRIORITY */
 
 	/*-----------------------------------------------------------*/
-
+d
 	#define taskSELECT_HIGHEST_PRIORITY_TASK()															\
 	{																									\
 	UBaseType_t uxTopPriority = uxTopReadyPriority;														\
@@ -308,6 +308,7 @@ typedef struct tskTaskControlBlock
 	ListItem_t			xEventListItem;		/*< Used to reference a task from an event list. */
 	UBaseType_t			uxPriority;			/*< The priority of the task.  0 is the lowest priority. */
 	StackType_t			*pxStack;			/*< Points to the start of the stack. */
+	UBaseType_t			xStackSize;
 	char				pcTaskName[ configMAX_TASK_NAME_LEN ];/*< Descriptive name given to the task when created.  Facilitates debugging only. */ /*lint !e971 Unqualified char types are allowed for strings and single characters only. */
 
 	#if ( portSTACK_GROWTH > 0 )
@@ -398,6 +399,7 @@ PRIVILEGED_DATA static List_t xPendingReadyList;						/*< Tasks that have been r
 
 #if ( INCLUDE_vTaskSuspend == 1 )
 
+	/*当任务被无限期延时时，被挂在xSuspendedTaskList 中*/
 	PRIVILEGED_DATA static List_t xSuspendedTaskList;					/*< Tasks that are currently suspended. */
 
 #endif
@@ -735,6 +737,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 				{
 					/* Store the stack location in the TCB. */
 					pxNewTCB->pxStack = pxStack;
+					pxNewTCB->xStackSize = (UBaseType_t)(usStackDepth  * sizeof( StackType_t ));
 				}
 				else
 				{
@@ -1918,6 +1921,7 @@ BaseType_t xReturn;
 		/* If configGENERATE_RUN_TIME_STATS is defined then the following
 		macro must be defined to configure the timer/counter used to generate
 		the run time counter time base. */
+		/*用于计算任务运行的时间百分比*/
 		portCONFIGURE_TIMER_FOR_RUN_TIME_STATS();
 
 		/* Setting up the timer tick is hardware specific and thus in the
@@ -2348,7 +2352,7 @@ TCB_t *pxTCB;
 				do
 				{
 					uxQueue--;
-					uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), eReady );
+					uxTask += prvListTasksWithinSingleList( &( pxTaskStatusArray[ uxTask ] ), &( pxReadyTasksLists[ uxQueue ] ), /*eReady*/eInvalid );
 
 				} while( uxQueue > ( UBaseType_t ) tskIDLE_PRIORITY ); /*lint !e961 MISRA exception as the casts are only redundant for some ports. */
 
@@ -2832,7 +2836,9 @@ void vTaskSwitchContext( void )
 		optimised asm code. */
 		taskSELECT_HIGHEST_PRIORITY_TASK();
 		traceTASK_SWITCHED_IN();
+		
 		/*add by yangjianzhou*/
+			
 		#if ( configUSE_TASK_SWTICH_HOOK == 1 )
 		{
 			extern void vTaskSwitchHook( TCB_t *pTCB);
@@ -2853,7 +2859,7 @@ void vTaskSwitchContext( void )
 #if ( configUSE_TASK_SWTICH_HOOK == 1 )
 void vTaskSwitchHook( TCB_t *pTCB)
 {
-	printf("%s: pcTaskName = %s\r\n", __func__, pTCB->pcTaskName);
+	printf("+++++++++++++++ Switch In Task %s\r\n", pTCB->pcTaskName);
 }
 #endif
 
@@ -3538,10 +3544,15 @@ static void prvCheckTasksWaitingTermination( void )
 			#if ( portSTACK_GROWTH > 0 )
 			{
 				pxTaskStatus->usStackHighWaterMark = prvTaskCheckFreeStackSpace( ( uint8_t * ) pxTCB->pxEndOfStack );
+				
 			}
 			#else
 			{
 				pxTaskStatus->usStackHighWaterMark = prvTaskCheckFreeStackSpace( ( uint8_t * ) pxTCB->pxStack );
+
+				pxTaskStatus->uStackFreePer = pxTaskStatus->usStackHighWaterMark *
+					sizeof( StackType_t ) * 100.0/pxTCB->xStackSize;
+				pxTaskStatus->xStackSize = pxTCB->xStackSize;
 			}
 			#endif
 		}
@@ -3631,6 +3642,13 @@ static void prvCheckTasksWaitingTermination( void )
 
 		uxReturn = ( UBaseType_t ) prvTaskCheckFreeStackSpace( pucEndOfStack );
 
+#if portSTACK_GROWTH < 0
+		{
+			//float per = uxReturn *sizeof( StackType_t ) * 100.0/pxTCB->xStackSize;
+			//printf("--------#####[%s]->stack free %f%%, stack size=[%d]*4*bytes\r\n", 
+			//	pxTCB->pcTaskName, per, pxTCB->xStackSize/4);
+		}
+#endif			
 		return uxReturn;
 	}
 

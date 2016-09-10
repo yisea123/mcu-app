@@ -100,22 +100,27 @@
 #define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
 
 
-#define configMAX_PRIORITIES		( 6 )
+#define configMAX_PRIORITIES		( 8 )
 //此参数用于定义可供用户使用的最大优先级数，
 //如果这个定义的是5，那么用户可以使用的优先级
 //号是0,1,2,3,4，不包含5，对于这一点，初学者要特别
 //的注意。
 
 #define configUSE_TIMERS			1
-#define configTIMER_TASK_PRIORITY	5// the most height priority
+#define configTIMER_TASK_PRIORITY	7// the most height priority
 #define configTIMER_QUEUE_LENGTH	3
 #define configTIMER_TASK_STACK_DEPTH (128+128)
+
+
 #define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )
 //#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 17 * 1024 ) )
 #define configTOTAL_HEAP_SIZE		( ( size_t ) ( 10 * 1024 ) )
 #define configTOTAL_XHEAP_SIZE		( 7 * 1024 )
 
 #define configMAX_TASK_NAME_LEN		( 16 )
+
+#define configUSE_MUTEXES					1
+#define configUSE_COUNTING_SEMAPHORES		1
 
 /******************************************/
 #define INCLUDE_uxTaskGetStackHighWaterMark   1

@@ -396,8 +396,11 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 	size_t xQueueSizeInBytes;
 	uint8_t *pucQueueStorage;
 
+		/*计数信号量的count 为uxQueueLength*/
+
 		configASSERT( uxQueueLength > ( UBaseType_t ) 0 );
 
+		/*信号量的uxItemSize = 0*/
 		if( uxItemSize == ( UBaseType_t ) 0 )
 		{
 			/* There is not going to be a queue storage area. */
@@ -490,6 +493,11 @@ static void prvInitialiseNewQueue( const UBaseType_t uxQueueLength, const UBaseT
 			correctly for a generic queue, but this function is creating a
 			mutex.  Overwrite those members that need to be set differently -
 			in particular the information required for priority inheritance. */
+/*
+			#define pxMutexHolder					pcTail
+			#define uxQueueType						pcHead
+			#define queueQUEUE_IS_MUTEX				NULL
+*/			
 			pxNewQueue->pxMutexHolder = NULL;
 			pxNewQueue->uxQueueType = queueQUEUE_IS_MUTEX;
 
@@ -1821,10 +1829,16 @@ UBaseType_t uxMessagesWaiting;
 
 	uxMessagesWaiting = pxQueue->uxMessagesWaiting;
 
+	/*信号量或者计数量uxItemSize = 0*/
 	if( pxQueue->uxItemSize == ( UBaseType_t ) 0 )
 	{
 		#if ( configUSE_MUTEXES == 1 )
 		{
+/*
+			#define pxMutexHolder					pcTail
+			#define uxQueueType						pcHead
+			#define queueQUEUE_IS_MUTEX				NULL
+*/			
 			if( pxQueue->uxQueueType == queueQUEUE_IS_MUTEX )
 			{
 				/* The mutex is no longer being held. */
@@ -1885,6 +1899,7 @@ UBaseType_t uxMessagesWaiting;
 		}
 	}
 
+	/*信号量或者mutex都把uxMessagesWaiting ++*/
 	pxQueue->uxMessagesWaiting = uxMessagesWaiting + 1;
 
 	return xReturn;
@@ -1893,6 +1908,7 @@ UBaseType_t uxMessagesWaiting;
 
 static void prvCopyDataFromQueue( Queue_t * const pxQueue, void * const pvBuffer )
 {
+	/*如果是信号量或者mutex，不进行数据拷贝*/
 	if( pxQueue->uxItemSize != ( UBaseType_t ) 0 )
 	{
 		pxQueue->u.pcReadFrom += pxQueue->uxItemSize;

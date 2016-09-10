@@ -48,3 +48,4 @@
 ..\obj\main.o: ..\OS\stm32f103\include\xlist.h
 ..\obj\main.o: ..\OS\include\queue.h
 ..\obj\main.o: ..\OS\stm32f103\include\xmalloc.h
+..\obj\main.o: ..\OS\include\semphr.h
