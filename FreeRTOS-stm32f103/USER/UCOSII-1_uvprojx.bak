@@ -577,6 +577,11 @@
               <FileType>1</FileType>
               <FilePath>..\OS\stm32f103\port.c</FilePath>
             </File>
+            <File>
+              <FileName>xmalloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\OS\stm32f103\xmalloc.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

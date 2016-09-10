@@ -1,0 +1,330 @@
+[2016-06-18 13:21:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\download\Forest S1 STM32最小系统附送资料\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:22:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:26:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:32:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:32:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:37:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:40:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:41:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:41:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:42:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:43:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:43:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:46:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:47:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 13:47:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:48:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:50:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:51:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:53:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:54:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:55:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 13:55:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 15:11:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 15:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 15:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 15:59:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:00:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:02:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:03:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:05:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:10:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:13:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:15:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:15:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:16:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:20:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:29:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:31:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:32:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:39:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:41:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 16:44:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 17:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 17:20:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 17:21:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-18 22:56:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:01:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:03:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:04:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:05:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:06:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:06:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:07:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:08:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:10:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:15:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-18 23:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:36:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:38:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:44:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:46:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:50:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:51:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 00:56:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 01:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 01:26:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 01:29:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 01:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:21:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:31:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:33:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:33:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:36:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:40:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:41:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:42:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:46:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:46:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:49:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 02:56:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:04:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:18:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:31:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:33:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 03:39:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 11:48:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:37:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:38:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:49:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:49:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:50:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:51:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 12:57:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 13:00:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 13:05:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 13:07:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-19 13:08:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 13:24:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 13:25:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 13:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 13:32:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 13:36:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:41:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:45:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:45:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:47:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:52:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:56:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:57:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:57:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:58:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:58:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:59:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 14:59:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:00:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:01:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:04:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:05:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:06:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:08:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:10:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:12:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:14:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:18:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:38:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:40:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:44:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:48:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 15:52:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:21:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:26:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:28:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:38:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:45:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:49:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:55:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 16:58:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:05:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:08:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:09:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:12:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:13:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:14:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:15:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:16:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:17:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:17:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:18:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:18:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:24:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:25:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:32:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:32:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:36:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:46:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:48:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:50:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:58:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:59:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 17:59:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:00:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:00:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:02:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:05:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:08:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:11:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-19 18:37:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-20 23:13:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:19:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:24:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:27:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:39:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:52:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:52:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-20 23:54:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:23:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:25:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:25:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:26:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:27:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:27:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:28:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:28:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:29:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:30:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:30:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-21 22:30:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-21 22:39:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-22 00:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-22 22:55:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-22 23:47:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:48:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:52:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:54:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:57:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:57:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:58:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 19:59:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 20:00:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 20:01:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 20:05:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 20:06:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-06-26 20:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:10:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:11:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:13:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:14:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:16:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:23:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:40:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:45:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:50:日志记录不属免费功能,请注册支持作者改进软件
+[2016-06-26 20:52:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 01:49:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:52:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:54:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:56:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:56:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:57:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:58:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 01:59:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 02:00:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 02:01:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 02:01:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 02:01:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:02:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:07:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:09:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:11:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:12:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:13:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:15:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:15:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:16:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:18:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:19:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:20:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:21:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:22:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:23:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:25:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:27:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:34:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:35:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:38:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:39:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:43:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:44:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 02:47:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 12:45:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:48:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:49:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:50:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:51:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:54:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:56:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:58:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 12:59:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 13:01:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 13:02:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 13:04:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-02 13:04:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-02 13:08:日志记录不属免费功能,请注册支持作者改进软件
+[2016-07-03 00:10:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:13:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:15:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:21:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:27:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:33:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:34:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:51:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:53:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 00:54:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:06:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:09:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:12:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:13:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:18:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:21:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 01:22:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 15:35:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 15:39:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 15:48:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 16:05:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 16:21:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 16:23:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 16:25:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-07-03 16:27:Program Success:53FF70065180485442352087 F:\work\xiaopeng\stm32f1\Forest S1测试代码（含OLED 按键 LED灯测试，出厂默认代码）\OBJ\Minibalance.hex
+[2016-09-10 23:09:Program Success:54FF6C065065515255511287 F:\work\xiaopeng\github\mcu-app\FreeRTOS-stm32f103\OBJ\FreeRTOS_STM32F103.hex
+[2016-09-10 23:10:Program Success:54FF6C065065515255511287 F:\work\xiaopeng\github\mcu-app\FreeRTOS-stm32f103\OBJ\FreeRTOS_STM32F103.hex
