@@ -364,7 +364,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_HD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\OS\include;..\OS\stm32f103\include</IncludePath>
+              <IncludePath>..\USER;..\CORE;..\STM32F10x_FWLib\inc;..\SYSTEM\sys;..\SYSTEM\usart;..\OS\include;..\OS\stm32f103\include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -442,15 +442,15 @@
               <FileType>1</FileType>
               <FilePath>..\OS\stm32f103\timer.c</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>HARDWARE</GroupName>
-          <Files>
             <File>
               <FileName>led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\HARDWARE\LED\led.c</FilePath>
+              <FilePath>.\led.c</FilePath>
+            </File>
+            <File>
+              <FileName>keydetect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\keydetect.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -240,6 +240,7 @@ d
 
 /* pxDelayedTaskList and pxOverflowDelayedTaskList are switched when the tick
 count overflows. */
+/*切换delay 跟 overflowdelay 链表， tick是一个一个减少的*/
 #define taskSWITCH_DELAYED_LISTS()																	\
 {																									\
 	List_t *pxTemp;																					\
@@ -2859,7 +2860,7 @@ void vTaskSwitchContext( void )
 #if ( configUSE_TASK_SWTICH_HOOK == 1 )
 void vTaskSwitchHook( TCB_t *pTCB)
 {
-	printf("+++++++++++++++ Switch In Task %s\r\n", pTCB->pcTaskName);
+	//printf("+++++++++++++++ Switch In Task %s\r\n", pTCB->pcTaskName);
 }
 #endif
 

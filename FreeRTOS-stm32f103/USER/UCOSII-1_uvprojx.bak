@@ -223,7 +223,7 @@
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <RoSelD>3</RoSelD>
@@ -576,6 +576,11 @@
               <FileName>port.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\OS\stm32f103\port.c</FilePath>
+            </File>
+            <File>
+              <FileName>xmalloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\OS\stm32f103\xmalloc.c</FilePath>
             </File>
           </Files>
         </Group>

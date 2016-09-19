@@ -29,9 +29,9 @@
 ..\obj\main.o: ..\STM32F10x_FWLib\inc\stm32f10x_usart.h
 ..\obj\main.o: ..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h
 ..\obj\main.o: ..\STM32F10x_FWLib\inc\misc.h
-..\obj\main.o: ..\HARDWARE\LED\led.h
-..\obj\main.o: uart.h
+..\obj\main.o: led.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+..\obj\main.o: uart.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
 ..\obj\main.o: ..\OS\include\FreeRTOS.h
 ..\obj\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stddef.h
@@ -49,3 +49,4 @@
 ..\obj\main.o: ..\OS\include\queue.h
 ..\obj\main.o: ..\OS\stm32f103\include\xmalloc.h
 ..\obj\main.o: ..\OS\include\semphr.h
+..\obj\main.o: keydetect.h
