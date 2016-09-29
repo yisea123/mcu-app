@@ -119,7 +119,7 @@ void key_gpioA_pin5_callback(KEY_VALUE value)
 		
 		if (value == KEY_SINGLE) {
 				key = 1;	
-				printf("%s 1\r\n", __func__);
+				printf("%s %d\r\n", __func__, key);
 		} else if (value == KEY_DOUBLE) {
 				key = 2;				
 				printf("%s 2\r\n", __func__);

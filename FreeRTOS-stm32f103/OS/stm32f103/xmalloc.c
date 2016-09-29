@@ -55,7 +55,7 @@ void x_mem_init(u8 memx)
 //获取内存使用率
 //memx:所属内存块
 //返回值:使用率(0~100)
-u8 xmem_used_pecent(u8 memx)  
+unsigned char xmem_used_pecent(unsigned char memx)  
 {  
     u32 used=0;  
     u32 i;  

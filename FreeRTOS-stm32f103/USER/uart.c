@@ -200,10 +200,10 @@ void uart1_send_string(const char *data)
 
 void USART1_IRQHandler(void)
 {
-	int ret;
-	int len = 0;	
-	uint8_t ch = 0, err;
-	static unsigned char pre = 0;
+	//int ret;
+	//int len = 0;	
+	uint8_t ch = 0;// err;
+	//static unsigned char pre = 0;
 	
 #if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
 	OSIntEnter();    
@@ -212,6 +212,7 @@ void USART1_IRQHandler(void)
 	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) { 		
 			USART_ClearITPendingBit(USART1,USART_IT_RXNE);
 			ch = USART_ReceiveData(USART1);
+			ch = ch;
 	}
 
 #if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
@@ -229,6 +230,7 @@ void USART3_IRQHandler(void)
   { 
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
 		ch = USART_ReceiveData(USART3);
+		ch = ch;
 	}
 }
 

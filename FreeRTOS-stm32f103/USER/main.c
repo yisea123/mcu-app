@@ -4,11 +4,13 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "timers.h"
+#include <stm32f10x.h>
 #include "timer.h"
 #include "queue.h"
 #include "xmalloc.h"
 #include "semphr.h"
 #include "keydetect.h"
+#include <stdio.h>
 
 #define BOOT_LOG   \
 printf(" \
@@ -30,8 +32,10 @@ xSemaphoreHandle xSemaphoreC;
 QueueHandle_t xSeamaphoreMutex;
 xTaskHandle  pTaskHandler;
 
+extern unsigned char xmem_used_pecent(unsigned char memx);
 void xTimerFunc0( TimerHandle_t xTimer )
 {
+	u8 percent = 0;
 	UBaseType_t uxArraySize = uxTaskGetNumberOfTasks();  
 	char *pcWriteBuffer = (char *) xmalloc(0, uxArraySize*90);
 	printf("$$$$$$$$$$%s$$$$$$$$$$\r\n", __func__);
@@ -40,8 +44,9 @@ void xTimerFunc0( TimerHandle_t xTimer )
 		vTaskGetRunTimeStats(pcWriteBuffer);
 		printf("System Task Infomation:\r\n%s", pcWriteBuffer);
 		xfree(0, pcWriteBuffer);
-		printf("xmem_used_pecent=%d%%\r\n", xmem_used_pecent(0));
-	} else {
+		percent =  xmem_used_pecent(0);
+		printf("xmem_used_pecent=%u %%\r\n", percent);
+	} else { 
 		printf("xmalloc pcWriteBuffer fail!\r\n");
 	}
 		//vTaskDelay(500);
@@ -49,7 +54,7 @@ void xTimerFunc0( TimerHandle_t xTimer )
 
 void xFirstTask(void *argc)
 {
-	UBaseType_t num;
+	//UBaseType_t num;
 	portTickType xLastWakeTime;
 	argc = argc;
 
@@ -68,11 +73,11 @@ void xFirstTask(void *argc)
 	char uStack[60];
 	char *p;
 	static UBaseType_t xIdleCountTotal = 0;
-	UBaseType_t t;
+	//UBaseType_t t;
 	TickType_t c;
 	
 	xIdleCountTotal++;
-	t = xIdleCountTotal*(xIdleCountTotal) + xIdleCountTotal%3;
+	//t = xIdleCountTotal*(xIdleCountTotal) + xIdleCountTotal%3;
 
 	c = xTaskGetTickCount();
 
@@ -99,7 +104,7 @@ void xFirstTask(void *argc)
  {  
 	BaseType_t xReturn;
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-  	timer3_int_init(5-1, 1440);//0.01ms   100us
+  (void) timer3_int_init(5-1, 1440);//0.01ms   100us
 	uarts_init();
 	BOOT_LOG
 	printf("\r\nFreeRTOS start...\r\n");
@@ -210,7 +215,9 @@ char *getTaskStatus(eTaskState status)
 	}
 }
 
-static void vSenderTask( void *pvParameters ) { 
+/*
+static void vSenderTask( void *pvParameters ) 
+{ 
 	long lValueToSend; 
 	portBASE_TYPE xStatus;  
 
@@ -254,6 +261,7 @@ static void vReceiverTask( void *pvParameters ) {
 		} 
 } 
 
+*/
 void vTask2( void *pvParameters ) { 
    /* 任务2什么也没做，只是删除自己。
    删除自己可以传入NULL值，这里为了演示，
@@ -273,7 +281,7 @@ void vTask2( void *pvParameters ) {
 
 void vTask1( void *pvParameters ) 
 { 
-   const portTickType xDelay100ms = 10000 / portTICK_RATE_MS; 
+//   const portTickType xDelay100ms = 10000 / portTICK_RATE_MS; 
    
    for( ;; ) { 
    		static int i = 0;
@@ -362,7 +370,7 @@ void xTimerFunc1( TimerHandle_t xTimer )
 	char rr[100];
 
 	sprintf(rr, " %s ", __func__);
-	printf("****************%s*************\r\n", __func__, rr);
+	printf("%s: ****************%s*************\r\n", __func__, rr);
 }
 
 

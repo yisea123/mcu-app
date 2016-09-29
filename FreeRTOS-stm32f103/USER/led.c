@@ -52,14 +52,18 @@ void led_off(uint8_t LEDNUM)
 
 char get_led_status(uint8_t LEDNUM) 
 {
+	char status;
+	
     switch (LEDNUM)
     {
 			case LED1:
-					return led1Status;
+					status = led1Status;
 					break;
 			default:
 					break;
     }	
+		
+		return status;
 }
 
 

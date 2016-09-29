@@ -247,8 +247,8 @@ static void prvTaskExitError( void )
 }
 /*-----------------------------------------------------------*/
 
-static unsigned int aaa = 0;
-void vTaskTest(vTaskTest)
+//static unsigned int aaa = 0;
+void vTaskTest(void)
 {
 	printf("@@@@@@@@@@@@%s invoke one time!@@@@@@@@@@\r\n", __func__);
 	//aaa++;

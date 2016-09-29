@@ -1,4 +1,5 @@
 #include "rfifo.h"
+#include <stdio.h>
 
 /*
 * author: yangjianzhou

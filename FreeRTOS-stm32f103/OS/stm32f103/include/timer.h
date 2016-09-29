@@ -19,4 +19,5 @@
 #define ENABLE_INT()	__set_PRIMASK(0)
 #define DISABLE_INT()	__set_PRIMASK(1)
 
+extern void timer3_int_init(u16 arr,u16 psc);
 #endif

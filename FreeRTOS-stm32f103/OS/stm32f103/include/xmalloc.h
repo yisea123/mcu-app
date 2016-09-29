@@ -1,6 +1,7 @@
 #ifndef __XMALLOC_H
 #define __XMALLOC_H
 #include "stm32f10x.h"
+#include "FreeRTOSConfig.h"
 
 #ifndef NULL
 #define NULL 0
@@ -15,7 +16,7 @@
 
 //mem1内存参数设定.mem1完全处于内部SRAM里面.
 #define MEM1_BLOCK_SIZE			32  	  						//内存块大小为32字节
-#define MEM1_MAX_SIZE			4*1024  						//最大管理内存 40K
+#define MEM1_MAX_SIZE			configTOTAL_XHEAP_SIZE 			//最大管理内存 40K
 #define MEM1_ALLOC_TABLE_SIZE	MEM1_MAX_SIZE/MEM1_BLOCK_SIZE 	//内存表大小
 
 //mem2内存参数设定.mem2的内存池处于外部SRAM里面
@@ -40,7 +41,7 @@ void xmemcpy(void *des,void *src,u32 n);//复制内存
 void x_mem_init(u8 memx);				//内存管理初始化函数(外/内部调用)
 u32 x_mem_malloc(u8 memx,u32 size);	//内存分配(内部调用)
 u8 x_mem_free(u8 memx,u32 offset);		//内存释放(内部调用)
-u8 x_mem_perused(u8 memx);				//获得内存使用率(外/内部调用) 
+extern unsigned char xmem_used_pecent(unsigned char memx);				//获得内存使用率(外/内部调用) 
 ////////////////////////////////////////////////////////////////////////////////
 //用户调用函数
 void xfree(u8 memx,void *ptr);  			//内存释放(外部调用)
