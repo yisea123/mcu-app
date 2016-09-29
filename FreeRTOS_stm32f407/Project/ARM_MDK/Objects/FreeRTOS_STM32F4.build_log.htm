@@ -1,0 +1,98 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\FreeRTOS_STM32F4.uvprojx
+Project File Date:  09/27/2016
+
+<h2>Output:</h2>
+Build target 'FreeRTOS_STM32F4'
+linking...
+Program Size: Code=24738 RO-data=1062 RW-data=496 ZI-data=24712  
+FromELF: creating hex file...
+".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 0 Warning(s).
+</pre>
+</body>
+</html>
+"C:\\mcu\\mcu-app\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
+Set JLink Project File to "C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\JLinkSettings.ini"
+* JLink Info: Device "STM32F407VE" selected (512 KB flash, 128 KB RAM).
+ 
+JLink info:
+------------
+DLL: V4.80g, compiled Feb 13 2014 20:50:02
+Firmware: J-Link ARM V8 compiled Nov 25 2013 19:20:08
+Hardware: V8.00
+S/N : 308622870 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+ 
+* JLink Info: Found SWD-DP with ID 0x2BA01477
+* JLink Info: Found SWD-DP with ID 0x2BA01477
+* JLink Info: Found Cortex-M4 r0p1, Little endian.
+* JLink Info: FPUnit: 6 code (BP) slots and 2 literal slots
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+ROMTableAddr = 0xE00FF003
+ 
+Target info:
+------------
+Device: STM32F407VE
+VTarget = 3.313V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 1, TRES: 1, TRST: 1
+Hardware-Breakpoints: 6
+Software-Breakpoints: 8192
+Watchpoints:          4
+JTAG speed: 50 kHz
+ 
+Erase Done.
+Programming Done.
+Verify OK.
+Application running ...
+
+tion running ...
+ a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\SYSTEM\usart\usart.c: 0 warnings, 1 error
+compiling main.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\USER\main.c: 0 warnings, 1 error
+compiling port.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F\port.c: 0 warnings, 1 error
+compiling heap_2.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\FreeRTOS\Source\portable\MemMang\heap_2.c: 0 warnings, 1 error
+compiling list.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\FreeRTOS\Source\list.c: 0 warnings, 1 error
+compiling queue.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\FreeRTOS\Source\queue.c: 0 warnings, 1 error
+compiling tasks.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\FreeRTOS\Source\tasks.c: 0 warnings, 1 error
+compiling usmart.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\USMART\usmart.c: 0 warnings, 1 error
+compiling exti.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\BSP\exti.c: 0 warnings, 1 error
+compiling adc.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\BSP\adc.c: 0 warnings, 1 error
+compiling dma.c...
+..\..\FreeRTOS\Source\include\FreeRTOS.h(668): error:  #35: #error directive: If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+                #error If configGENERATE_RUN_TIME_STATS is defined then portCONFIGURE_TIMER_FOR_RUN_TIME_STATS must also be defined.  portCONFIGURE_TIMER_FOR_RUN_TIME_STATS should call a port layer function to setup a peripheral timer/counter that can then be used as the run time counter time base.
+..\..\BSP\dma.c: 0 warnings, 1 error
+".\Objects\FreeRTOS_STM32F4.axf" - 12 Error(s), 0 Warning(s).
+Target not created
