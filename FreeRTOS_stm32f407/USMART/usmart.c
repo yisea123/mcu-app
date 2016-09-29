@@ -64,6 +64,69 @@ u16 USART_RX_STA=0;       //接收状态标记
 ///runtime统计功能,必须设置:USMART_ENTIMX_SCAN 为1,才可以使用!!
 /////////////////////////////////////////////////////////////////////////////////////
 //系统命令
+
+static char pBuf[512];
+
+void getAllTask( void )
+{
+		vTaskList( pBuf );
+		printf("Name   \t Status\t Priority   WaterMark   Num\r\n");
+		printf("%s", pBuf);
+}
+
+void Deal_Command_For_Task( unsigned char *command , char action)
+{
+	TaskHandle_t target;
+		char taskName[configMAX_TASK_NAME_LEN];
+	
+		printf("%s: command = %s\r\n", __func__, command);
+		memset(taskName, '\0', sizeof(taskName));
+		while( *command == ' ')
+			command++;
+		
+		strcpy(taskName, (char *)command);
+		printf("taskName = %s\r\n", taskName);
+		target = xTaskGetHandle( taskName );
+		
+		if( target )
+		{
+			switch( action )
+			{
+				case 1:
+								vTaskDelete( target );
+								printf("delete task %s success!\r\n", taskName);
+								break;
+				case 2:
+								vTaskSuspend(target);
+								printf("suspend task %s success!\r\n", taskName);
+								break;
+				case 3:
+								vTaskResume(target);
+								printf("resume task %s success!\r\n", taskName);
+								break;
+				case 4:
+								if( pdTRUE == xTaskAbortDelay(target) )
+								{
+									printf("wake up task %s from block success!\r\n", taskName);
+								}
+								else
+								{
+									printf("wake up task %s from block fail!\r\n", taskName);
+								}
+								break;
+				case 5:
+								
+								break;
+				default:
+								break;
+			}
+		}
+		else
+		{
+			printf("toKill = %p Error!\r\n", target);
+		}
+}
+
 u8 *sys_cmd_tab[]=
 {
 	"?",
@@ -72,40 +135,60 @@ u8 *sys_cmd_tab[]=
 	"id",
 	"hex",
 	"dec",
-	"runtime",	   
+	"runtime",
+	/*For FreeRTOS*/
+	"ps",
+	"kill",
+	"suspend",
+	"resume",
+	"abort",
+	"exit",
 };	    
 //处理系统指令
 //0,成功处理;其他,错误代码;
-u8 usmart_sys_cmd_exe(u8 *str)
+u8 usmart_sys_cmd_exe( u8 *str )
 {
 	u8 i;
 	u8 sfname[MAX_FNAME_LEN];//存放本地函数名
 	u8 pnum;
 	u8 rval;
 	u32 res;  
-	res=usmart_get_cmdname(str,sfname,&i,MAX_FNAME_LEN);//得到指令及指令长度
-	if(res)return USMART_FUNCERR;//错误的指令 
-	str+=i;	 	 			    
-	for(i=0;i<sizeof(sys_cmd_tab)/4;i++)//支持的系统指令
+	res = usmart_get_cmdname( str, sfname, &i, MAX_FNAME_LEN );//得到指令及指令长度
+	if( res )
+		return USMART_FUNCERR;//错误的指令 
+	
+	str += i;	 	 			    
+	for( i=0; i < sizeof(sys_cmd_tab)/sizeof(sys_cmd_tab[0]); i++ )//支持的系统指令
 	{
-		if(usmart_strcmp(sfname,sys_cmd_tab[i])==0)break;
+		if( usmart_strcmp( sfname, sys_cmd_tab[i] )==0 )
+			break;
 	}
-	switch(i)
+	switch( i )
 	{					   
 		case 0:
 		case 1://帮助指令
 			printf("\r\n");
 #if USMART_USE_HELP
-			printf("USMART有7个系统命令:\r\n");
-			printf("?:      获取帮助信息\r\n");
-			printf("help:   获取帮助信息\r\n");
-			printf("list:   可用的函数列表\r\n\n");
-			printf("id:     可用函数的ID列表\r\n\n");
-			printf("hex:    参数16进制显示,后跟空格+数字即执行进制转换\r\n\n");
-			printf("dec:    参数10进制显示,后跟空格+数字即执行进制转换\r\n\n");
-			printf("runtime:1,开启函数运行计时;0,关闭函数运行计时;\r\n\n");
-			printf("请按照程序编写格式输入函数名及参数并以回车键结束.\r\n");    
-			printf("--------------------------ALIENTEK------------------------- \r\n");
+			printf("Debug系统调试命令:\r\n");
+			printf("?:    获取帮助信息\r\n");
+			printf("help: 获取帮助信息\r\n");
+			printf("list: 可用的函数列表\r\n");
+			printf("id:   可用函数的ID列表\r\n");
+			vTaskDelay(5 / portTICK_RATE_MS);
+			printf("hex:  参数16进制显示,后跟空格+数字即执行进制转换\r\n");
+			printf("dec:  参数10进制显示,后跟空格+数字即执行进制转换\r\n");
+			printf("runtime:1, 开启函数运行计时;0,关闭函数运行计时;\r\n");
+			vTaskDelay(5 / portTICK_RATE_MS);
+			printf("----------------FreeRTOS---------------\r\n");
+			printf("ps:	    列出FreeRTOS各个任务信息\r\n");		
+			printf("kill:	  后跟空格+任务名字，杀死指定名字的任务\r\n");		
+			printf("suspend:后跟空格+任务名字，挂起指定名字的任务\r\n");	
+			vTaskDelay(5 / portTICK_RATE_MS);
+			printf("resume: 后跟空格+任务名字，把任务恢复到ready状态\r\n");		
+			printf("abort:  后跟空格+任务名字，把任务改成ready状态\r\n");	
+			printf("----------------FreeRTOS---------------\r\n");		
+			//printf("请按照程序编写格式输入函数名及参数并以回车键结束.\r\n");    
+			//printf("--------------------------------------------- \r\n");
 #else
 			printf("指令失效\r\n");
 #endif
@@ -182,7 +265,28 @@ u8 usmart_sys_cmd_exe(u8 *str)
 				}else return USMART_PARMERR;   			//未带参数,或者参数错误	 
  			}else return USMART_PARMERR;				//参数错误. 
 			printf("\r\n"); 
-			break;	    
+			break;	 
+
+		/*Add For FreeRTOS*/
+		case 7:
+			getAllTask();
+			break;
+		case 8:
+			Deal_Command_For_Task(str, 1);
+			break;
+		case 9:
+			Deal_Command_For_Task(str, 2);
+			break;
+		case 10:
+			Deal_Command_For_Task(str, 3);
+			break;		
+		case 11:
+			Deal_Command_For_Task(str, 4);
+			break;			
+		case 12:
+			Deal_Command_For_Task(str, 5);
+			break;			
+		/*Add For FreeRTOS*/
 		default://非法指令
 			return USMART_FUNCERR;
 	}

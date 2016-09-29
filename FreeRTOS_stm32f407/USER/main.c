@@ -65,7 +65,7 @@ int main(void)
 	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
 	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 3, NULL );
 	xTaskCreate( Temprate_Task, (const char *)"Temprate", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 3, NULL );		
-	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE-46, NULL, configKDETECT_TASK_PRIORITY, NULL );
+	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, NULL );
 	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, NULL );	
 
 	vTaskStartScheduler();
@@ -307,8 +307,9 @@ void RTC_read_Task(void * pvParameters)
 	while (1)
 	{
 	  vTaskDelayUntil( &pxPreviousWakeTime, 1000 / portTICK_RATE_MS );
-		
+		//printf("%s	1\r\n", __func__);
 		RTC_Get_Time( &hour, &min, &sec, &ampm );
+		//printf("%s	2\r\n", __func__);		
 		if( ( sec % xPrintfTime ) == 0 )
 		{
 			sprintf((char*)tbuf, "\r\nTime:%02d:%02d:%02d\r\n", hour, min, sec);
@@ -320,18 +321,9 @@ void RTC_read_Task(void * pvParameters)
 	}
 }
 
-static char pBuf[512];
-
-void getAllTask(void)
-{
-		vTaskList( pBuf );
-		printf("%s", pBuf);
-}
-
 void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName )
 {
 	printf("\r\n%s -> [%s] , please add stack for the Task!\r\n\r\n", __func__, pcTaskName);		
-	//getAllTask();	
 }
 
 

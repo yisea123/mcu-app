@@ -1192,7 +1192,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 
 	void vTaskDelayUntil( TickType_t * const pxPreviousWakeTime, const TickType_t xTimeIncrement )
 	{
-	TickType_t xTimeToWake;
+	TickType_t xTimeToWake, xTemp;
 	BaseType_t xAlreadyYielded, xShouldDelay = pdFALSE;
 
 		configASSERT( pxPreviousWakeTime );
@@ -1266,6 +1266,13 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 		else
 		{
 			mtCOVERAGE_TEST_MARKER();
+		}
+		
+		xTemp =  xTaskGetTickCount();
+		if( *pxPreviousWakeTime > xTemp)
+		{
+			printf("*pxPreviousWakeTime=%u, current=%u\r\n", *pxPreviousWakeTime, xTemp);
+			*pxPreviousWakeTime = xTemp;
 		}
 	}
 
@@ -2556,6 +2563,7 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 						mtCOVERAGE_TEST_MARKER();
 					}
 				}
+				xReturn = pdTRUE;
 				#endif /* configUSE_PREEMPTION */
 			}
 			else
