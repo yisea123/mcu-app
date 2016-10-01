@@ -24,13 +24,14 @@ _sys_exit(int x)
 
 extern Ringfifo mLogFifo;
 extern QueueHandle_t mLogSemaphore;
+extern TaskHandle_t pxUsmartTask;
 
 //重定义fputc函数 
 int fputc(int ch, FILE *f)
 { 	
 	static unsigned char pre = 0;
 	
-	if( xTaskGetSchedulerState() != taskSCHEDULER_RUNNING )
+	if( 1 /*xTaskGetSchedulerState() != taskSCHEDULER_RUNNING*/ )
 	{
 		while((USART1->SR&0X40)==0);//循环发送,直到发送完毕   
 		USART1->DR = (u8) ch;  
@@ -40,6 +41,7 @@ int fputc(int ch, FILE *f)
 		/*in interrupt context*/
 		if( rfifo_put( &mLogFifo, &ch, 1 ) != 1 ) 
 		{
+			/*we may lost byte printf in interrupt*/
 			mLogFifo.lostBytes++;
 			xSemaphoreGiveFromISR( mLogSemaphore, NULL );	
 			pre = 0;
@@ -74,11 +76,21 @@ int fputc(int ch, FILE *f)
 	else 
 	{
 		/*in task context*/
+		
+TRYAGAIN:
+		
 		if( rfifo_put( &mLogFifo, &ch, 1 ) != 1 ) 
 		{
+			/*we will never switch out*/
+			vTaskDelay( 2 / portTICK_RATE_MS );
+			
+			/*we will never lost a byte to printf*/
+			goto TRYAGAIN;
+			/*
 			mLogFifo.lostBytes++;
 			xSemaphoreGive( mLogSemaphore );	
 			pre = 0;
+			*/
 		} 
 		else 
 		{
@@ -158,41 +170,67 @@ void uart_init(u32 bound){
 	
 }
 
+void uart_deinit( void )
+{
+	USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);//开启相关中断	
+  USART_Cmd(USART1, DISABLE);  //使能串口1 
+	USART_DeInit(USART1);
+}
+
 extern Ringfifo uart1fifo;
 extern QueueHandle_t xDebugQueue;
+extern char isDma;
 
 void USART1_IRQHandler(void)                	//串口1中断服务程序
 {
-	int len = 0;	
+	//int len = 0;	
 	uint8_t ch = 0;
-	static unsigned char pre = 0;
 	
 	(void) vPortEnterCritical();
 	
-	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) { 		
-			USART_ClearITPendingBit(USART1,USART_IT_RXNE);
-			ch = USART_ReceiveData(USART1);
-			if (rfifo_put(&uart1fifo, &ch, 1) != 1) {
-					uart1fifo.lostBytes++;
-					if (xDebugQueue) {
+	if( USART_GetITStatus( USART1, USART_IT_RXNE ) != RESET ) 
+	{ 		
+		ch = USART_ReceiveData( USART1 );
+		/*
+		if( ch != 0x0d ) 
+		{
+			while( ( USART1->SR & 0X40 ) == 0 );   
+			USART1->DR = ch;  
+		}
+		*/
+		
+		if( rfifo_put( &uart1fifo, &ch, 1 ) != 1 ) 
+		{
+				uart1fifo.lostBytes++;
+				/*
+				if ( xDebugQueue ) 
+				{
+					len = rfifo_len( &uart1fifo );
+					xQueueSendToBackFromISR( xDebugQueue, &len, NULL );
+				}
+				*/
+		} 
+		else 
+		{
+			/*
+			if( ch == 0x0d ) 
+			{				
+					if( xDebugQueue ) 
+					{
 						len = rfifo_len(&uart1fifo);
 						xQueueSendToBackFromISR(xDebugQueue, &len, NULL);
-					}
-			} else {
-				if (pre == 0x0d && ch == 0x0a) {
-						if (xDebugQueue) {
-							len = rfifo_len(&uart1fifo);
-							xQueueSendToBackFromISR(xDebugQueue, &len, NULL);
-							//printf("%s,%d\r\n", __FUNCTION__, __LINE__);
-						}		
-						pre = 0;
-				} else {
-						pre = ch;
-				}
-			}
+					}		
+			} 
+			*/
+		}
+		vTaskNotifyGiveFromISR( pxUsmartTask, NULL);
+		(void) vPortExitCritical();
+		USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+	} 
+	else 
+	{
+		(void) vPortExitCritical();
 	}
-	
-	(void) vPortExitCritical();
 } 
 #endif	
 

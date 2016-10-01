@@ -51,3 +51,7 @@
 .\objects\usmart.o: ..\..\FreeRTOS\Source\include\list.h
 .\objects\usmart.o: ..\..\FreeRTOS\Source\include\queue.h
 .\objects\usmart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+.\objects\usmart.o: ..\..\SYSTEM\usart\usart.h
+.\objects\usmart.o: ..\..\SYSTEM\sys\sys.h
+.\objects\usmart.o: ..\..\SYSTEM\usart\usart.h
+.\objects\usmart.o: ..\..\FreeRTOS\Source\include\list.h

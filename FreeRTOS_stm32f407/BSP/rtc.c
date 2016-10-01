@@ -184,7 +184,7 @@ u8 RTC_INIT(void)
 	} 
 	else
 	{
-			printf("rtc has value!\r\n");
+			;//printf("rtc has value!\r\n");
 	}
 	//RTC_Set_WakeUp(4,0);			//配置WAKE UP中断,1秒钟中断一次 
 	return 0;

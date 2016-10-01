@@ -101,7 +101,7 @@
 #define configTIMER_TASK_STACK_DEPTH (128+128)
 
 #define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )
-#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 20 * 1024 ) )
+#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 50 * 1024 ) )
 
 #define configMAX_TASK_NAME_LEN		( 16 )
 #define configUSE_MUTEXES					1
@@ -113,6 +113,7 @@
 //#define configGENERATE_RUN_TIME_STATS	1
 #define configUSE_STATS_FORMATTING_FUNCTIONS 1
 
+//#define configUSE_TICKLESS_IDLE		1  //  1 or 2
 #define configUSE_16_BIT_TICKS		0
 #define configIDLE_SHOULD_YIELD		1
 

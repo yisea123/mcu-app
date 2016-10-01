@@ -22,9 +22,10 @@
 #define BOOT_LOG   \
 printf(" \
 \r\n\r\n/******       MCU   -   START        ******/ \
-\r\n/***** YANGJIANZHOU AT GUANGZHOU 2016 *****/ \
+\r\n/***** YANGJIANZHOU AT GUANGZHOU 21TH *****/ \
+\r\n/********* %s %s *********/ \
 \r\n/******************************************/ \
-\r\n\r\n");
+\r\n\r\n", __DATE__, __TIME__);
 
 void LED0_Task(void * pvParameters);
 void LED1_Task(void * pvParameters);
@@ -37,9 +38,14 @@ void Timer_func1( TimerHandle_t xTimer );
 
 Ringfifo mLogFifo;
 QueueHandle_t mLogSemaphore =  NULL;
-QueueHandle_t mDmaSemaphore =  NULL;
+//QueueHandle_t mDmaSemaphore =  NULL;
 unsigned char mSendBuffer[512];
 TimerHandle_t xTimer1 = NULL;
+TaskHandle_t pxKeyDetectTask;
+TaskHandle_t pxLogTask;
+TaskHandle_t pxTimeTask;
+TaskHandle_t pxTempretureTask;
+TaskHandle_t pxUsmartTask;
 
 int main(void)
 {
@@ -49,7 +55,7 @@ int main(void)
 	(void) RTC_INIT();
 	(void) LED_Init();
 	(void) EXTIX_Init();
-	(void) IWDG_Init( 4,1000 ); //Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
+	(void) IWDG_Init( 4,2000 ); //Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
 	(void) Adc_Init();         //ÄÚ²¿ÎÂ¶È´«¸ÐÆ÷ADC³õÊ¼»
 	while( RNG_Init() )
 	{
@@ -57,16 +63,16 @@ int main(void)
 	}   
 	
 	vSemaphoreCreateBinary( mLogSemaphore );
-	vSemaphoreCreateBinary( mDmaSemaphore );	
+	//vSemaphoreCreateBinary( mDmaSemaphore );	
 	
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY, NULL );
-	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL );	
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 2, &pxUsmartTask );
+	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL );	
 	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL );
 	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
-	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 3, NULL );
-	xTaskCreate( Temprate_Task, (const char *)"Temprate", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 3, NULL );		
-	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, NULL );
-	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, NULL );	
+	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 3, &pxTimeTask );
+	xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 3, &pxTempretureTask );		
+	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
+	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
 
 	vTaskStartScheduler();
 }
@@ -79,7 +85,8 @@ void Timer_func1( TimerHandle_t xTimer )
 {
 	/*run is Timers Task context with 
 		configTIMER_TASK_PRIORITY priority.*/
-	printf("%s\r\n", __func__);
+	//printf("System timer callback in %u(ms)\r\n",
+	//	(xTimerGetPeriod( xTimer ) / portTICK_PERIOD_MS));
 }
 
 /*
@@ -88,15 +95,22 @@ void Timer_func1( TimerHandle_t xTimer )
 **/
 void LED0_Task(void * pvParameters)
 {
+	UBaseType_t pre;
+	
+	pre = uxTaskPriorityGet( NULL );
+	
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
+	printf("%s ...\r\n", __func__);
+	vTaskPrioritySet( NULL, pre );
+
 	/*create and start a timer in FreeRTOS*/
-	xTimer1 = xTimerCreate("timer1", 9000, pdTRUE, "T1", Timer_func1);
+	xTimer1 = xTimerCreate("timer1", 20000, pdTRUE, "T1", Timer_func1);
 	xTimerStart(xTimer1, 0);
 	
-	printf("%s ...\r\n", __func__);	
 	while (1)
 	{
 		LED0 = !LED0;
-		vTaskDelay(750 / portTICK_RATE_MS);
+		vTaskDelay( 5000 / portTICK_RATE_MS );
 	}
 }
 
@@ -106,11 +120,18 @@ void LED0_Task(void * pvParameters)
 **/
 void LED1_Task( void * pvParameters )
 {
-	printf("%s ...\r\n", __func__);	
+	UBaseType_t pre;
+	
+	pre = uxTaskPriorityGet( NULL );
+	
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
+	printf("%s ...\r\n", __func__);
+	vTaskPrioritySet( NULL, pre );
+	
 	while( 1 )
 	{
 		LED1 = !LED1;
-		vTaskDelay( 500 / portTICK_RATE_MS );
+		vTaskDelay( 4000 / portTICK_RATE_MS );
 	}
 }
 
@@ -121,14 +142,20 @@ void LED1_Task( void * pvParameters )
 void Feed_Wdg_Task( void * pvParameters )
 {
 	TickType_t pxPreviousWakeTime;
+	UBaseType_t pre;
 	
-	printf("%s ...\r\n", __func__);	
+	pre = uxTaskPriorityGet( NULL );
+	
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
+	printf("%s ...\r\n", __func__);
+	vTaskPrioritySet( NULL, pre );
+	
 	pxPreviousWakeTime = xTaskGetTickCount();
 	
 	while( 1 )
 	{
 		( void ) IWDG_Feed();
-		vTaskDelayUntil( &pxPreviousWakeTime, 500 / portTICK_RATE_MS );
+		vTaskDelayUntil( &pxPreviousWakeTime, 2000 / portTICK_RATE_MS );
 	}
 }
 
@@ -149,6 +176,7 @@ void Temprate_Task(void * pvParameters)
 	
 	while (1)
 	{
+		vTaskDelay( /*45000 / portTICK_RATE_MS*/portMAX_DELAY );		
 		temp = Get_Temprate();
 		if( temp < 0 )
 		{
@@ -163,11 +191,10 @@ void Temprate_Task(void * pvParameters)
 			printf("temprature: %d.%d\r\n", temp/100, temp%100);
 			vTaskPrioritySet( NULL, pre );	
 		}
-		
-		vTaskDelay(5000 / portTICK_RATE_MS);
 	}
 }
 
+char isDma = 0;
 /*
 *	author: yangjianzhou
 * function: Printf_Log_Task run in most hight Priority. Useing DMA to printf log, interrupt happend when 
@@ -176,12 +203,18 @@ void Temprate_Task(void * pvParameters)
 void Printf_Log_Task(void * pvParameters)
 {	
 	int len;
+
+	UBaseType_t pre;
 	
-	MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
+	pre = uxTaskPriorityGet( NULL );
+	//MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
 	/*mLogSemaphore create as has value, take it.*/
 	xSemaphoreTake( mLogSemaphore, 0 );	
-	xSemaphoreTake( mDmaSemaphore, 0 );	
+	//xSemaphoreTake( mDmaSemaphore, 0 );
+
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );		
 	printf("%s ...\r\n", __func__);	
+	vTaskPrioritySet( NULL, pre );
 	
 	while( 1 )
 	{
@@ -191,15 +224,19 @@ void Printf_Log_Task(void * pvParameters)
 		while( ( len = rfifo_len( &mLogFifo ) ) > 0 ) 
 		{
 			rfifo_get( &mLogFifo, mSendBuffer, len );
+			isDma = 1;
       USART_DMACmd( USART1, USART_DMAReq_Tx, ENABLE );  
 			MYDMA_Enable( DMA2_Stream7, len );
-			/*we sleep 350ms to wait DMA finish*/
-			xSemaphoreTake( mDmaSemaphore, 350 / portTICK_PERIOD_MS );				
+			/*we sleep 2000ms to wait DMA finish*/
+			//xSemaphoreTake( mDmaSemaphore, 2000 / portTICK_PERIOD_MS );	
+			//use ulTaskNotifyTake instead of xSemaphoreTake 
+			ulTaskNotifyTake( pdTRUE, 2000 / portTICK_PERIOD_MS );
+			isDma = 0;
 		}
 	}
 }
 
-xSemaphoreHandle xKeySemaphore = NULL ;
+//xSemaphoreHandle xKeySemaphore = NULL ;
 
 /*
 *	author: yangjianzhou
@@ -212,12 +249,15 @@ void Key_Detect_Task(void * pvParameters)
 	unsigned int random;	
 	printf("%s ...\r\n", __func__);	
 
-	vSemaphoreCreateBinary( xKeySemaphore); 	
-	xSemaphoreTake( xKeySemaphore, 0 );
+	//vSemaphoreCreateBinary( xKeySemaphore); 	
+	//xSemaphoreTake( xKeySemaphore, 0 );
 
 	while (1)
 	{
-		xSemaphoreTake( xKeySemaphore, portMAX_DELAY );
+		//xSemaphoreTake( xKeySemaphore, portMAX_DELAY );
+		/*pdTRUE make ulTaskNotifyTake Binary
+			pdFALSE make ulTaskNotifyTake Counting*/
+		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		vTaskDelay(10 / portTICK_RATE_MS);
 		
 		count = 0;
@@ -280,9 +320,9 @@ static int xPrintfTime = 30;
 
 /*
 *	author: yangjianzhou
-* function: xSetPrrintfTime.
+* function: vSetPrrintfTime.
 **/
-void xSetPrrintfTime(int time)
+void vSetPrrintfTime(int time)
 {
 		if( time > 0 )
 		{
@@ -304,15 +344,17 @@ void RTC_read_Task(void * pvParameters)
 	printf("%s ...\r\n", __func__);	
 	pxPreviousWakeTime = xTaskGetTickCount();
 	
+	xPrintfTime = xPrintfTime;
+	
 	while (1)
 	{
-	  vTaskDelayUntil( &pxPreviousWakeTime, 1000 / portTICK_RATE_MS );
+	  vTaskDelayUntil( &pxPreviousWakeTime, portMAX_DELAY );
 		//printf("%s	1\r\n", __func__);
 		RTC_Get_Time( &hour, &min, &sec, &ampm );
 		//printf("%s	2\r\n", __func__);		
-		if( ( sec % xPrintfTime ) == 0 )
+		if( 1 /*( sec % xPrintfTime ) == 0*/ ) 
 		{
-			sprintf((char*)tbuf, "\r\nTime:%02d:%02d:%02d\r\n", hour, min, sec);
+			sprintf((char*)tbuf, "Time:%02d:%02d:%02d\r\n", hour, min, sec);
 			printf("%s", tbuf);
 			RTC_Get_Date(&year,&month,&date,&week);
 			sprintf((char*)tbuf, "Date:20%02d-%02d-%02d\r\n", year, month, date);
@@ -324,6 +366,11 @@ void RTC_read_Task(void * pvParameters)
 void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName )
 {
 	printf("\r\n%s -> [%s] , please add stack for the Task!\r\n\r\n", __func__, pcTaskName);		
+}
+
+void Printf_Application_Version( void )
+{
+		BOOT_LOG
 }
 
 

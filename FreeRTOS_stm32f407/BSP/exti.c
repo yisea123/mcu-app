@@ -10,18 +10,23 @@
 #include "stdio.h"
 //#include "beep.h"
 
-extern xSemaphoreHandle xKeySemaphore;
+//extern xSemaphoreHandle xKeySemaphore;
+extern TaskHandle_t pxKeyDetectTask;
 
 void EXTI0_IRQHandler(void)
 {
 	//delay_ms(10);	//消抖
+	 EXTI_ClearITPendingBit(EXTI_Line0); //清除LINE0上的中断标志位	 
+	
 	(void) vPortEnterCritical();
 	
-	 xSemaphoreGiveFromISR( xKeySemaphore, NULL );
+	 //xSemaphoreGiveFromISR( xKeySemaphore, NULL );
+ 	 vTaskNotifyGiveFromISR( pxKeyDetectTask, NULL);
+	 
+	 //printf("%s\r\n", __func__);
+	 
+	 (void) vPortExitCritical();
 
-	 EXTI_ClearITPendingBit(EXTI_Line0); //清除LINE0上的中断标志位 
-	 printf("%s\r\n", __func__);
-	(void) vPortExitCritical();	
 }	
 //外部中断2服务程序
 /*
@@ -39,22 +44,25 @@ void EXTI2_IRQHandler(void)
 void EXTI3_IRQHandler(void)
 {
 	//delay_ms(10);	//消抖
+	 EXTI_ClearITPendingBit(EXTI_Line3);  //清除LINE3上的中断标志位  	
 	(void) vPortEnterCritical();
-	 xSemaphoreGiveFromISR( xKeySemaphore, NULL );
-	 
-	 EXTI_ClearITPendingBit(EXTI_Line3);  //清除LINE3上的中断标志位  
-	 printf("%s\r\n", __func__);
-	(void) vPortExitCritical();		
+	//xSemaphoreGiveFromISR( xKeySemaphore, NULL );
+	vTaskNotifyGiveFromISR( pxKeyDetectTask, NULL);
+
+	 //printf("%s\r\n", __func__);
+	(void) vPortExitCritical();
+	
 }
 //外部中断4服务程序
 void EXTI4_IRQHandler(void)
 {
 	//delay_ms(10);	//消抖
+	 EXTI_ClearITPendingBit(EXTI_Line4);//清除LINE4上的中断标志位  	
 	(void) vPortEnterCritical();
-	 xSemaphoreGiveFromISR( xKeySemaphore, NULL );
-		 
-	 EXTI_ClearITPendingBit(EXTI_Line4);//清除LINE4上的中断标志位  
-	 printf("%s\r\n", __func__);
+	//xSemaphoreGiveFromISR( xKeySemaphore, NULL );
+	vTaskNotifyGiveFromISR( pxKeyDetectTask, NULL);
+	 
+	 //printf("%s\r\n", __func__);
 	(void) vPortExitCritical();		
 }
 	   

@@ -73,7 +73,8 @@ void MYDMA_Enable(DMA_Stream_TypeDef *DMA_Streamx,u16 ndtr)
 	DMA_Cmd(DMA_Streamx, ENABLE);                      //¿ªÆôDMA´«Êä 
 }	  
 
-extern QueueHandle_t mDmaSemaphore; 
+//extern QueueHandle_t mDmaSemaphore; 
+extern TaskHandle_t pxLogTask;
 
 void DMA2_Stream7_IRQHandler(void)  
 {   
@@ -83,10 +84,13 @@ void DMA2_Stream7_IRQHandler(void)
 		{		
 				DMA_ClearITPendingBit(DMA2_Stream7, DMA_IT_TCIF7);
 				DMA_Cmd(DMA2_Stream7, DISABLE);
+				/*
 			  if( mDmaSemaphore )
 				{
 					xSemaphoreGiveFromISR( mDmaSemaphore, NULL );
 				}
+				*/
+				vTaskNotifyGiveFromISR( pxLogTask, NULL);
 		}
 
 	(void) vPortExitCritical();		

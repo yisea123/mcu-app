@@ -9,8 +9,7 @@
 //用户直接在这里输入要执行的函数名及其查找串
 //extern void usmart_test(void);
 //extern void test_put_msg(char cmd, char *text);
-extern void xSetPrrintfTime(int time);
-extern void getAllTask(void);
+extern void vSetPrrintfTime(int time);
 
 struct _m_usmart_nametab usmart_nametab[]=
 {
@@ -20,8 +19,7 @@ struct _m_usmart_nametab usmart_nametab[]=
 #endif
 	(void*)delay_ms,"void delay_ms(u16 nms)",
 	(void*)delay_us,"void delay_us(u32 nus)",
-	(void*)xSetPrrintfTime,"void xSetPrrintfTime(int time)",
-	(void*)getAllTask,"void getAllTask(void)",
+	(void*)vSetPrrintfTime,"void vSetPrrintfTime(int time)",
 //	(void*)usmart_test,"void usmart_test(void)",
 //	(void*)test_put_msg,"void test_put_msg(char cmd, char *text)",		
 };						  

@@ -2080,6 +2080,9 @@ void vTaskSuspendAll( void )
 		else
 		{
 			xReturn = xNextTaskUnblockTime - xTickCount;
+			//printf("%d\r\n", xReturn);
+			//printf("xNextTaskUnblockTime(%d)xTickCount(%d)\r\n", 
+			//	xNextTaskUnblockTime, xTickCount);
 		}
 
 		return xReturn;
@@ -2505,6 +2508,7 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 ,即使被阻塞的任务等待的事件还没发生
 ,或者被阻塞的任务超时定时器还没有超时
 **/
+
 	BaseType_t xTaskAbortDelay( TaskHandle_t xTask )
 	{
 	TCB_t *pxTCB = ( TCB_t * ) xTask;
@@ -2563,6 +2567,7 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 						mtCOVERAGE_TEST_MARKER();
 					}
 				}
+				
 				xReturn = pdTRUE;
 				#endif /* configUSE_PREEMPTION */
 			}
@@ -3354,7 +3359,7 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 			scheduler suspended.  The result here is not necessarily
 			valid. */
 			xExpectedIdleTime = prvGetExpectedIdleTime();
-
+			//printf("xExpectedIdleTime=%d\r\n", xExpectedIdleTime);
 			if( xExpectedIdleTime >= configEXPECTED_IDLE_TIME_BEFORE_SLEEP )
 			{
 				vTaskSuspendAll();
@@ -4515,6 +4520,8 @@ TickType_t uxReturn;
 /*-----------------------------------------------------------*/
 
 #if( configUSE_TASK_NOTIFICATIONS == 1 )
+//#define xTaskNotifyGive( xTaskToNotify ) 		\
+//xTaskGenericNotify( ( xTaskToNotify ), ( 0 ), eIncrement, NULL )
 
 	BaseType_t xTaskGenericNotify( TaskHandle_t xTaskToNotify, uint32_t ulValue, eNotifyAction eAction, uint32_t *pulPreviousNotificationValue )
 	{
