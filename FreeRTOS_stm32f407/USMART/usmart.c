@@ -650,27 +650,24 @@ void usmart_exe(void)
 	u32 temp[MAX_PARM];//参数转换,使之支持了字符串 
 	u8 sfname[MAX_FNAME_LEN];//存放本地函数名
 	u8 pnum,rval;
-	id=usmart_dev.id;
-	if(id>=usmart_dev.fnum)return;//不执行.
-	usmart_get_fname((u8*)usmart_dev.funs[id].name,sfname,&pnum,&rval);//得到本地函数名,及参数个数 
-	//printf("\r\n%s(",sfname);//输出正要执行的函数名
-	for(i=0;i<pnum;i++)//输出参数
+	id = usmart_dev.id;
+	if( id>=usmart_dev.fnum )
+		return;//不执行.
+	usmart_get_fname( (u8*)usmart_dev.funs[id].name,sfname,&pnum,&rval );//得到本地函数名,及参数个数 
+
+	for( i=0; i < pnum; i++ )//输出参数
 	{
-		if(usmart_dev.parmtype&(1<<i))//参数是字符串
+		if( usmart_dev.parmtype & ( 1<<i ) )//参数是字符串
 		{
-			//printf("%c",'"');			 
-			//printf("%s",usmart_dev.parm+usmart_get_parmpos(i));
-			//printf("%c",'"');
 			temp[i]=(u32)&(usmart_dev.parm[usmart_get_parmpos(i)]);
-		}else						  //参数是数字
+		}
+		else						  //参数是数字
 		{
 			temp[i]=*(u32*)(usmart_dev.parm+usmart_get_parmpos(i));
 			if(usmart_dev.sptype==SP_TYPE_DEC);//printf("%lu",temp[i]);//10进制参数显示
-			else ;//printf("0X%X",temp[i]);//16进制参数显示 	   
+			else ;   
 		}
-		//if(i!=pnum-1)printf(",");
 	}
-	//printf(")");
 	usmart_reset_runtime();	//计时器清零,开始计时
 	switch(usmart_dev.pnum)
 	{
@@ -724,11 +721,7 @@ void usmart_exe(void)
 		printf("Function Run Time:%d.%1dms\r\n",usmart_dev.runtime/10,usmart_dev.runtime%10);//打印函数执行时间 
 	}	
 }
-//usmart扫描函数
-//通过调用该函数,实现usmart的各个控制.该函数需要每隔一定时间被调用一次
-//以及时执行从串口发过来的各个函数.
-//本函数可以在中断里面调用,从而实现自动管理.
-//如果非ALIENTEK用户,则USART_RX_STA和USART_RX_BUF[]需要用户自己实现
+
 extern Ringfifo uart1fifo;
 
 void usmart_scan( int uart1DataLen )
@@ -736,17 +729,17 @@ void usmart_scan( int uart1DataLen )
 	static unsigned int num = 0xffffffff;
 	cmdRecord *cmdItem;
 	static int index = 0;
-	unsigned char sta, len;
+	unsigned char sta, len, add = 0;
 	
 	while( rfifo_len( &uart1fifo ) > 0 ) 
 	{
 		rfifo_get( &uart1fifo, USART_RX_BUF+index, 1 );
-		
-		if( index >= 2 && USART_RX_BUF[index] == 0x41 && 
+
+		if( index >= 2 && ( USART_RX_BUF[index] == 0x41 ||
+					USART_RX_BUF[index] == 0x42 ) && 
 					USART_RX_BUF[index-1] == 0x5b &&
 					USART_RX_BUF[index-2] == 0x1b)
 		{
-			//printf(" up ");
 			if( listLIST_IS_EMPTY( &xCommandRecordList ) != pdFALSE )
 			{
 				printf(" ");				
@@ -754,7 +747,16 @@ void usmart_scan( int uart1DataLen )
 			else
 			{
 				cmdItem = NULL;
-				listGET_OWNER_OF_NEXT_ENTRY( cmdItem, &xCommandRecordList );
+				/*UP*/
+				if( USART_RX_BUF[index] == 0x41 )
+				{
+					listGET_OWNER_OF_NEXT_ENTRY( cmdItem, &xCommandRecordList );
+				}
+				/*DOWN*/
+				else if( USART_RX_BUF[index] == 0x42 )
+				{
+					listGET_OWNER_OF_PRE_ENTRY( cmdItem, &xCommandRecordList );
+				}
 				if( cmdItem )
 				{
 					printf(" %s ", cmdItem->command);
@@ -794,63 +796,23 @@ void usmart_scan( int uart1DataLen )
 			{
 				USART_RX_BUF[index - 1] = '\0';
 			}
-			
-			{
-			cmdRecord *pxFirstCmd, *pxNextCmd;
-				
-				if( listCURRENT_LIST_LENGTH( &xCommandRecordList ) > ( UBaseType_t ) 0 )
-				{
-					listGET_OWNER_OF_NEXT_ENTRY( pxFirstCmd, &xCommandRecordList );
-				
-					do
-					{
-						listGET_OWNER_OF_NEXT_ENTRY( pxNextCmd, &xCommandRecordList );
-						if( memcmp(pxNextCmd->command, USART_RX_BUF, strlen((char*)USART_RX_BUF)) == 0)
-						{
-							//printf("\r\n *****remove command %s *****\r\n", USART_RX_BUF);
-							uxListRemove( &( pxNextCmd->xStateListItem ) );
-							vPortFree(pxNextCmd->command);
-							vPortFree(pxNextCmd);
-							pxNextCmd = NULL;
-							break;
-						}
-
-					} while( pxNextCmd != pxFirstCmd );
-					//printf("***out\r\n");
-				}
-			}
-
-			cmdItem =  pvPortMalloc( sizeof(cmdRecord) );
-			if( cmdItem)
-			{
-				cmdItem->command = pvPortMalloc( index );
-				if( cmdItem->command )
-				{				
-					vListInitialiseItem( &( cmdItem->xStateListItem ) );
-					listSET_LIST_ITEM_OWNER( &( cmdItem->xStateListItem ), cmdItem );
-					listSET_LIST_ITEM_VALUE( &( cmdItem->xStateListItem ), num );
-					num--;
-					memset( cmdItem->command, '\0', index);
-					memcpy( cmdItem->command, USART_RX_BUF, index);
-					cmdItem->len = index;
-					vListInsert( &xCommandRecordList, &( cmdItem->xStateListItem ) );
-					(&xCommandRecordList)->pxIndex = (&( cmdItem->xStateListItem ))->pxPrevious;
-				}
-				else
-				{
-					vPortFree(cmdItem);
-				}
-			}
-			
+						
 			printf("\r\n");
+			/*system function*/
 			sta = usmart_dev.cmd_rec( USART_RX_BUF );	
-			if( sta == 0 ) 
+			if( sta == USMART_OK ) 
 			{				
+				add = 1;
 				usmart_dev.exe();
 			}
 			else 
 			{  
+				/*system command*/
 				len = usmart_sys_cmd_exe( USART_RX_BUF );
+				if( len == USMART_OK)
+				{
+					add = 1;
+				}
 				if( len != USMART_FUNCERR ) 
 				{
 					sta = len;
@@ -874,6 +836,63 @@ void usmart_scan( int uart1DataLen )
 					}
 				}
 			}
+
+			if( add )
+			{
+				{
+				cmdRecord *pxFirstCmd, *pxNextCmd;
+
+					cmdItem = NULL;
+					if( listCURRENT_LIST_LENGTH( &xCommandRecordList ) > ( UBaseType_t ) 0 )
+					{
+						listGET_OWNER_OF_NEXT_ENTRY( pxFirstCmd, &xCommandRecordList );
+					
+						do
+						{
+							listGET_OWNER_OF_NEXT_ENTRY( pxNextCmd, &xCommandRecordList );
+							if( memcmp(pxNextCmd->command, USART_RX_BUF, strlen((char*)USART_RX_BUF)) == 0)
+							{
+								uxListRemove( &( pxNextCmd->xStateListItem ) );
+								cmdItem = pxNextCmd;
+								break;
+							}
+
+						} while( pxNextCmd != pxFirstCmd );
+					}
+				}			
+				if( cmdItem == NULL)
+				{
+					cmdItem =  pvPortMalloc( sizeof(cmdRecord) );
+					if( cmdItem)
+					{
+						cmdItem->command = pvPortMalloc( index );
+						if( cmdItem->command )
+						{				
+							vListInitialiseItem( &( cmdItem->xStateListItem ) );
+							listSET_LIST_ITEM_OWNER( &( cmdItem->xStateListItem ), cmdItem );
+							listSET_LIST_ITEM_VALUE( &( cmdItem->xStateListItem ), num );
+							num--;
+							memset( cmdItem->command, '\0', index);
+							memcpy( cmdItem->command, USART_RX_BUF, index);
+							cmdItem->len = index;
+							vListInsert( &xCommandRecordList, &( cmdItem->xStateListItem ) );
+							(&xCommandRecordList)->pxIndex = (&( cmdItem->xStateListItem ))->pxPrevious;
+						}
+						else
+						{
+							vPortFree(cmdItem);
+						}
+					}
+				}
+				else
+				{
+					listSET_LIST_ITEM_VALUE( &( cmdItem->xStateListItem ), num );
+					num--;
+					vListInsert( &xCommandRecordList, &( cmdItem->xStateListItem ) );
+					(&xCommandRecordList)->pxIndex = (&( cmdItem->xStateListItem ))->pxPrevious;
+				}
+			}
+			
 			index = 0;
 			printf("%s#", xUserName);
 			USART_RX_STA = 0; 		
@@ -885,16 +904,16 @@ void usmart_scan( int uart1DataLen )
 	}
 }
 
-#if USMART_USE_WRFUNS==1 	//如果使能了读写操作
-//读取指定地址的值		 
-u32 read_addr(u32 addr)
+#if USMART_USE_WRFUNS==1 
+
+u32 read_addr( u32 addr )
 {
-	return *(u32*)addr;//	
+	return *( u32* ) addr;
 }
-//在指定地址写入指定的值		 
-void write_addr(u32 addr,u32 val)
+
+void write_addr( u32 addr,u32 val )
 {
-	*(u32*)addr=val; 	
+	*( u32* ) addr = val; 	
 }
 #endif
 
