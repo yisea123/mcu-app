@@ -377,6 +377,10 @@ typedef struct tskTaskControlBlock
 		uint8_t ucDelayAborted;
 	#endif
 
+	#if( INCLUDE_xTaskLogLevel == 1 )
+		eLogLevel ucLogLevel;
+	#endif
+
 } tskTCB;
 
 /* The old tskTCB name is maintained above then typedefed to the new TCB_t name
@@ -789,6 +793,10 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB ) PRIVILEGED_FUNCTION;
 			}
 			#endif /* configSUPPORT_STATIC_ALLOCATION */
 
+			#if( INCLUDE_xTaskLogLevel == 1 )
+			pxNewTCB->ucLogLevel = eLogLevel_4;
+			#endif
+			
 			prvInitialiseNewTask( pxTaskCode, pcName, ( uint32_t ) usStackDepth, pvParameters, uxPriority, pxCreatedTask, pxNewTCB, NULL );
 			prvAddNewTaskToReadyList( pxNewTCB );
 			xReturn = pdPASS;
@@ -5211,6 +5219,37 @@ void printf_debug_delay_list_after1 (List_t * const pxList)
 	} 	
 	//}
 }
+
+//pxCurrentTCB
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+eLogLevel ucGetTaskLogLevel( TaskHandle_t pxHandle )
+{
+TCB_t *pxTCB;
+
+	if( portIsInInterrupt() )
+	{
+		return eLogLevel_0;
+	}
+	
+	pxTCB = prvGetTCBFromHandle( pxHandle );
+	return pxTCB->ucLogLevel;
+}
+
+void vSetTaskLogLevel( TaskHandle_t pxHandle,  eLogLevel level)
+{
+TCB_t *pxTCB;
+
+	if( portIsInInterrupt() )
+	{
+		return ;
+	}
+	
+	pxTCB = prvGetTCBFromHandle( pxHandle );
+	pxTCB->ucLogLevel = level;
+}
+#endif
+
 
 #ifdef FREERTOS_MODULE_TEST
 	#include "tasks_test_access_functions.h"

@@ -21,6 +21,15 @@ typedef enum
 	NOBOOT
 } vUserType;
 
+typedef enum
+{
+	DELETETASK = 1,
+	SUSPENDTASK,
+	RESUMETASK,
+	ABORTTASK
+} vActionType;
+
+
 typedef struct commandRecord
 {
 	char *command;
@@ -36,6 +45,103 @@ static char xUserName[36] = { 'r', 'o', 'o', 't', '\0' };
 static char pBuf[512];
 extern TaskHandle_t pxTimeTask;
 extern TaskHandle_t pxTempretureTask;
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+/*0~8*/
+extern eLogLevel ucOsLogLevel;
+
+void Set_Os_Log_Level( char *param )
+{
+	int i = 0;
+	char logLevel;
+	
+	while( *param == ' ')
+		param++;
+
+	while( *param != '\0' )
+	{
+		if( i == 1 )
+		{
+			printf("Error Os log level len!\r\n");
+			return;
+		}
+		logLevel = *param;
+		param++;
+	}
+
+	if( ( logLevel - '0' ) >= 0 && ( logLevel - '0' ) <= 8 )
+	{
+		ucOsLogLevel = ( eLogLevel ) ( logLevel - '0' );
+		printf("OS log level set ok! ucOsLogLevel = %d\r\n", ucOsLogLevel);
+	}
+	else
+	{
+		printf("oslevel Error! 0~8 is right value\r\n");
+	}
+}
+
+void Set_Task_Log_Level( char *param )
+{
+	TaskHandle_t target;
+		int i = 0, level;
+		char taskName[configMAX_TASK_NAME_LEN];
+		char logLevel[2];
+	
+		printf("%s: command = %s\r\n", __func__, param);
+		memset(taskName, '\0', sizeof(taskName));
+		while( *param == ' ')
+			param++;
+
+		while( *param != ' ' )
+		{
+			if( i == ( configMAX_TASK_NAME_LEN - 1 ) )
+			{
+				printf("Error task name len!\r\n");
+				return;
+			}
+			taskName[i++] = *param;
+			param++;
+		}
+		taskName[i] = '\0';
+
+		while( *param == ' ')
+			param++;
+
+		i = 0;
+		while( *param != '\0' )
+		{
+			if( i == 1 )
+			{
+				printf("Error log level len!\r\n");
+				return;
+			}
+			logLevel[i++] = *param;
+			param++;
+		}
+		logLevel[i] = '\0';
+		level = logLevel[0] - '0';
+		
+		printf("taskName = %s, log level = %d\r\n", taskName, level);
+		target = xTaskGetHandle( taskName );
+
+		if( target )
+		{
+			if( level >= 0 && level <= 8 )
+			{
+				vSetTaskLogLevel( target, ( eLogLevel ) level );
+			}
+			else
+			{
+				printf("setlevel Error! 0~8 is right value\r\n");
+			}
+		}
+		else
+		{
+			printf("target = %p error! please input right task name.\r\n", target);
+		}
+}
+
+#endif
 
 void Change_User_Name( char *userName )
 {
@@ -212,7 +318,7 @@ void Printf_Memory_Information( void )
 				fUsePercent, xFreeSize, configTOTAL_HEAP_SIZE);
 }
 
-void Deal_Command_For_Task( unsigned char *command , char action)
+void Deal_Command_For_Task( unsigned char *command , vActionType action)
 {
 	TaskHandle_t target;
 		char taskName[configMAX_TASK_NAME_LEN];
@@ -230,19 +336,19 @@ void Deal_Command_For_Task( unsigned char *command , char action)
 		{
 			switch( action )
 			{
-				case 1:
+				case DELETETASK:
 								vTaskDelete( target );
 								printf("delete task %s success!\r\n", taskName);
 								break;
-				case 2:
+				case SUSPENDTASK:
 								vTaskSuspend(target);
 								printf("suspend task %s success!\r\n", taskName);
 								break;
-				case 3:
+				case RESUMETASK:
 								vTaskResume(target);
 								printf("resume task %s success!\r\n", taskName);
 								break;
-				case 4:
+				case ABORTTASK:
 								if( pdTRUE == xTaskAbortDelay(target) )
 								{
 									printf("wake up task %s from block success!\r\n", taskName);
@@ -252,9 +358,9 @@ void Deal_Command_For_Task( unsigned char *command , char action)
 									printf("wake up task %s from block fail!\r\n", taskName);
 								}
 								break;
-				case 5:
-								
-								break;			
+				//case 5:
+				//				
+				//				break;			
 				default:
 								break;
 			}
@@ -293,6 +399,8 @@ u8 *sys_cmd_tab[]=
 	"tempreture",
 	"su",
 	"version",
+	"setlevel",
+	"oslevel",	
 };	    
 
 /*
@@ -327,16 +435,16 @@ UBaseType_t pre;
 #if USMART_USE_HELP
 			pre = uxTaskPriorityGet( NULL );
 			vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
-			printf("          Debug系统调试命令:     \r\n");
+			printf("          Debug System Command:     \r\n");
 			printf("\r\n");			
-			printf("?:    获取帮助信息\r\n");
-			printf("help: 获取帮助信息\r\n");
-			printf("list: 可用的函数列表\r\n");
-			printf("id:   可用函数的ID列表\r\n");
+			printf("?:    print help information.\r\n");
+			printf("help: print help information.\\r\n");
+			printf("list: print available Function name list.\r\n");
+			printf("id:   print available Function ID list.\r\n");
 			printf("hex:  参数16进制显示,后跟空格+数字即执行进制转换\r\n");
 			printf("dec:  参数10进制显示,后跟空格+数字即执行进制转换\r\n");
-			printf("runtime:1, 开启函数运行计时;0,关闭函数运行计时;\r\n");
-			printf("请按照程序编写格式输入函数名及参数并以回车键结束.\r\n"); 
+			printf("runtime:1, open calculate func cost times;0, colse calculate;\r\n");
+			printf(" please input the Function and params just like you coding.\r\n"); 
 		
 			printf("----------------FreeRTOS---------------\r\n");
 			printf("ps:	 list FreeRTOS all Task information.\r\n");		
@@ -351,7 +459,10 @@ UBaseType_t pre;
 			printf("jiffies: print system jiffies.\r\n");
 			printf("time: print Date/time from rtc.\r\n");
 			printf("su:   change user name.\r\n");
-			printf("version: print application version.\r\n");			
+			printf("version: print application version.\r\n");		
+			printf("setlevel: setlevel + task name + level num( 0 ~ 8 ).\r\n");	
+			printf("oslevel:  oslevel + level num ( 0 ~ 8 ).\r\n");
+			
 			printf("----------------FreeRTOS---------------\r\n");		
    
 			//printf("--------------------------------------------- \r\n");
@@ -474,19 +585,19 @@ UBaseType_t pre;
 			( void ) List_All_Task_Information();
 			break;
 		case 8:
-			( void ) Deal_Command_For_Task(str, 1);
+			( void ) Deal_Command_For_Task(str, DELETETASK);
 			break;
 		case 9:
-			( void ) Deal_Command_For_Task(str, 2);
+			( void ) Deal_Command_For_Task(str, SUSPENDTASK);
 			break;
 		case 10:
-			( void ) Deal_Command_For_Task(str, 3);
+			( void ) Deal_Command_For_Task(str, RESUMETASK);
 			break;		
 		case 11:
-			( void ) Deal_Command_For_Task(str, 4);
+			( void ) Deal_Command_For_Task(str, ABORTTASK);
 			break;			
 		case 12:
-			( void ) Deal_Command_For_Task(str, 5);
+			//( void ) Deal_Command_For_Task(str, 5);
 			break;			
 		case 13:
 			( void ) List_Struct_Information();
@@ -514,6 +625,12 @@ UBaseType_t pre;
 			break;			
 		case 21:
 			( void ) Printf_Application_Version();
+			break;	
+		case 22:
+			( void ) Set_Task_Log_Level((char *)str);
+			break;		
+		case 23:
+			( void ) Set_Os_Log_Level((char *)str);
 			break;				
 		/*Add For FreeRTOS*/
 		default://非法指令
@@ -565,6 +682,7 @@ QueueHandle_t xDebugQueue =  NULL;
 
 void usamrt_debug_task(void *argc) 
 {
+	vSetTaskLogLevel(NULL, eLogLevel_0);
 	vListInitialise( &xCommandRecordList );
 	printf("%s start...\r\n", __func__);
 	usmart_dev.sptype = 0;	//0,10进制;1,16进制;

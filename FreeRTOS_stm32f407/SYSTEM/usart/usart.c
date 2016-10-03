@@ -26,11 +26,23 @@ extern Ringfifo mLogFifo;
 extern QueueHandle_t mLogSemaphore;
 extern TaskHandle_t pxUsmartTask;
 
+#if( INCLUDE_xTaskLogLevel == 1 )
+/*0~8*/
+eLogLevel ucOsLogLevel = eLogLevel_4;
+#endif
+
 //重定义fputc函数 
 int fputc(int ch, FILE *f)
 { 	
 	static unsigned char pre = 0;
-	
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+	if( ucGetTaskLogLevel( NULL ) > ucOsLogLevel )
+	{
+		return ch;
+	}
+#endif
+
 	if( 1 /*xTaskGetSchedulerState() != taskSCHEDULER_RUNNING*/ )
 	{
 		while((USART1->SR&0X40)==0);//循环发送,直到发送完毕   

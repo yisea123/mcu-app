@@ -85,8 +85,8 @@ void Timer_func1( TimerHandle_t xTimer )
 {
 	/*run is Timers Task context with 
 		configTIMER_TASK_PRIORITY priority.*/
-	//printf("System timer callback in %u(ms)\r\n",
-	//	(xTimerGetPeriod( xTimer ) / portTICK_PERIOD_MS));
+	printf("System timer callback in %u(ms)\r\n",
+		(xTimerGetPeriod( xTimer ) / portTICK_PERIOD_MS));
 }
 
 /*
@@ -110,7 +110,8 @@ void LED0_Task(void * pvParameters)
 	while (1)
 	{
 		LED0 = !LED0;
-		vTaskDelay( 5000 / portTICK_RATE_MS );
+		vTaskDelay( 8000 / portTICK_RATE_MS );
+		printf("%s\r\n", __func__);
 	}
 }
 
@@ -131,7 +132,8 @@ void LED1_Task( void * pvParameters )
 	while( 1 )
 	{
 		LED1 = !LED1;
-		vTaskDelay( 4000 / portTICK_RATE_MS );
+		vTaskDelay( 10000 / portTICK_RATE_MS );
+		printf("%s\r\n", __func__);		
 	}
 }
 
@@ -225,7 +227,7 @@ void Printf_Log_Task(void * pvParameters)
 		{
 			rfifo_get( &mLogFifo, mSendBuffer, len );
 			isDma = 1;
-      USART_DMACmd( USART1, USART_DMAReq_Tx, ENABLE );  
+			USART_DMACmd( USART1, USART_DMAReq_Tx, ENABLE );  
 			MYDMA_Enable( DMA2_Stream7, len );
 			/*we sleep 2000ms to wait DMA finish*/
 			//xSemaphoreTake( mDmaSemaphore, 2000 / portTICK_PERIOD_MS );	
