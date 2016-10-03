@@ -322,7 +322,7 @@ static int xPrintfTime = 30;
 *	author: yangjianzhou
 * function: vSetPrrintfTime.
 **/
-void vSetPrrintfTime(int time)
+void vSetPrintfTime(int time)
 {
 		if( time > 0 )
 		{

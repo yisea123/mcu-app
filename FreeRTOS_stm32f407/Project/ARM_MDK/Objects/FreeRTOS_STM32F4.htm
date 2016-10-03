@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\FreeRTOS_STM32F4.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\FreeRTOS_STM32F4.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Sun Oct 02 11:55:49 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Mon Oct 03 16:47:41 2016
 <BR><P>
 <H3>Maximum Stack Usage =        412 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -139,7 +139,7 @@ Function Pointers
  <LI><a href="#[8]">usmart_init</a> from usmart.o(i.usmart_init) referenced 2 times from usmart_config.o(.data)
  <LI><a href="#[b]">usmart_scan</a> from usmart.o(i.usmart_scan) referenced 2 times from usmart_config.o(.data)
  <LI><a href="#[12]">vPortSVCHandler</a> from port.o(.emb_text) referenced from startup_stm32f40_41xxx.o(RESET)
- <LI><a href="#[7]">vSetPrrintfTime</a> from main.o(i.vSetPrrintfTime) referenced 2 times from usmart_config.o(.data)
+ <LI><a href="#[7]">vSetPrintfTime</a> from main.o(i.vSetPrintfTime) referenced 2 times from usmart_config.o(.data)
  <LI><a href="#[4]">write_addr</a> from usmart.o(i.write_addr) referenced 2 times from usmart_config.o(.data)
  <LI><a href="#[14]">xPortPendSVHandler</a> from port.o(.emb_text) referenced from startup_stm32f40_41xxx.o(RESET)
  <LI><a href="#[15]">xPortSysTickHandler</a> from port.o(i.xPortSysTickHandler) referenced from startup_stm32f40_41xxx.o(RESET)
@@ -2210,7 +2210,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[179]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;usmart_get_fparam
 </UL>
 
-<P><STRONG><a name="[183]"></a>usmart_sys_cmd_exe</STRONG> (Thumb, 1890 bytes, Stack size 80 bytes, usmart.o(i.usmart_sys_cmd_exe))
+<P><STRONG><a name="[183]"></a>usmart_sys_cmd_exe</STRONG> (Thumb, 1874 bytes, Stack size 80 bytes, usmart.o(i.usmart_sys_cmd_exe))
 <BR><BR>[Stack]<UL><LI>Max Depth = 296 + Unknown Stack Size
 <LI>Call Chain = usmart_sys_cmd_exe &rArr; Deal_Command_For_Task &rArr; vTaskSuspend &rArr; vTaskSwitchContext &rArr; vApplicationStackOverflowHook &rArr; __2printf &rArr; _printf_char_file &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -2418,7 +2418,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[168]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;prvProcessTimerOrBlockTask
 </UL>
 
-<P><STRONG><a name="[7]"></a>vSetPrrintfTime</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, main.o(i.vSetPrrintfTime))
+<P><STRONG><a name="[7]"></a>vSetPrintfTime</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, main.o(i.vSetPrintfTime))
 <BR>[Address Reference Count : 1]<UL><LI> usmart_config.o(.data)
 </UL>
 <P><STRONG><a name="[e1]"></a>vTaskDelay</STRONG> (Thumb, 46 bytes, Stack size 16 bytes, tasks.o(i.vTaskDelay))

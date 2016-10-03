@@ -187,7 +187,7 @@ u8 usmart_search_nextc(u8* str)
 //*pnum:函数的参数个数
 //*rval:是否需要显示返回值(0,不需要;1,需要)
 //返回值:0,成功;其他,错误代码.
-u8 usmart_get_fname(u8*str,u8*fname,u8 *pnum,u8 *rval)
+u8 usmart_get_fname(u8*str, u8*fname, u8 *pnum, u8 *rval)
 {
 	u8 res;
 	u8 fover=0;	  //括号深度
@@ -200,7 +200,7 @@ u8 usmart_get_fname(u8*str,u8*fname,u8 *pnum,u8 *rval)
 	u8 pcnt=0;	 //参数计数器
 	u8 nchar;
 	//判断函数是否有返回值
-	strtemp=str;
+	strtemp = str;
 	while(*strtemp!='\0')//没有结束
 	{
 		if(*strtemp!=' '&&(pcnt&0X7F)<5)//最多记录5个字符
