@@ -66,3 +66,10 @@
 .\objects\main.o: ..\..\USER\rfifo.h
 .\objects\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdlib.h
 .\objects\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\string.h
+.\objects\main.o: ..\..\BSP\w25qxx.h
+.\objects\main.o: ..\..\BSP\sdio_sdcard.h
+.\objects\main.o: ..\..\FATFS\exfuns\exfuns.h
+.\objects\main.o: ..\..\FATFS\src\ff.h
+.\objects\main.o: ..\..\FATFS\src\integer.h
+.\objects\main.o: ..\..\FATFS\src\ffconf.h
+.\objects\main.o: ..\..\FATFS\exfuns\fattester.h

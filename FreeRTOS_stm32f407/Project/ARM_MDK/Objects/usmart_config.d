@@ -36,5 +36,9 @@
 .\objects\usmart_config.o: ..\..\Libraries\FWLIB\inc\stm32f4xx_dac.h
 .\objects\usmart_config.o: ..\..\Libraries\FWLIB\inc\stm32f4xx_dcmi.h
 .\objects\usmart_config.o: ..\..\Libraries\FWLIB\inc\stm32f4xx_fsmc.h
+.\objects\usmart_config.o: ..\..\FATFS\exfuns\fattester.h
+.\objects\usmart_config.o: ..\..\FATFS\src\ff.h
+.\objects\usmart_config.o: ..\..\FATFS\src\integer.h
+.\objects\usmart_config.o: ..\..\FATFS\src\ffconf.h
 .\objects\usmart_config.o: ..\..\SYSTEM\delay\delay.h
 .\objects\usmart_config.o: ..\..\SYSTEM\sys\sys.h

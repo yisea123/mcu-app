@@ -6,14 +6,12 @@
 #include "stdio.h"
 #include "usart.h"
 #include "list.h"
+#include "stmflash.h"
+#include "fattester.h"	 
+#include "ff.h"
+#include "string.h"
 
-extern Ringfifo mLogFifo;
 extern void Printf_Application_Version( void );
-Ringfifo uart1fifo;
-
-u8 USART_RX_BUF[USART_REC_LEN];
-u16 USART_RX_STA=0;
-
 
 typedef enum
 {
@@ -37,14 +35,413 @@ typedef struct commandRecord
 	ListItem_t			xStateListItem;
 } cmdRecord;
 
+static unsigned int destination = ADDR_FLASH_SECTOR_7;
 static List_t xCommandRecordList;
-
 vUserType xUserID = ROOT;
 static char xUserName[36] = { 'r', 'o', 'o', 't', '\0' };
-
 static char pBuf[512];
+Ringfifo uart1fifo;
+u8 USART_RX_BUF[USART_REC_LEN];
+u16 USART_RX_STA=0;
+extern Ringfifo mLogFifo;
 extern TaskHandle_t pxTimeTask;
 extern TaskHandle_t pxTempretureTask;
+
+char buff[128];
+
+void Fatfs_Mount( char *str )
+{
+	while( *str == ' ')
+		str++;
+
+	if( memcmp(str, "sd", strlen("sd")) == 0 )
+	{
+		if( FR_OK == mf_chdrive( "0:" ) )
+		{
+			printf("mount sd scueess!\r\n");
+		}
+		else
+		{
+			printf("mount sd fail!\r\n");
+		}	
+	}
+	else if( memcmp(str, "flash", strlen("flash")) == 0 )
+	{
+		if( FR_OK == mf_chdrive( "1:" ) )
+		{
+			printf("mount flash scueess!\r\n");
+		}
+		else
+		{
+			printf("mount flash fail!\r\n");
+		}		
+	}	
+	else
+	{
+		printf("please input mount sd/flash\r\n");
+	}
+}
+
+void Fatfs_Echo_To_File( char *str )
+{
+	int i = 0;
+	FIL file;
+	FILINFO fno;
+	UINT bw;	
+	UBaseType_t pre;
+
+	// echo fdfv > hello.txt	
+	pre = uxTaskPriorityGet( NULL );
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
+	
+	while( *str == ' ')
+		str++;
+	
+	memset(buff, '\0', sizeof(buff));
+	memset(pBuf, '\0', sizeof(pBuf));
+	while( *str != ' ')
+	{
+		pBuf[i++] = *str;
+		str++;
+	}
+	//printf("echo data = %s\r\n", pBuf);
+
+	while( *str == ' ')
+		str++;
+	
+	if( *str == '>' )
+	{
+		str++;
+		while( *str == ' ')
+			str++;
+
+		if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+		{
+			if( strlen(str) > strlen("1:/") )
+			{	
+				memcpy( buff, str, strlen(str) );			
+			}
+			else
+			{
+				printf("file name error!\r\n");
+			}
+		}
+		else
+		{
+			mf_getcwd_( buff, sizeof(buff) );
+			sprintf( buff + strlen(buff), "%s%s", "./", str );
+		}			
+		//printf("echo file name = %s\r\n", buff);
+
+		if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+		{			
+			//printf("file or dir %s exist, fno.fattrib=%d\r\n", 
+			//	buff, fno.fattrib);		
+			if( fno.fattrib == 32 && 
+				f_open(&file,(const TCHAR*) buff, FA_WRITE) 
+				== FR_OK)
+			{
+				//printf("file %s open sucess!\r\n", str);
+				f_lseek(&file, fno.fsize);
+				f_write(&file, pBuf, strlen(pBuf), &bw);
+				f_close(&file);
+			}
+			else
+			{
+				printf("maybe is dir error!\r\n");
+			}
+		}
+		else
+		{
+			printf("file %s not exist\r\n", buff);
+		}		
+	}
+	else
+	{
+		printf("error command.\r\n");
+	}
+
+	vTaskPrioritySet( NULL, pre );
+}
+
+void Fatfs_Touch_File( char *str )
+{
+	FIL file;
+	FILINFO fno;	
+	UBaseType_t pre;
+	
+	while( *str == ' ')
+		str++;
+
+	pre = uxTaskPriorityGet( NULL );
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
+	memset(buff, '\0', sizeof(buff));
+
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	{
+		if( strlen(str) > strlen("1:/") )
+		{	
+			if( f_stat( (const TCHAR*) str , &fno) == FR_OK )
+			{			
+				printf("file %s exist\r\n", str);
+			}
+			else
+			{
+				if( f_open(&file,(const TCHAR*) str, 
+					FA_CREATE_ALWAYS | FA_WRITE) == FR_OK)
+				{
+					printf("file %s create sucess!\r\n", str);
+					f_close(&file);
+				}
+			}
+		}
+		else
+		{
+			printf("file name error!\r\n");
+		}
+	}
+	else
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		sprintf( buff + strlen(buff), "%s%s", "./", str );		
+		if( f_stat( (const TCHAR*) buff , &fno) == FR_OK )
+		{			
+			printf("file %s exist\r\n", buff);
+		}
+		else
+		{
+			if( f_open(&file,(const TCHAR*) buff, 
+				FA_CREATE_ALWAYS | FA_WRITE) == FR_OK)
+			{
+				printf("file %s create sucess!\r\n", buff);
+				f_close(&file);
+			}
+		}
+
+	}
+
+	vTaskPrioritySet( NULL, pre );
+}
+
+void Fatfs_Cat_File( char *str )
+{
+	unsigned char ret;
+	FIL file;
+	FILINFO fno;
+	UINT br;
+	UBaseType_t pre;
+
+	char *buffer;	
+	while( *str == ' ')
+		str++;
+	
+	//printf("%s: str = %s!\r\n", __func__, str);
+
+	pre = uxTaskPriorityGet( NULL );
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );
+	memset(buff, '\0', sizeof(buff));
+	
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	{
+		if( strlen(str) > strlen("1:/") )
+		{	
+			memcpy( buff, str, strlen(str) );			
+		}
+		else
+		{
+			printf("file name error!\r\n");
+		}
+	}
+	else
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		sprintf( buff + strlen(buff), "%s%s", "./", str );
+	}	
+
+	if( strlen(buff) > 0 )
+	{
+		//printf("%s: buff = %s\r\n", __func__, buff);
+		//mf_stat((unsigned char*)buff);
+		ret = mf_stat_( (unsigned char*)buff , &fno );
+		//ret  = f_stat ((const TCHAR*)buff, &fno);
+		//printf("f_stat out..\r\n");
+		if(  ret == FR_OK )
+		{
+			//printf("%s: fno.fsize = %d\r\n", __func__, fno.fsize);
+			if( fno.fsize > 0 && f_open( &file, (const TCHAR*)buff, FA_READ) == FR_OK )
+			{
+				buffer = pvPortMalloc( fno.fsize );
+				if( buffer )
+				{
+					if( f_read(&file, buffer, fno.fsize, &br) == FR_OK ) 
+					{
+						//printf("cat result:\r\n");
+						printf("%s\r\n", buffer);
+					}
+					vPortFree( buffer );
+				}
+				f_close( &file );
+			}
+			else
+			{
+				printf("%s: f_open or fno.fsize = %d error!\r\n", __func__, fno.fsize);
+			}
+		}
+		else
+		{
+			printf("%s: file name = %s error!!!\r\n", __func__, buff);
+		}
+	}
+	vTaskPrioritySet( NULL, pre );
+}
+
+void Fatfs_Rm_Dir( char *str )
+{
+	UBaseType_t pre;
+	pre = uxTaskPriorityGet( NULL );
+		
+	while( *str == ' ')
+		str++;
+
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
+	
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	{
+		if( strlen(str) > strlen("1:/") )
+		{	
+			mf_unlink( (unsigned char*)str );
+			printf("rm direct %s\r\n", str);
+		}
+		else
+		{
+			printf("direct error!\r\n");
+		}
+	}
+	else
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		sprintf( buff+strlen(buff), "%s%s", "./", str );		
+		//memcpy( buff+strlen(buff), str, strlen(str) );
+		mf_unlink( (unsigned char*)buff );
+		printf("rm direct %s\r\n", buff);
+	}
+
+	vTaskPrioritySet( NULL, pre );	
+}
+
+void Fatfs_Make_Dir( char *str )
+{
+	UBaseType_t pre;
+	pre = uxTaskPriorityGet( NULL );
+	
+	while( *str == ' ')
+		str++;
+
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	{
+		mf_mkdir( (unsigned char*)str );
+		printf("make direct %s\r\n", str);
+	}
+	else
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		sprintf( buff+strlen(buff), "%s%s", "./", str );
+		//memcpy( buff+strlen(buff), str, strlen(str) );
+		mf_mkdir( (unsigned char*)buff );
+		printf("make direct %s\r\n", buff);
+	}
+
+	vTaskPrioritySet( NULL, pre );		
+}
+
+void Fatfs_Change_Dir( char *str )
+{
+	UBaseType_t pre;
+	pre = uxTaskPriorityGet( NULL );
+
+	while( *str == ' ')
+		str++;
+
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );		
+	if( strncmp( str, "..", strlen(str) ) == 0 )
+	{
+		mf_getcwd_( buff, sizeof(buff) );	
+		if( strncmp(buff, "1:/", strlen(buff) ) == 0 )
+		{
+			printf("Warnning: in root dir!\r\n");
+			return;
+		}
+		sprintf( buff+strlen(buff), "%s%s", "/", str );
+		printf("buff = %s\r\n", buff);
+		mf_chdir( ( unsigned char * )buff );
+	}
+	else if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	{
+		printf("change to %s\r\n", str);
+		mf_chdir((unsigned char *)str);
+	}
+	else if( strncmp( str, "./", strlen("./") )  == 0 )
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		memcpy( buff+strlen(buff), str, strlen(str) );
+		printf("change to %s\r\n", buff);
+		mf_chdir( ( unsigned char * )buff );
+	}
+	else
+	{
+		mf_getcwd_( buff, sizeof(buff) );
+		sprintf( buff+strlen(buff), "%s%s", "./", str );
+		printf("change to %s\r\n", buff);
+		mf_chdir( ( unsigned char * )buff );
+	}			
+
+	vTaskPrioritySet( NULL, pre );		
+}
+
+void Flash_Wirte_Test( void )
+{
+		static unsigned int value = 0x1010;
+		unsigned int preDestination, temp = ADDR_FLASH_SECTOR_7, tmpValue;
+		
+		do 
+		{
+			STMFLASH_Read(temp, &tmpValue, 1);
+			temp += 4;
+		} while( tmpValue != 0XFFFFFFFF );
+		temp -= 4;
+		printf("target = 0X%X\r\n", temp);
+		destination = temp;
+		preDestination = destination;
+		
+		/*
+		if( destination == ADDR_FLASH_SECTOR_7 )
+		{
+			FLASH_If_Erase_Sector( destination );
+		}
+		*/
+		if( 1 )
+		{
+			destination = STMFLASH_Write(destination, &value, 1);
+			if( destination == preDestination + sizeof(unsigned int) )
+			{
+				value++;
+				printf("Flash write OK. addr = 0X%X, value = 0X%X\r\n", preDestination, value);
+			}
+			else
+			{
+				printf("Flash write Fail!\r\n");
+			}
+		}			
+}
+
+void Flash_Read_Test( void )
+{
+	  unsigned int value;
+
+		STMFLASH_Read(destination - sizeof(unsigned int), &value, 1);
+		printf("%s: addr=0X%X, value=0X%X \r\n", __func__, destination - sizeof(unsigned int), value);	
+}
 
 #if( INCLUDE_xTaskLogLevel == 1 )
 /*0~8*/
@@ -53,7 +450,7 @@ extern eLogLevel ucOsLogLevel;
 void Set_Os_Log_Level( char *param )
 {
 	int i = 0;
-	char logLevel;
+	char logLevel = 0;
 	
 	while( *param == ' ')
 		param++;
@@ -76,7 +473,15 @@ void Set_Os_Log_Level( char *param )
 	}
 	else
 	{
-		printf("oslevel Error! 0~8 is right value\r\n");
+		if( logLevel == 0)
+		{
+			printf("ucOsLogLevel = %d\r\n", ucOsLogLevel);
+		}
+		else
+		{
+			printf("oslevel Error! 0~8 is right value\r\n");
+
+		}
 	}
 }
 
@@ -295,8 +700,12 @@ void Change_Uart_Baud( unsigned char *command )
 void List_All_Task_Information( void )
 {
 		vTaskList( pBuf );
+		#if( INCLUDE_xTaskLogLevel == 1 )	
+		printf("Name	   Status  Priority  WaterMark	Num  Loglevel\r\n\r\n");
+		#else		
 		printf("Name       Status  Priority  WaterMark  Num\r\n\r\n");
-		printf("%s", pBuf);
+		#endif
+		printf("%s\r\n", pBuf);
 }
 
 void List_Struct_Information( void )
@@ -383,7 +792,7 @@ u8 *sys_cmd_tab[]=
 	"hex",
 	"dec",
 	"runtime",
-	
+	/*FreeRTOS*/
 	"ps",
 	"kill",
 	"suspend",
@@ -400,7 +809,18 @@ u8 *sys_cmd_tab[]=
 	"su",
 	"version",
 	"setlevel",
-	"oslevel",	
+	"oslevel",
+	"testflash",
+	/*Fatfs*/
+	"pwd",
+	"ls",
+	"cd",
+	"mkdir",
+	"rm",
+	"cat",
+	"echo",
+	"touch",
+	"mount",
 };	    
 
 /*
@@ -438,15 +858,15 @@ UBaseType_t pre;
 			printf("          Debug System Command:     \r\n");
 			printf("\r\n");			
 			printf("?:    print help information.\r\n");
-			printf("help: print help information.\\r\n");
+			printf("help: print help information.\r\n");
 			printf("list: print available Function name list.\r\n");
 			printf("id:   print available Function ID list.\r\n");
-			printf("hex:  参数16进制显示,后跟空格+数字即执行进制转换\r\n");
-			printf("dec:  参数10进制显示,后跟空格+数字即执行进制转换\r\n");
-			printf("runtime:1, open calculate func cost times;0, colse calculate;\r\n");
-			printf(" please input the Function and params just like you coding.\r\n"); 
+			printf("hex:  binary exchange, etc hex + 0x10.\r\n");
+			printf("dec:  binary exchange, etc dec + 10.\r\n");
+			printf("runtime: 1,open calculate func cost times; 0,colse calculate;\r\n");
+			printf("please input the Function and params just like you coding.\r\n"); 
 		
-			printf("----------------FreeRTOS---------------\r\n");
+			printf("\r\n----------------FreeRTOS---------------\r\n");
 			printf("ps:	 list FreeRTOS all Task information.\r\n");		
 			printf("kill:	 kill the task in task name.\r\n");		
 			printf("suspend: suspend task by task name.\r\n");	
@@ -462,13 +882,13 @@ UBaseType_t pre;
 			printf("version: print application version.\r\n");		
 			printf("setlevel: setlevel + task name + level num( 0 ~ 8 ).\r\n");	
 			printf("oslevel:  oslevel + level num ( 0 ~ 8 ).\r\n");
-			
+			printf("testflash: test flash write and read.\r\n");
 			printf("----------------FreeRTOS---------------\r\n");		
    
 			//printf("--------------------------------------------- \r\n");
 			vTaskPrioritySet( NULL, pre );				
 #else
-			printf("指令失效\r\n");
+			printf("not support command!\r\n");
 #endif
 			break;
 		case 2:
@@ -631,7 +1051,39 @@ UBaseType_t pre;
 			break;		
 		case 23:
 			( void ) Set_Os_Log_Level((char *)str);
-			break;				
+			break;		
+		case 24:
+			( void ) Flash_Read_Test();
+			( void ) Flash_Wirte_Test();
+			( void ) Flash_Read_Test();		
+			break;			
+		case 25:
+			mf_getcwd();
+			break;	
+		case 26:
+			mf_scan_files(".");
+			break;	
+		case 27:
+			Fatfs_Change_Dir( (char *) str );
+			break;		
+		case 28:
+			Fatfs_Make_Dir( (char *) str );
+			break;	
+		case 29:
+			Fatfs_Rm_Dir( (char *) str );
+			break;
+		case 30:
+			Fatfs_Cat_File( (char *) str );			
+			break;
+		case 31:
+			Fatfs_Echo_To_File( (char *) str );
+			break;
+		case 32:
+			Fatfs_Touch_File( (char *) str );
+			break;
+		case 33:
+			Fatfs_Mount( (char *) str );
+			break;			
 		/*Add For FreeRTOS*/
 		default://非法指令
 			return USMART_FUNCERR;
@@ -682,13 +1134,17 @@ QueueHandle_t xDebugQueue =  NULL;
 
 void usamrt_debug_task(void *argc) 
 {
+	/*usamrt has the heighest priroty.*/
 	vSetTaskLogLevel(NULL, eLogLevel_0);
 	vListInitialise( &xCommandRecordList );
 	printf("%s start...\r\n", __func__);
 	usmart_dev.sptype = 0;	//0,10进制;1,16进制;
 	rfifo_init(&uart1fifo);	
 	xDebugQueue = xQueueCreate( 20, sizeof(int));
-
+	
+	/*Run in lowest priroty, set system log level*/
+	ucOsLogLevel = eLogLevel_3;
+	
 	while (1) {
 		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		usmart_dev.scan(0);
@@ -884,7 +1340,24 @@ void usmart_scan( int uart1DataLen )
 				}
 				if( cmdItem )
 				{
-					printf(" %s ", cmdItem->command);
+					/*delete before command.*/
+					if( index > 3 )
+					{
+						int i;						
+						printf("%c", 0x20);
+						for( i = 0; i < ( index - 2 ); i++ )
+						{
+							printf("%c", 0x08);
+							/*clear an char*/
+							printf("%c", 0x20);
+							printf("%c", 0x08);							
+						}						
+						printf("%s ", cmdItem->command);
+					}
+					else
+					{
+						printf(" %s ", cmdItem->command);
+					}
 					memset( USART_RX_BUF, '\0', sizeof(USART_RX_BUF) );
 					memcpy( USART_RX_BUF, cmdItem->command, cmdItem->len);
 					index = cmdItem->len;

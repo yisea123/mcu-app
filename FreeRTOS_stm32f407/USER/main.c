@@ -18,6 +18,10 @@
 #include "adc.h"
 #include "dma.h"
 #include "rfifo.h"
+#include "w25qxx.h"
+#include "sdio_sdcard.h" 
+#include "exfuns.h"
+#include "fattester.h"
 
 #define BOOT_LOG   \
 printf(" \
@@ -27,6 +31,7 @@ printf(" \
 \r\n/******************************************/ \
 \r\n\r\n", __DATE__, __TIME__);
 
+void Software_Hardware_Init( void );
 void LED0_Task(void * pvParameters);
 void LED1_Task(void * pvParameters);
 void RTC_read_Task(void * pvParameters);
@@ -47,34 +52,96 @@ TaskHandle_t pxTimeTask;
 TaskHandle_t pxTempretureTask;
 TaskHandle_t pxUsmartTask;
 
+
 int main(void)
 {
+	( void ) Software_Hardware_Init();
+	vSemaphoreCreateBinary( mLogSemaphore );
+	//vSemaphoreCreateBinary( mDmaSemaphore );	
+	
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
+	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );	
+	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
+	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL );
+	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 4, &pxTimeTask );
+	xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 5, &pxTempretureTask );		
+	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
+	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
+
+	vTaskStartScheduler();
+}
+
+/*
+*	author: yangjianzhou
+* function: Software_Hardware_Init.
+**/
+void Software_Hardware_Init( void )
+{
+	unsigned char res, i;
 	rfifo_init( &mLogFifo );
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_2 );
 	(void) uart_init( 115200 ); BOOT_LOG
 	(void) RTC_INIT();
 	(void) LED_Init();
 	(void) EXTIX_Init();
-	(void) IWDG_Init( 4,2000 ); //Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
+	(void) IWDG_Init( 4, 2000 ); //Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
 	(void) Adc_Init();         //ÄÚ²¿ÎÂ¶È´«¸ÐÆ÷ADC³õÊ¼»
+	(void) W25QXX_Init();	
+	while( W25QXX_ReadID() != W25Q16 )								//¼ì²â²»µ½W25Q16
+	{
+		printf("W25Q128 Check Failed!\r\n");
+		delay_ms(5000);
+		printf("Please Check!      !\r\n");
+		delay_ms(5000);
+		LED0=!LED0;
+	}	
 	while( RNG_Init() )
 	{
 		printf("  RNG Error! RNG Trying...\r\n");	 
-	}   
-	
-	vSemaphoreCreateBinary( mLogSemaphore );
-	//vSemaphoreCreateBinary( mDmaSemaphore );	
-	
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 2, &pxUsmartTask );
-	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL );	
-	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL );
-	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
-	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 3, &pxTimeTask );
-	xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 3, &pxTempretureTask );		
-	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
-	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
+	}  
 
-	vTaskStartScheduler();
+	/*add fatfs file system support*/
+	exfuns_init();
+	
+ 	for( i = 0; i< 3; i++ )
+	{
+		if( SD_Init() == 0 )
+		{
+			printf("SD Card Init Scueess!\r\n");
+			f_mount(fs[1], "0:", 1);
+			break;
+		}
+		printf("SD Card Error!\r\nPlease Check! \r\n");
+		//delay_ms(500);					
+	}	
+
+ 	res = f_mount( fs[0], "1:", 1 ); 				//¹ÒÔØFLASH.	
+	if( res==0X0D )//FLASH´ÅÅÌ,FATÎÄ¼þÏµÍ³´íÎó,ÖØÐÂ¸ñÊ½»¯FLASH
+	{
+		printf("Flash Disk Formatting...\r\n");
+		res = f_mkfs( "1:", 1, 4096 );//¸ñÊ½»¯FLASH,1,ÅÌ·û;1,²»ÐèÒªÒýµ¼Çø,8¸öÉÈÇøÎª1¸ö´Ø
+		if( res == 0 )
+		{
+			f_setlabel( (const TCHAR *) "1:FreeRTOS" );	//ÉèÖÃFlash´ÅÅÌµÄÃû×ÖÎª£ºALIENTEK
+			printf("Flash Disk Format Finish\r\n");
+			res = f_mount( fs[0], "1:", 1 );
+			if( res == FR_OK )
+			{
+				printf("mount flash fatfs success.\r\n");
+			}
+			else
+			{
+				printf("mount flash fatfs Fail!\r\n");
+			}
+		}
+		else 
+		{
+			printf("Flash Disk Format Error\r\n");
+		}
+		//delay_ms(1000);
+	}		
+	mf_chdrive( "1:" );
+	mf_getcwd();
 }
 
 /*
@@ -178,7 +245,7 @@ void Temprate_Task(void * pvParameters)
 	
 	while (1)
 	{
-		vTaskDelay( /*45000 / portTICK_RATE_MS*/portMAX_DELAY );		
+		vTaskDelay( 45000 / portTICK_RATE_MS/*portMAX_DELAY*/ );		
 		temp = Get_Temprate();
 		if( temp < 0 )
 		{
@@ -250,6 +317,7 @@ void Key_Detect_Task(void * pvParameters)
 	int count = 0;
 	unsigned int random;	
 	printf("%s ...\r\n", __func__);	
+	vSetTaskLogLevel(NULL, eLogLevel_0);
 
 	//vSemaphoreCreateBinary( xKeySemaphore); 	
 	//xSemaphoreTake( xKeySemaphore, 0 );
@@ -314,7 +382,8 @@ void Key_Detect_Task(void * pvParameters)
 		}		
 		
 		random = RNG_Get_RandomNum();	
-		printf("random = %d\r\n", random);		
+		random = random;
+		//printf("random = %d\r\n", random);		
 	}
 }
 
@@ -329,6 +398,7 @@ void vSetPrintfTime(int time)
 		if( time > 0 )
 		{
 			xPrintfTime = time;
+			printf("%s: time = %d\r\n", __func__, time);
 		}
 }
 
@@ -344,6 +414,7 @@ void RTC_read_Task(void * pvParameters)
 	TickType_t pxPreviousWakeTime;
 	
 	printf("%s ...\r\n", __func__);	
+	vSetTaskLogLevel(NULL, eLogLevel_1);	
 	pxPreviousWakeTime = xTaskGetTickCount();
 	
 	xPrintfTime = xPrintfTime;
@@ -365,9 +436,40 @@ void RTC_read_Task(void * pvParameters)
 	}
 }
 
+const u8 TEXT_Buffer[]={"Explorer STM32F4 SPI TEST"};
+#define SIZE  sizeof(TEXT_Buffer)	 
+u8 datatemp[SIZE];
+
+void Save_String_To_Flash( unsigned int addr, const char *data )
+{
+	printf("Start Write W25Q16....\r\n");
+	( void ) W25QXX_Write( (u8*) data, addr, strlen( data ) );
+	printf("W25Q16 Write Finished!\r\n");	
+}
+
+void Read_String_From_Flash( unsigned int addr, int size )
+{
+	unsigned char *data = pvPortMalloc( size + 1 );
+	if( data == NULL )
+	{
+		printf("%s: pvPortMalloc Fail!\r\n", __func__);
+		return;
+	}
+	memset( data, '\0', size + 1);
+	printf("Start Read W25Q16.... \r\n");
+	W25QXX_Read( data, addr, size );
+	printf("The Data Readed Is:\r\n");
+	printf("%s\r\n", data);	
+	vPortFree( data );
+}
+
 void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName )
 {
+	UBaseType_t pre;
+	pre = uxTaskPriorityGet( NULL );
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
 	printf("\r\n%s -> [%s] , please add stack for the Task!\r\n\r\n", __func__, pcTaskName);		
+	vTaskPrioritySet( NULL, pre );
 }
 
 void Printf_Application_Version( void )

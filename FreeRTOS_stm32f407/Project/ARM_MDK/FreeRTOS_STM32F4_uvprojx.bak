@@ -497,6 +497,16 @@
               <FileType>1</FileType>
               <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_dma.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4xx_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_spi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -562,6 +572,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\FreeRTOS\Source\tasks.c</FilePath>
             </File>
+            <File>
+              <FileName>timers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FreeRTOS\Source\timers.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -626,6 +641,21 @@
               <FileName>dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stmflash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\stmflash.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>w25qxx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\w25qxx.c</FilePath>
             </File>
           </Files>
         </Group>

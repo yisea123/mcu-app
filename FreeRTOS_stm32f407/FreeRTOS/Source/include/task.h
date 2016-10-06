@@ -190,6 +190,9 @@ typedef struct xTASK_STATUS
 	uint16_t usStackHighWaterMark;	/* The minimum amount of stack space that has remained for the task since the task was created.  The closer this value is to zero the closer the task has come to overflowing its stack. */
 	float uStackFreePer;			// = uxReturn *sizeof( StackType_t ) * 100.0/pxTCB->xStackSize;
 	UBaseType_t xStackSize;
+	#if( INCLUDE_xTaskLogLevel == 1 )	
+	eLogLevel	eLogLevel;
+	#endif
 } TaskStatus_t;
 
 /* Possible return values for eTaskConfirmSleepModeStatus(). */

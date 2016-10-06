@@ -55,3 +55,8 @@
 .\objects\usmart.o: ..\..\SYSTEM\sys\sys.h
 .\objects\usmart.o: ..\..\SYSTEM\usart\usart.h
 .\objects\usmart.o: ..\..\FreeRTOS\Source\include\list.h
+.\objects\usmart.o: ..\..\BSP\stmflash.h
+.\objects\usmart.o: ..\..\FATFS\exfuns\fattester.h
+.\objects\usmart.o: ..\..\FATFS\src\ff.h
+.\objects\usmart.o: ..\..\FATFS\src\integer.h
+.\objects\usmart.o: ..\..\FATFS\src\ffconf.h

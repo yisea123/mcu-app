@@ -364,7 +364,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F40_41xxx</Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\Libraries;..\..\Libraries\CORE;..\..\Libraries\FWLIB\inc;..\..\SYSTEM\delay;..\..\SYSTEM\sys;..\..\SYSTEM\usart;..\..\FreeRTOS;..\..\FreeRTOS\Source\include;..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\..\BSP;..\..\USER;..\..\USMART</IncludePath>
+              <IncludePath>..\..\Libraries;..\..\Libraries\CORE;..\..\Libraries\FWLIB\inc;..\..\SYSTEM\delay;..\..\SYSTEM\sys;..\..\SYSTEM\usart;..\..\FreeRTOS;..\..\FreeRTOS\Source\include;..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F;..\..\BSP;..\..\USER;..\..\USMART;..\..\FATFS\src;..\..\FATFS\exfuns</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -496,6 +496,21 @@
               <FileName>stm32f4xx_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_sdio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_sdio.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -631,6 +646,56 @@
               <FileName>dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stmflash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\stmflash.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>w25qxx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\w25qxx.c</FilePath>
+            </File>
+            <File>
+              <FileName>sdio_sdcard.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\sdio_sdcard.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FATFS</GroupName>
+          <Files>
+            <File>
+              <FileName>diskio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FATFS\src\diskio.c</FilePath>
+            </File>
+            <File>
+              <FileName>ff.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FATFS\src\ff.c</FilePath>
+            </File>
+            <File>
+              <FileName>fattester.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FATFS\exfuns\fattester.c</FilePath>
+            </File>
+            <File>
+              <FileName>exfuns.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FATFS\exfuns\exfuns.c</FilePath>
+            </File>
+            <File>
+              <FileName>cc936.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\FATFS\src\option\cc936.c</FilePath>
             </File>
           </Files>
         </Group>
