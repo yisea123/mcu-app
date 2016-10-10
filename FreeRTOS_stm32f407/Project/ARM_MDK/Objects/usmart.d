@@ -60,3 +60,4 @@
 .\objects\usmart.o: ..\..\FATFS\src\ff.h
 .\objects\usmart.o: ..\..\FATFS\src\integer.h
 .\objects\usmart.o: ..\..\FATFS\src\ffconf.h
+.\objects\usmart.o: ..\..\FreeRTOS\Source\include\semphr.h

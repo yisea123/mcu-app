@@ -49,6 +49,103 @@ extern TaskHandle_t pxTempretureTask;
 
 char buff[128];
 
+void Fatfs_Get_Volume_Free( char *str )
+{
+	while( *str == ' ')
+		str++;
+	
+	if( memcmp(str, "sd", strlen("sd")) == 0 )
+	{
+		printf("SD Card:\r\n");
+		mf_showfree("0:");
+	}
+	else if( memcmp(str, "flash", strlen("flash")) == 0 )
+	{
+		printf("FLASH:\r\n");
+		mf_showfree("1:");
+	}
+	else if ( strlen( str ) == 0 )
+	{
+		printf("SD Card:\r\n");
+		mf_showfree("0:");
+		printf("FLASH:\r\n");
+		mf_showfree("1:");
+	}
+	else
+	{
+		printf("please input df [sd/flash]");
+	}
+}
+
+void Fatfs_Get_Dir_More_Ll( char *str )
+{
+	while( *str == ' ')
+		str++;
+
+	memset(buff, '\0', sizeof(buff));
+	if( strlen(str) == 0 )
+	{
+		mf_getcwd_( buff, sizeof(buff) );	
+	}
+	else
+	{
+		if( strncmp( str, "1:", strlen("1:") ) == 0  ||
+			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+		{
+			memcpy( buff, str, strlen(str) );
+		}
+		else
+		{
+			mf_getcwd_( buff, sizeof(buff) );
+			sprintf( buff + strlen(buff), "%s%s", "./", str );
+		}	
+	}
+	if( strlen(buff) > 0 )
+	{
+		printf("%s: dir = %s\r\n", __func__, buff);
+		mf_scan_files_( (unsigned char *)buff );
+	}
+}
+
+void Fatfs_Get_Dir_More_Ls( char *str )
+{
+	while( *str == ' ')
+		str++;
+
+	memset(buff, '\0', sizeof(buff));
+
+	if( strlen(str) == 0 )
+	{
+		mf_getcwd_( buff, sizeof(buff) );	
+	}
+	else 
+	{
+		if( strncmp( str, "1:", strlen("1:") ) == 0  ||
+			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+		{
+			memcpy( buff, str, strlen(str) );
+		}
+		else
+		{
+			mf_getcwd_( buff, sizeof(buff) );
+			if( buff[strlen(buff) - 1] == '/' )
+			{
+				sprintf( buff + strlen(buff), "%s", str );
+			}
+			else
+			{
+				sprintf( buff + strlen(buff), "/%s", str );	
+			}
+		}	
+	}
+	if( strlen( buff ) > 0 )
+	{
+		printf("%s: dir = %s\r\n", __func__, buff);
+		mf_scan_files( (unsigned char *)buff );
+	}
+}
+
+//change volume
 void Fatfs_Mount( char *str )
 {
 	while( *str == ' ')
@@ -88,11 +185,11 @@ void Fatfs_Echo_To_File( char *str )
 	FIL file;
 	FILINFO fno;
 	UINT bw;	
-	UBaseType_t pre;
+	//UBaseType_t pre;
 
 	// echo fdfv > hello.txt	
-	pre = uxTaskPriorityGet( NULL );
-	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
+	//pre = uxTaskPriorityGet( NULL );
+	//vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
 	
 	while( *str == ' ')
 		str++;
@@ -115,7 +212,8 @@ void Fatfs_Echo_To_File( char *str )
 		while( *str == ' ')
 			str++;
 
-		if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+		if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
+				strncmp( str, "0:/", strlen("0:/") ) == 0 )
 		{
 			if( strlen(str) > strlen("1:/") )
 			{	
@@ -129,7 +227,14 @@ void Fatfs_Echo_To_File( char *str )
 		else
 		{
 			mf_getcwd_( buff, sizeof(buff) );
-			sprintf( buff + strlen(buff), "%s%s", "./", str );
+			if( buff[strlen(buff) - 1] == '/' )
+			{
+				sprintf( buff + strlen(buff), "%s", str );
+			}
+			else
+			{
+				sprintf( buff + strlen(buff), "/%s", str ); 
+			}
 		}			
 		//printf("echo file name = %s\r\n", buff);
 
@@ -161,7 +266,7 @@ void Fatfs_Echo_To_File( char *str )
 		printf("error command.\r\n");
 	}
 
-	vTaskPrioritySet( NULL, pre );
+	//vTaskPrioritySet( NULL, pre );
 }
 
 void Fatfs_Touch_File( char *str )
@@ -177,7 +282,8 @@ void Fatfs_Touch_File( char *str )
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
 	memset(buff, '\0', sizeof(buff));
 
-	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
+			strncmp( str, "0:/", strlen("0:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
@@ -203,7 +309,14 @@ void Fatfs_Touch_File( char *str )
 	else
 	{
 		mf_getcwd_( buff, sizeof(buff) );
-		sprintf( buff + strlen(buff), "%s%s", "./", str );		
+		if( buff[strlen(buff) - 1] == '/' )
+		{
+			sprintf( buff + strlen(buff), "%s", str );
+		}
+		else
+		{
+			sprintf( buff + strlen(buff), "/%s", str );	
+		}
 		if( f_stat( (const TCHAR*) buff , &fno) == FR_OK )
 		{			
 			printf("file %s exist\r\n", buff);
@@ -229,7 +342,7 @@ void Fatfs_Cat_File( char *str )
 	FIL file;
 	FILINFO fno;
 	UINT br;
-	UBaseType_t pre;
+	//UBaseType_t pre;
 
 	char *buffer;	
 	while( *str == ' ')
@@ -237,11 +350,12 @@ void Fatfs_Cat_File( char *str )
 	
 	//printf("%s: str = %s!\r\n", __func__, str);
 
-	pre = uxTaskPriorityGet( NULL );
-	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );
+	//pre = uxTaskPriorityGet( NULL );
+	//vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );
 	memset(buff, '\0', sizeof(buff));
 	
-	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 ||
+			strncmp( str, "0:/", strlen("0:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
@@ -255,7 +369,14 @@ void Fatfs_Cat_File( char *str )
 	else
 	{
 		mf_getcwd_( buff, sizeof(buff) );
-		sprintf( buff + strlen(buff), "%s%s", "./", str );
+		if( buff[strlen(buff) - 1] == '/' )
+		{
+			sprintf( buff + strlen(buff), "%s", str );
+		}
+		else
+		{
+			sprintf( buff + strlen(buff), "/%s", str );	
+		}
 	}	
 
 	if( strlen(buff) > 0 )
@@ -278,13 +399,17 @@ void Fatfs_Cat_File( char *str )
 						//printf("cat result:\r\n");
 						printf("%s\r\n", buffer);
 					}
+					else
+					{
+						printf("%s: f_read error!\r\n", __func__);
+					}
 					vPortFree( buffer );
 				}
 				f_close( &file );
 			}
 			else
 			{
-				printf("%s: f_open or fno.fsize = %d error!\r\n", __func__, fno.fsize);
+				printf("%s: file size = %d\r\n", __func__, fno.fsize);
 			}
 		}
 		else
@@ -292,7 +417,7 @@ void Fatfs_Cat_File( char *str )
 			printf("%s: file name = %s error!!!\r\n", __func__, buff);
 		}
 	}
-	vTaskPrioritySet( NULL, pre );
+	//vTaskPrioritySet( NULL, pre );
 }
 
 void Fatfs_Rm_Dir( char *str )
@@ -305,7 +430,8 @@ void Fatfs_Rm_Dir( char *str )
 
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
 	
-	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
+		strncmp( str, "0:/", strlen("0:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
@@ -320,7 +446,14 @@ void Fatfs_Rm_Dir( char *str )
 	else
 	{
 		mf_getcwd_( buff, sizeof(buff) );
-		sprintf( buff+strlen(buff), "%s%s", "./", str );		
+		if( buff[strlen(buff) - 1] == '/' )
+		{
+			sprintf( buff + strlen(buff), "%s", str );
+		}
+		else
+		{
+			sprintf( buff + strlen(buff), "/%s", str );	
+		}		
 		//memcpy( buff+strlen(buff), str, strlen(str) );
 		mf_unlink( (unsigned char*)buff );
 		printf("rm direct %s\r\n", buff);
@@ -338,7 +471,8 @@ void Fatfs_Make_Dir( char *str )
 		str++;
 
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
-	if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
+		strncmp( str, "0:/", strlen("0:/") ) == 0 )
 	{
 		mf_mkdir( (unsigned char*)str );
 		printf("make direct %s\r\n", str);
@@ -376,7 +510,8 @@ void Fatfs_Change_Dir( char *str )
 		printf("buff = %s\r\n", buff);
 		mf_chdir( ( unsigned char * )buff );
 	}
-	else if( strncmp( str, "1:/", strlen("1:/") ) == 0 )
+	else if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
+		strncmp( str, "0:/", strlen("0:/") ) == 0 )
 	{
 		printf("change to %s\r\n", str);
 		mf_chdir((unsigned char *)str);
@@ -821,6 +956,8 @@ u8 *sys_cmd_tab[]=
 	"echo",
 	"touch",
 	"mount",
+	"df",
+	"ll",
 };	    
 
 /*
@@ -1059,9 +1196,10 @@ UBaseType_t pre;
 			break;			
 		case 25:
 			mf_getcwd();
+			printf("\r\n%s\r\n", pDir);
 			break;	
 		case 26:
-			mf_scan_files(".");
+			Fatfs_Get_Dir_More_Ls( (char *) str );
 			break;	
 		case 27:
 			Fatfs_Change_Dir( (char *) str );
@@ -1083,7 +1221,13 @@ UBaseType_t pre;
 			break;
 		case 33:
 			Fatfs_Mount( (char *) str );
-			break;			
+			break;	
+		case 34:
+			Fatfs_Get_Volume_Free( (char *) str );
+			break;
+		case 35:
+			Fatfs_Get_Dir_More_Ll( (char *) str );
+			break;
 		/*Add For FreeRTOS*/
 		default://∑«∑®÷∏¡Ó
 			return USMART_FUNCERR;
@@ -1388,7 +1532,11 @@ void usmart_scan( int uart1DataLen )
 				{
 					printf("Error command!\r\n");
 				}
-				printf("\r\n%s#", xUserName);
+				printf("\r\n");
+				mf_getcwd();
+				printf("\r\n");
+				printf("\r\n[%s]%s#", xUserName, pDir);				
+				//printf("\r\n%s#", xUserName);
 				index = 0;
 				continue;
 			}
@@ -1494,7 +1642,8 @@ void usmart_scan( int uart1DataLen )
 			}
 			
 			index = 0;
-			printf("%s#", xUserName);
+			mf_getcwd();
+			printf("[%s]%s#", xUserName, pDir);
 			USART_RX_STA = 0; 		
 		}
 		else

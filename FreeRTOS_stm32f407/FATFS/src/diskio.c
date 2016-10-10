@@ -12,29 +12,14 @@
 #include "w25qxx.h"
 #include "FreeRTOS.h"
 #include "task.h"
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F407开发板
-//FATFS底层(diskio) 驱动代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/15
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	 
-
 
 #define SD_CARD	 0  //SD卡,卷标为0
 #define EX_FLASH 1	//外部flash,卷标为1
-
-#define FLASH_SECTOR_SIZE 	512			  
+	  
 //对于W25Q128
 //前12M字节给fatfs用,12M字节后,用于存放字库,字库占用3.09M.	剩余部分,给客户自己用	 			    
 //u16	    FLASH_SECTOR_COUNT=2048*12;	//W25Q1218,前12M字节给FATFS占用
 u16	    FLASH_SECTOR_COUNT = 2048*2;	
-#define FLASH_BLOCK_SIZE   	8     	//每个BLOCK有8个扇区
 
 //初始化磁盘
 DSTATUS disk_initialize (
@@ -93,16 +78,16 @@ DRESULT disk_read (
 			}
 			break;
 		case EX_FLASH://外部flash
-			for(;count>0;count--)
+			for( ; count > 0; count-- )
 			{
-				W25QXX_Read(buff,sector*FLASH_SECTOR_SIZE,FLASH_SECTOR_SIZE);
+				W25QXX_Read( buff, sector * FLASH_SECTOR_SIZE, FLASH_SECTOR_SIZE );
 				sector++;
-				buff+=FLASH_SECTOR_SIZE;
+				buff += FLASH_SECTOR_SIZE;
 			}
-			res=0;
+			res = 0;
 			break;
 		default:
-			res=1; 
+			res = 1; 
 	}
    //处理返回值，将SPI_SD_driver.c的返回值转成ff.c的返回值
     if(res==0x00)return RES_OK;	 
@@ -220,17 +205,17 @@ DRESULT disk_ioctl (
 //User defined function to give a current time to fatfs module      */
 //31-25: Year(0-127 org.1980), 24-21: Month(1-12), 20-16: Day(1-31) */                                                                                                                                                                                                                                          
 //15-11: Hour(0-23), 10-5: Minute(0-59), 4-0: Second(0-29 *2) */                                                                                                                                                                                                                                                
-DWORD get_fattime (void)
+DWORD get_fattime ( void )
 {				 
 	return 0;
 }			 
 //动态分配内存
-void *ff_memalloc (UINT size)			
+void *ff_memalloc ( UINT size )			
 {
-	return (void*)pvPortMalloc( size );
+	return ( void* ) pvPortMalloc( size );
 }
 //释放内存
-void ff_memfree (void* mf)		 
+void ff_memfree ( void* mf )		 
 {
 	( void ) vPortFree( mf );
 }

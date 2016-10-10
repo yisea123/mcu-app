@@ -7,18 +7,6 @@
 #include "task.h"  
 #include "ff.h"
 #include "string.h"
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F407开发板
-//FATFS 测试代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/15
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	
     
 //为磁盘注册工作区	 
 //path:磁盘路径，比如"0:"、"1:"
@@ -126,12 +114,11 @@ u8 mf_chdrive(u8* path)
 	return f_chdrive((const TCHAR*)path);
 }
 
+char pDir[128];
 u8 mf_getcwd( void )
-{
-	char buff[56];
-	
-	f_getcwd((TCHAR*)buff, sizeof(buff));
-	printf("\r\n%s\r\n", buff);
+{	
+	f_getcwd((TCHAR*)pDir, sizeof(pDir));
+	//printf("\r\n%s\r\n", pDir);
 	return 0;
 }
 
@@ -237,7 +224,9 @@ u8 mf_readdir(void)
 	res=f_readdir(&dir,&fileinfo);//读取一个文件的信息
 	if(res!=FR_OK||fileinfo.fname[0]==0)
 	{
+#if _USE_LFN		
 		vPortFree( fileinfo.lfname );
+#endif		
 		return res;//读完了.
 	}
 #if _USE_LFN
@@ -260,7 +249,9 @@ u8 mf_readdir(void)
 	printf("File time is:%d\r\n",fileinfo.ftime);
 	printf("File Attr is:%d\r\n",fileinfo.fattrib);
 	printf("\r\n");
+#if _USE_LFN		
 	vPortFree(fileinfo.lfname);
+#endif	
 	return 0;
 }			 
 
@@ -269,6 +260,8 @@ u8 mf_readdir(void)
  //返回值:执行结果
 u8 mf_scan_files(u8 * path)
 {
+	DIR dir;
+	FILINFO fileinfo;
 	FRESULT res;	  
     char *fn;   /* This function is assuming non-Unicode cfg. */
 #if _USE_LFN
@@ -294,9 +287,54 @@ u8 mf_scan_files(u8 * path)
 			printf("%s\r\n",  fn);//打印文件名	  
 		} 
     }	  
+#if _USE_LFN		
 		vPortFree( fileinfo.lfname );
+#endif		
     return res;	  
 }
+
+u8 mf_scan_files_(u8 * path)
+{
+	DIR dir;
+	FILINFO fileinfo;
+	//char name[90];
+	//FILINFO fno;
+	FRESULT res;	  
+    char *fn;   /* This function is assuming non-Unicode cfg. */
+#if _USE_LFN
+ 	fileinfo.lfsize = _MAX_LFN * 2 + 1;
+	fileinfo.lfname = pvPortMalloc( fileinfo.lfsize );
+#endif		  
+
+    res = f_opendir(&dir,(const TCHAR*)path); //打开一个目录
+    if (res == FR_OK) 
+	{	
+		printf("\r\n"); 
+		while(1)
+		{
+	        res = f_readdir(&dir, &fileinfo);                   //读取目录下的一个文件
+	        if (res != FR_OK || fileinfo.fname[0] == 0) break;  //错误了/到末尾了,退出
+	        //if (fileinfo.fname[0] == '.') continue;             //忽略上级目录
+#if _USE_LFN
+        	fn = *fileinfo.lfname ? fileinfo.lfname : fileinfo.fname;
+#else							   
+        	fn = fileinfo.fname;
+#endif	                                              /* It is a file. */
+			//memset(name, '\0', sizeof(name));
+			//sprintf( name, "%s/%s", path, fn );
+			//mf_stat_( (u8*) name, &fno );
+			//printf("%s/", path);//打印路径	
+			printf("%s/%s\t\t(%d)bytes\tAttribute(%d)\r\n",
+				path, fn, fileinfo.fsize, fileinfo.fattrib );//打印文件名	  
+		} 
+    }	  
+#if _USE_LFN		
+		vPortFree( fileinfo.lfname );
+#endif		
+    return res;	  
+} 
+
+
 //显示剩余容量
 //drv:盘符
 //返回值:剩余容量(字节)
@@ -318,13 +356,13 @@ u32 mf_showfree(u8 *drv)
 		if(tot_sect<20480)//总容量小于10M
 		{
 		    /* Print free space in unit of KB (assuming 512 bytes/sector) */
-		    printf("\r\n磁盘总容量:%d KB\r\n"
+		    printf("磁盘总容量:%d KB\r\n"
 		           "可用空间:%d KB\r\n",
 		           tot_sect>>1,fre_sect>>1);
 		}else
 		{
 		    /* Print free space in unit of KB (assuming 512 bytes/sector) */
-		    printf("\r\n磁盘总容量:%d MB\r\n"
+		    printf("磁盘总容量:%d MB\r\n"
 		           "可用空间:%d MB\r\n",
 		           tot_sect>>11,fre_sect>>11);
 		}

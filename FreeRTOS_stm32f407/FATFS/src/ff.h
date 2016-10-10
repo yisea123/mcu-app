@@ -75,13 +75,18 @@ typedef char TCHAR;
 /* File system object structure (FATFS) */
 
 typedef struct {
+	/*fat12\fat16\fat32, 		1,2,3*/
 	BYTE	fs_type;		/* FAT sub-type (0:Not mounted) */
 	BYTE	drv;			/* Physical drive number */
+	/*一个cluster的扇区数目*/
 	BYTE	csize;			/* Sectors per cluster (1,2,4...128) */
 	BYTE	n_fats;			/* Number of FAT copies (1 or 2) */
+	/*当把wflag置1时，代表win的数据要被回写进sector中
+	意思就是这个sector的数据被修改过了*/
 	BYTE	wflag;			/* win[] flag (b0:dirty) */
 	BYTE	fsi_flag;		/* FSINFO flags (b7:disabled, b0:dirty) */
 	WORD	id;				/* File system mount ID */
+	/*文件目录表的个数，fat12/fat16 = N_ROOTDIR */
 	WORD	n_rootdir;		/* Number of root directory entries (FAT12/16) */
 #if _MAX_SS != _MIN_SS
 	WORD	ssize;			/* Bytes per sector (512, 1024, 2048 or 4096) */
@@ -90,18 +95,26 @@ typedef struct {
 	_SYNC_t	sobj;			/* Identifier of sync object */
 #endif
 #if !_FS_READONLY
+	/*最近一个被分配出去的族位置*/
 	DWORD	last_clust;		/* Last allocated cluster */
+	/*空闲的族数目*/
 	DWORD	free_clust;		/* Number of free clusters */
 #endif
 #if _FS_RPATH
+	/*当前目录的开始cluster */
 	DWORD	cdir;			/* Current directory start cluster (0:root) */
 #endif
+	/*fat 表能表示的 clusters数目为n_fatent*/
 	DWORD	n_fatent;		/* Number of FAT entries, = number of clusters + 2 */
 	DWORD	fsize;			/* Sectors per FAT */
+	/*VBR的开始扇区，一般就是0*/
 	DWORD	volbase;		/* Volume start sector */
 	DWORD	fatbase;		/* FAT start sector */
+	/*root 目录的开始扇区(sector)   文件目录表，每个32 bytes*/
 	DWORD	dirbase;		/* Root directory start sector (FAT32:Cluster#) */
+	/*子目录族的开始和文件数据开始扇区*/
 	DWORD	database;		/* Data start sector */
+	/*当前在win缓存中的扇区位置*/
 	DWORD	winsect;		/* Current sector appearing in the win[] */
 	BYTE	win[_MAX_SS];	/* Disk access window for Directory, FAT (and file data at tiny cfg) */
 } FATFS;
@@ -117,11 +130,14 @@ typedef struct {
 	BYTE	err;			/* Abort flag (error code) */
 	DWORD	fptr;			/* File read/write pointer (Zeroed on file open) */
 	DWORD	fsize;			/* File size */
+	/*文件数据开始的 cluster*/
 	DWORD	sclust;			/* File start cluster (0:no cluster chain, always 0 when fsize is 0) */
 	DWORD	clust;			/* Current cluster of fpter (not valid when fprt is 0) */
 	DWORD	dsect;			/* Sector number appearing in buf[] (0:invalid) */
 #if !_FS_READONLY
+	/*当前目录项所在的扇区数*/
 	DWORD	dir_sect;		/* Sector number containing the directory entry */
+	/*文件对应的目录项地址*/
 	BYTE*	dir_ptr;		/* Pointer to the directory entry in the win[] */
 #endif
 #if _USE_FASTSEEK
@@ -142,11 +158,18 @@ typedef struct {
 typedef struct {
 	FATFS*	fs;				/* Pointer to the owner file system object (**do not change order**) */
 	WORD	id;				/* Owner file system mount ID (**do not change order**) */
+	/*此结构在目录项表中的位置*/
 	WORD	index;			/* Current read/write index number */
+	/*对应的起始族，文件的数据就是从这里开始
+	或者子目录的开始族*/
 	DWORD	sclust;			/* Table start cluster (0:Root dir) */
+	/*当前目录项所在的cluster , if is Static table   clust = 0--> fat12/16*/
 	DWORD	clust;			/* Current cluster */
+	/*当前目录项所在的扇区*/
 	DWORD	sect;			/* Current sector */
+	/*目录项32bytes的头指针，指向文件/文件夹名字*/
 	BYTE*	dir;			/* Pointer to the current SFN entry in the win[] */
+	/*指向目录或者文件句*/
 	BYTE*	fn;				/* Pointer to the SFN (in/out) {file[8],ext[3],status[1]} */
 #if _FS_LOCK
 	UINT	lockid;			/* File lock ID (index of file semaphore table Files[]) */

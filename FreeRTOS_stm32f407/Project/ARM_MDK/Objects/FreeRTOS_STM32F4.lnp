@@ -47,7 +47,7 @@
 ".\objects\ff.o"
 ".\objects\fattester.o"
 ".\objects\exfuns.o"
-".\objects\cc936.o"
+".\objects\syscall.o"
 --strict --scatter ".\Objects\FreeRTOS_STM32F4.sct"
 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

@@ -14,6 +14,9 @@ extern "C" {
 
 #include "integer.h"
 
+#define FLASH_BLOCK_SIZE   	2     	//每个BLOCK有8个扇区
+
+#define FLASH_SECTOR_SIZE 	512		
 
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;

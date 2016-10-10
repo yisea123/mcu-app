@@ -31,6 +31,7 @@ printf(" \
 \r\n/******************************************/ \
 \r\n\r\n", __DATE__, __TIME__);
 
+extern void Fatfs_Cat_File( char *str );
 void Software_Hardware_Init( void );
 void LED0_Task(void * pvParameters);
 void LED1_Task(void * pvParameters);
@@ -40,6 +41,7 @@ void Temprate_Task(void * pvParameters);
 void Printf_Log_Task(void * pvParameters);
 void Feed_Wdg_Task( void * pvParameters );
 void Timer_func1( TimerHandle_t xTimer );
+void Read_Fatfs(void * pvParameters);
 
 Ringfifo mLogFifo;
 QueueHandle_t mLogSemaphore =  NULL;
@@ -58,7 +60,8 @@ int main(void)
 	( void ) Software_Hardware_Init();
 	vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
-	
+
+	xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, NULL );		
 	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );	
 	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
@@ -75,6 +78,7 @@ int main(void)
 *	author: yangjianzhou
 * function: Software_Hardware_Init.
 **/
+#include "diskio.h"		/* FatFs lower layer API */
 void Software_Hardware_Init( void )
 {
 	unsigned char res, i;
@@ -116,10 +120,12 @@ void Software_Hardware_Init( void )
 	}	
 
  	res = f_mount( fs[0], "1:", 1 ); 				//挂载FLASH.	
-	if( res==0X0D )//FLASH磁盘,FAT文件系统错误,重新格式化FLASH
+	if( res == 0X0D )
+	//FLASH磁盘,FAT文件系统错误,重新格式化FLASH
 	{
 		printf("Flash Disk Formatting...\r\n");
-		res = f_mkfs( "1:", 1, 4096 );//格式化FLASH,1,盘符;1,不需要引导区,8个扇区为1个簇
+		res = f_mkfs( "1:", 1, FLASH_BLOCK_SIZE*FLASH_SECTOR_SIZE );
+		//格式化FLASH,1,盘符;1,不需要引导区,8个扇区为1个簇
 		if( res == 0 )
 		{
 			f_setlabel( (const TCHAR *) "1:FreeRTOS" );	//设置Flash磁盘的名字为：ALIENTEK
@@ -142,6 +148,32 @@ void Software_Hardware_Init( void )
 	}		
 	mf_chdrive( "1:" );
 	mf_getcwd();
+}
+
+/*
+*	author: yangjianzhou
+* function: Read_Fatfs.
+**/
+void Read_Fatfs(void * pvParameters)
+{
+	UBaseType_t pre;
+	
+	pre = uxTaskPriorityGet( NULL );
+	
+	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
+	printf("%s ...\r\n", __func__);
+	vTaskPrioritySet( NULL, pre );
+
+	/* vTaskDelay( portMAX_DELAY ) just block in max time, task will 
+	 	ready to run in portMAX_DELAY tick after */
+	vTaskDelay( portMAX_DELAY );
+	
+	while (1)
+	{
+		vTaskDelay( 20 / portTICK_RATE_MS );
+		( void ) Fatfs_Cat_File( "0:/hello.txt" );
+		printf("%s\r\n", __func__);
+	}
 }
 
 /*

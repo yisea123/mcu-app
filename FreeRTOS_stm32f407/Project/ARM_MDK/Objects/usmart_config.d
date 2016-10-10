@@ -40,5 +40,15 @@
 .\objects\usmart_config.o: ..\..\FATFS\src\ff.h
 .\objects\usmart_config.o: ..\..\FATFS\src\integer.h
 .\objects\usmart_config.o: ..\..\FATFS\src\ffconf.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\FreeRTOS.h
+.\objects\usmart_config.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stddef.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\FreeRTOSConfig.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\projdefs.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\portable.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\deprecated_definitions.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F\portmacro.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\mpu_wrappers.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\semphr.h
+.\objects\usmart_config.o: ..\..\FreeRTOS\Source\include\queue.h
 .\objects\usmart_config.o: ..\..\SYSTEM\delay\delay.h
 .\objects\usmart_config.o: ..\..\SYSTEM\sys\sys.h

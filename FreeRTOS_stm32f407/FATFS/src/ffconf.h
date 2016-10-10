@@ -57,7 +57,8 @@
 / Locale and Namespace Configurations
 /---------------------------------------------------------------------------*/
 
-#define _CODE_PAGE	936		//采用中文GBK编码
+//#define _CODE_PAGE	936		//采用中文GBK编码
+#define _CODE_PAGE	1
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
 /  Incorrect setting of the code page can cause a file open failure.
 /
@@ -89,7 +90,7 @@
 /   1    - ASCII (Valid for only non-LFN configuration) */
 
 
-#define	_USE_LFN	3		/* 0 to 3 */
+#define	_USE_LFN	0		/* 0 to 3 */ /* use 3 before*/
 #define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
 /* The _USE_LFN option switches the LFN feature.
 /
@@ -189,9 +190,12 @@
 /  with file lock control. This feature uses bss _FS_LOCK * 12 bytes. */
 
 
-#define _FS_REENTRANT	0		/* 0:Disable or 1:Enable */
-#define _FS_TIMEOUT		1000	/* Timeout period in unit of time tick */
-#define	_SYNC_t			HANDLE	/* O/S dependent sync object type. e.g. HANDLE, OS_EVENT*, ID, SemaphoreHandle_t and etc.. */
+#include "FreeRTOS.h"
+#include "semphr.h"
+
+#define _FS_REENTRANT	1		/* 0:Disable or 1:Enable */
+#define _FS_TIMEOUT		portMAX_DELAY	/* 1000 befor   Timeout period in unit of time tick */
+#define	_SYNC_t			SemaphoreHandle_t	/* O/S dependent sync object type. e.g. HANDLE, OS_EVENT*, ID, SemaphoreHandle_t and etc.. */
 /* The _FS_REENTRANT option switches the re-entrancy (thread safe) of the FatFs module.
 /
 /   0: Disable re-entrancy. _FS_TIMEOUT and _SYNC_t have no effect.

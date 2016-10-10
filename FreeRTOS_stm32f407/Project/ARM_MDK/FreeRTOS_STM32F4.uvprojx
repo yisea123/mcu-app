@@ -693,9 +693,9 @@
               <FilePath>..\..\FATFS\exfuns\exfuns.c</FilePath>
             </File>
             <File>
-              <FileName>cc936.c</FileName>
+              <FileName>syscall.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\FATFS\src\option\cc936.c</FilePath>
+              <FilePath>..\..\FATFS\src\option\syscall.c</FilePath>
             </File>
           </Files>
         </Group>

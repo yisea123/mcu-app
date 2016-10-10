@@ -117,7 +117,7 @@
 
 #include "ff.h"			/* Declarations of FatFs API */
 #include "diskio.h"		/* Declarations of disk I/O functions */
-
+#include <stdio.h>
 
 
 
@@ -515,17 +515,22 @@ FILESEM	Files[_FS_LOCK];	/* Open object lock semaphores */
 #elif _USE_LFN == 1			/* LFN feature with static working buffer */
 static
 WCHAR LfnBuf[_MAX_LFN+1];
+/*定义成全局变量，所以有可能会导致多任务进入
+安全的问题*/
 #define	DEF_NAMEBUF			BYTE sfn[12]
 #define INIT_BUF(dobj)		{ (dobj).fn = sfn; (dobj).lfn = LfnBuf; }
 #define	FREE_BUF()
 
 #elif _USE_LFN == 2 		/* LFN feature with dynamic working buffer on the stack */
 #define	DEF_NAMEBUF			BYTE sfn[12]; WCHAR lbuf[_MAX_LFN+1]
+/*使用任务的栈开辟lfn的空间，对多任务来说
+安全的，但是消耗栈，要注意多分配点栈给任务*/
 #define INIT_BUF(dobj)		{ (dobj).fn = sfn; (dobj).lfn = lbuf; }
 #define	FREE_BUF()
 
 #elif _USE_LFN == 3 		/* LFN feature with dynamic working buffer on the heap */
 #define	DEF_NAMEBUF			BYTE sfn[12]; WCHAR *lfn
+/*使用动态内存分配*/
 #define INIT_BUF(dobj)		{ lfn = ff_memalloc((_MAX_LFN + 1) * 2); \
 							  if (!lfn) LEAVE_FF((dobj).fs, FR_NOT_ENOUGH_CORE); \
 							  (dobj).lfn = lfn;	(dobj).fn = sfn; }
@@ -766,6 +771,7 @@ FRESULT sync_window (
 			return FR_DISK_ERR;
 		fs->wflag = 0;
 		if (wsect - fs->fatbase < fs->fsize) {		/* Is it in the FAT area? */
+			//如果写的是fat表，把备份的fat也回写
 			for (nf = fs->n_fats; nf >= 2; nf--) {	/* Reflect the change to all FAT copies */
 				wsect += fs->fsize;
 				disk_write(fs->drv, fs->win, wsect, 1);
@@ -783,7 +789,11 @@ FRESULT move_window (
 	DWORD sector	/* Sector number to make appearance in the fs->win[] */
 )
 {
+	/*当sector与当前win缓存中的数据不是同个
+	扇区，重新去读flash的扇区。*/
 	if (sector != fs->winsect) {	/* Changed current window */
+		printf("%s: sector(%d) != fs->winsect(%d)\r\n", __func__, 
+			sector, fs->winsect);
 #if !_FS_READONLY
 		if (sync_window(fs) != FR_OK)
 			return FR_DISK_ERR;
@@ -843,13 +853,13 @@ FRESULT sync_fs (	/* FR_OK: successful, FR_DISK_ERR: failed */
 /* Get sector# from cluster#                                             */
 /*-----------------------------------------------------------------------*/
 
-
+/*族到扇区的转化*/
 DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 	FATFS* fs,		/* File system object */
 	DWORD clst		/* Cluster# to be converted */
 )
 {
-	clst -= 2;
+	clst -= 2;//why do this?
 	if (clst >= (fs->n_fatent - 2)) return 0;		/* Invalid cluster# */
 	return clst * fs->csize + fs->database;
 }
@@ -861,7 +871,9 @@ DWORD clust2sect (	/* !=0: Sector number, 0: Failed - invalid cluster# */
 /* FAT access - Read value of a FAT entry                                */
 /*-----------------------------------------------------------------------*/
 
-
+/*  Get the cluster status 
+就是读出fat表中当前族下的值，
+可能代表一下族，也可能代表clst是最后一个族*/
 DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster status */
 	FATFS* fs,	/* File system object */
 	DWORD clst	/* Cluster# to get the link information */
@@ -907,7 +919,7 @@ DWORD get_fat (	/* 0xFFFFFFFF:Disk error, 1:Internal error, Else:Cluster status 
 /* FAT access - Change value of a FAT entry                              */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
-
+/*把clst位置的族，设置成val，也就是指向了val族*/
 FRESULT put_fat (
 	FATFS* fs,	/* File system object */
 	DWORD clst,	/* Cluster# to be changed in range of 2 to fs->n_fatent - 1 */
@@ -970,6 +982,7 @@ FRESULT put_fat (
 /* FAT handling - Remove a cluster chain                                 */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
+/*删除clst开始的族链*/
 static
 FRESULT remove_chain (
 	FATFS* fs,			/* File system object */
@@ -1023,6 +1036,10 @@ FRESULT remove_chain (
 /* FAT handling - Stretch or Create a cluster chain                      */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
+/*当clst为0时，找出一个未分配的族，作为
+链的第一个族头
+当clst不会0时，clst代表当前族链的最后一个族，分配一个
+新族，然后添加到clst，使新族成为族链尾巴*/
 static
 DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk error, >=2:New cluster# */
 	FATFS* fs,			/* File system object */
@@ -1034,6 +1051,7 @@ DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk err
 
 
 	if (clst == 0) {		/* Create a new chain */
+		printf("%s: create a new cluster chain for sub dir or file!\r\n", __func__);
 		scl = fs->last_clust;			/* Get suggested start point */
 		if (!scl || scl >= fs->n_fatent) scl = 1;
 	}
@@ -1061,6 +1079,8 @@ DWORD create_chain (	/* 0:No free cluster, 1:Internal error, 0xFFFFFFFF:Disk err
 
 	res = put_fat(fs, ncl, 0x0FFFFFFF);	/* Mark the new cluster "last link" */
 	if (res == FR_OK && clst != 0) {
+		printf("%s: ###############################\r\n", __func__);
+		printf("%s: ###############################Link cluster(%d)->(%d)\r\n", __func__, clst, ncl);
 		res = put_fat(fs, clst, ncl);	/* Link it to the previous one if needed */
 	}
 	if (res == FR_OK) {
@@ -1113,6 +1133,16 @@ DWORD clmt_clust (	/* <2:Error, >=2:Cluster number */
 /* Directory handling - Set directory index                              */
 /*-----------------------------------------------------------------------*/
 //static //让外部函数调用
+/*根据dir的sclust获取到指写index的目录项的信息
+也就是让dp->dir指向win缓存中的正确位置
+还有设置了每index个目录项对应的dp->sect、dp->clust
+可是此时win缓存可能还没有更新， 所以一般
+都会再调用 一下move_window*/
+
+/*找到目录下，第index个目录项，从0开始算
+子目录下，第0个是".", 每1个是".."代表了父亲目录，
+目录项里面的信息，包含了父亲目录的开始族
+开始族为0时，代表到了root目录*/
 FRESULT dir_sdi (
 	DIR* dp,		/* Pointer to directory object */
 	UINT idx		/* Index of directory table */
@@ -1121,7 +1151,8 @@ FRESULT dir_sdi (
 	DWORD clst, sect;
 	UINT ic;
 
-
+	printf("in %s: dp->index(%d), dp->sect(%d), dp->sclust(%d)\r\n", 
+		__func__, dp->index, dp->sect, dp->sclust);
 	dp->index = (WORD)idx;	/* Current index */
 	clst = dp->sclust;		/* Table start cluster (0:root) */
 	if (clst == 1 || clst >= dp->fs->n_fatent)	/* Check start cluster range */
@@ -1136,19 +1167,32 @@ FRESULT dir_sdi (
 	}
 	else {				/* Dynamic table (root-directory in FAT32 or sub-directory) */
 		ic = SS(dp->fs) / SZ_DIR * dp->fs->csize;	/* Entries per cluster */
+		/*一个cluster有ic个目录项(代表目录跟文件)
+		而文件的sclust代表文件内容的开始地址
+		而子目录的sclust代表一颗新的目录树的开始
+		遍历一个目录下的文件跟目录，就是从此目录
+		的sclust开始遍历目录项，除了root下对目录项有限制，
+		其它的子目录下族开始的目录项没有数目的限制*/
 		while (idx >= ic) {	/* Follow cluster chain */
 			clst = get_fat(dp->fs, clst);				/* Get next cluster */
+			/*clst 就是族链中的下一个族，如果有效的话，
+				就是因为这个子目录下有太多的目录项了，
+				也就是说有太多的文件跟目录了*/
 			if (clst == 0xFFFFFFFF) return FR_DISK_ERR;	/* Disk error */
 			if (clst < 2 || clst >= dp->fs->n_fatent)	/* Reached to end of table or internal error */
 				return FR_INT_ERR;
 			idx -= ic;
 		}
 		sect = clust2sect(dp->fs, clst);
+		printf("%s: sub dir, clst(%d), sect=%d\r\n", __func__, clst, sect);
 	}
 	dp->clust = clst;	/* Current cluster# */
 	if (!sect) return FR_INT_ERR;
 	dp->sect = sect + idx / (SS(dp->fs) / SZ_DIR);					/* Sector# of the directory entry */
+	/*当前目录项在所在扇区的偏移地址*/
 	dp->dir = dp->fs->win + (idx % (SS(dp->fs) / SZ_DIR)) * SZ_DIR;	/* Ptr to the entry in the sector */
+	printf("out %s: dp->index(%d), dp->sect(%d)\r\n", 
+		__func__, dp->index, dp->sect);
 
 	return FR_OK;
 }
@@ -1160,6 +1204,11 @@ FRESULT dir_sdi (
 /* Directory handling - Move directory table index next                  */
 /*-----------------------------------------------------------------------*/
 
+/*根据dp->sclust代表的目录，并且在第dp->index个
+目录项的状态下，向后移动一个目录项，
+stretch为0，代表超出一族时，报错误，
+stretch为1时，代表当目录项的空间满一族后，
+再分配多一族给目录的目录项*/
 static
 FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could not stretch */
 	DIR* dp,		/* Pointer to the directory object */
@@ -1176,20 +1225,29 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 
 	if (!(i % (SS(dp->fs) / SZ_DIR))) {	/* Sector changed? */
 		dp->sect++;					/* Next sector */
-
+		printf("%s: Sector changed, dp->sect = %d\r\n", __func__, dp->sect);
 		if (!dp->clust) {		/* Static table */
+			/*如果是在0族，也就是root目录族
+			root目录族最多只能有目录项n_rootdir 个*/
 			if (i >= dp->fs->n_rootdir)	/* Report EOT if it reached end of static table */
 				return FR_NO_FILE;
 		}
 		else {					/* Dynamic table */
+			/*如果不是在root目录下，而是在子目录下*/
 			if (((i / (SS(dp->fs) / SZ_DIR)) & (dp->fs->csize - 1)) == 0) {	/* Cluster changed? */
+				/*产生族的变化,子目录下文件太多*/
+				printf("%s: in sub dir, and it dir has too much file and dir"	\
+							"exzit an Cluster(has %d sector size)\r\n", __func__, dp->fs->csize);
 				clst = get_fat(dp->fs, dp->clust);				/* Get next cluster */
 				if (clst <= 1) return FR_INT_ERR;
 				if (clst == 0xFFFFFFFF) return FR_DISK_ERR;
+				/*判断是否超出了fat表所能表示的族*/
 				if (clst >= dp->fs->n_fatent) {					/* If it reached end of dynamic table, */
+					//判断已经是族链的尾端
 #if !_FS_READONLY
 					UINT c;
 					if (!stretch) return FR_NO_FILE;			/* If do not stretch, report EOT */
+					/*找出一个新的族，放到族链尾端*/
 					clst = create_chain(dp->fs, dp->clust);		/* Stretch cluster chain */
 					if (clst == 0) return FR_DENIED;			/* No free cluster */
 					if (clst == 1) return FR_INT_ERR;
@@ -1211,6 +1269,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 				}
 				dp->clust = clst;				/* Initialize data for new cluster */
 				dp->sect = clust2sect(dp->fs, clst);
+				printf("%s: Cluster changed  dp->sect=%d\r\n", __func__, dp->sect);
 			}
 		}
 	}
@@ -1229,6 +1288,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 /*-----------------------------------------------------------------------*/
 
 #if !_FS_READONLY
+/*在dp->sclust   所代表的目录下，分配nent个目录项*/
 static
 FRESULT dir_alloc (
 	DIR* dp,	/* Pointer to the directory object */
@@ -1243,13 +1303,18 @@ FRESULT dir_alloc (
 	if (res == FR_OK) {
 		n = 0;
 		do {
+			printf("%s: dp->dir = %p\r\n", __func__, dp->dir);
 			res = move_window(dp->fs, dp->sect);
 			if (res != FR_OK) break;
 			if (dp->dir[0] == DDE || dp->dir[0] == 0) {	/* Is it a blank entry? */
-				if (++n == nent) break;	/* A block of contiguous entries is found */
+				if (++n == nent) {
+					printf("%s: dp->index = %d\r\n", __func__, dp->index);
+					break;	/* A block of contiguous entries is found */
+				}
 			} else {
 				n = 0;					/* Not a blank entry. Restart to search */
 			}
+			/*只有在分配 时，参数才传入1*/
 			res = dir_next(dp, 1);		/* Next entry with table stretch enabled */
 		} while (res == FR_OK);
 	}
@@ -1265,6 +1330,8 @@ FRESULT dir_alloc (
 /* Directory handling - Load/Store start cluster number                  */
 /*-----------------------------------------------------------------------*/
 
+/*获取到子目录树的开始族
+其中dir为子目录所在的目录项的指针*/
 static
 DWORD ld_clust (
 	FATFS* fs,	/* Pointer to the fs object */
@@ -1272,7 +1339,13 @@ DWORD ld_clust (
 )
 {
 	DWORD cl;
-
+	/*目录项中保存的
+	    文件数据开始的 cluster
+	    
+	    或者子目录的开始cluster */
+	    
+	/*root 目录项的cluster 为0
+	/user/user1/ff.txt*/
 	cl = LD_WORD(dir+DIR_FstClusLO);
 	if (fs->fs_type == FS_FAT32)
 		cl |= (DWORD)LD_WORD(dir+DIR_FstClusHI) << 16;
@@ -1485,6 +1558,13 @@ BYTE sum_sfn (
 /* Directory handling - Find an object in the directory                  */
 /*-----------------------------------------------------------------------*/
 
+/*根据文件名，从flash读取dir结构结构
+
+根据dp->sclust代表的当前目录下，找到dp->fn为名字
+的文件、目录的目录项，原理就是利用move_window把
+目录项信息，读取到FATFS win缓存中，从32个bytes中
+对比dp->fn是否一样，一样就中了，
+重要的就是dir指针，指向了目录项信息地址*/
 static
 FRESULT dir_find (
 	DIR* dp			/* Pointer to the directory object linked to the file name */
@@ -1496,6 +1576,9 @@ FRESULT dir_find (
 	BYTE a, ord, sum;
 #endif
 
+	printf("%s: need to find file name = %s, dp->sect=%d\r\n", __func__, dp->fn, dp->sect);
+	/* Set directory index */
+	/*从第0个目录表项开始找*/
 	res = dir_sdi(dp, 0);			/* Rewind directory object */
 	if (res != FR_OK) return res;
 
@@ -1503,11 +1586,19 @@ FRESULT dir_find (
 	ord = sum = 0xFF; dp->lfn_idx = 0xFFFF;	/* Reset LFN sequence */
 #endif
 	do {
+		/*读取sector的数据，如果sector有变化，*/
 		res = move_window(dp->fs, dp->sect);
 		if (res != FR_OK) break;
 		dir = dp->dir;					/* Ptr to the directory entry of current index */
 		c = dir[DIR_Name];
-		if (c == 0) { res = FR_NO_FILE; break; }	/* Reached to end of table */
+		if (c == 0) { 
+			/*dp->sclust代表的当前目录下已经没有其它
+				目录项了*/
+			res = FR_NO_FILE; 
+			printf("%s: Reached to end of table Directory! not find (%s) file or dir\r\n", 
+				__func__, dp->fn);
+			break; 
+		}	/* Reached to end of table */
 #if _USE_LFN	/* LFN configuration */
 		a = dir[DIR_Attr] & AM_MASK;
 		if (c == DDE || ((a & AM_VOL) && a != AM_LFN)) {	/* An entry without valid data */
@@ -1531,9 +1622,18 @@ FRESULT dir_find (
 		}
 #else		/* Non LFN configuration */
 		if (!(dir[DIR_Attr] & AM_VOL) && !mem_cmp(dir, dp->fn, 11)) /* Is it a valid entry? */
+		{
+			printf("%s, find the file or dir scuess!\r\n", __func__);
+			printf("%s: out, dp->fn(%s), dp->sect=%d\r\n", 
+				__func__, dp->fn, dp->sect);			
 			break;
+		}
 #endif
+		/*改变sector , 如果目录项的移动超出当前sector*/
 		res = dir_next(dp, 0);		/* Next entry */
+		/*dir_next(dp, 0) 中的参数0，因为我们只是查询
+		目录下的目录项，遍历它，所以不为1，
+		在创建目录时，用dir_next(dp, 1)*/
 	} while (res == FR_OK);
 
 	return res;
@@ -1546,6 +1646,8 @@ FRESULT dir_find (
 /* Read an object from the directory                                     */
 /*-----------------------------------------------------------------------*/
 #if _FS_MINIMIZE <= 1 || _USE_LABEL || _FS_RPATH >= 2
+/*读dp->sect扇区中一个一个的目录项，读到一个存在的
+目录项，或者读不到，都break然后返回*/
 static
 FRESULT dir_read (
 	DIR* dp,		/* Pointer to the directory object */
@@ -1586,7 +1688,10 @@ FRESULT dir_read (
 		}
 #else		/* Non LFN configuration */
 		if (c != DDE && (_FS_RPATH || c != '.') && a != AM_LFN && (int)(a == AM_VOL) == vol)	/* Is it a valid entry? */
+		{
+			//printf("%s: get an dir or file: (%s)\r\n", __func__, (char *)dp->dir[DIR_Name]);
 			break;
+		}
 #endif
 		res = dir_next(dp, 0);				/* Next entry */
 		if (res != FR_OK) break;
@@ -1605,12 +1710,19 @@ FRESULT dir_read (
 /* Register an object to the directory                                   */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
+/*给dp->fn指定的文件名，在dp->sclust所代表的目录下，
+分配一个新的目录项给此文件，并且把文件的名字，
+写入到缓存中，标志回写，等待目录项信息被回写到
+flash中
+dp->fn也可能是一个目录名
+*/
 static
 FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many SFN collision, FR_DISK_ERR:Disk error */
 	DIR* dp				/* Target directory with object name to be created */
 )
 {
 	FRESULT res;
+	printf("%s: dp->sclust(%d)\r\n", __func__, dp->sclust);
 #if _USE_LFN	/* LFN configuration */
 	UINT n, nent;
 	BYTE sn[12], *fn, sum;
@@ -1657,17 +1769,22 @@ FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many 
 		}
 	}
 #else	/* Non LFN configuration */
+	/*分配一个目录项空间，也就是32bytes
+		在此时dp所代表的当前目录下*/
 	res = dir_alloc(dp, 1);		/* Allocate an entry for SFN */
 #endif
 
 	if (res == FR_OK) {				/* Set SFN entry */
 		res = move_window(dp->fs, dp->sect);
 		if (res == FR_OK) {
+			/*清除分配到的32bytes目录项内容*/
 			mem_set(dp->dir, 0, SZ_DIR);	/* Clean the entry */
+			/*拷贝文件名字到目录项空间中*/
 			mem_cpy(dp->dir, dp->fn, 11);	/* Put SFN */
 #if _USE_LFN
 			dp->dir[DIR_NTres] = dp->fn[NS] & (NS_BODY | NS_EXT);	/* Put NT flag */
 #endif
+			/*目录项信息被污染，请求回写*/
 			dp->fs->wflag = 1;
 		}
 	}
@@ -1759,6 +1876,12 @@ void get_fileinfo (		/* No return code */
 			c = ff_convert(c, 1);	/* OEM -> Unicode */
 			if (!c) c = '?';
 #endif
+
+/*add by lex*/
+#else
+			if (IsUpper(c) && (dir[DIR_NTres] & (i >= 9 ? NS_EXT : NS_BODY)))
+				c += 0x20;			/* To lower */
+/*add by lex*/
 #endif
 			*p++ = c;
 		}
@@ -2010,6 +2133,8 @@ FRESULT create_name (
 /* Follow a file path                                                    */
 /*-----------------------------------------------------------------------*/
 
+/*从patch找到最后一个目录，或者文件的目录项
+信息，并把信息放到dp中，重点是返回值跟dp->dir*/
 static
 FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR* dp,			/* Directory object to return last directory and found object */
@@ -2019,12 +2144,16 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	FRESULT res;
 	BYTE *dir, ns;
 
-
+	printf("%s: path = %s\r\n", __func__, path);
 #if _FS_RPATH
 	if (*path == '/' || *path == '\\') {	/* There is a heading separator */
+		/*如果是根目录*/
 		path++;	dp->sclust = 0;				/* Strip it and start from the root directory */
+		printf("%s: (have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);		
 	} else {								/* No heading separator */
+		/*如果不是根目录*/
 		dp->sclust = dp->fs->cdir;			/* Start from the current directory */
+		printf("%s: (!!!not have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);
 	}
 #else
 	if (*path == '/' || *path == '\\')		/* Strip heading separator if exist */
@@ -2033,17 +2162,27 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 #endif
 
 	if ((UINT)*path < ' ') {				/* Null path name is the origin directory itself */
+		/*只有根目录*/
+		printf("%s: just /\r\n", __func__);
 		res = dir_sdi(dp, 0);
 		dp->dir = 0;
 	} else {								/* Follow path */
+		//	USER/yang.txt
+		printf("%s: path = %s\r\n", __func__, path);
 		for (;;) {
+			/*格式化出一个文件or目录名,放在dp->fn
+				同时修改path(不断的减少最前的目录)*/
 			res = create_name(dp, &path);	/* Get a segment name of the path */
+			// 			path = yang.txt, dp->fn=USER
+			printf("%s: create_name after, path(%s), dp->fn(%s)\r\n", 
+				__func__, path, dp->fn);
 			if (res != FR_OK) break;
 			res = dir_find(dp);				/* Find an object with the sagment name */
 			ns = dp->fn[NS];
 			if (res != FR_OK) {				/* Failed to find the object */
 				if (res == FR_NO_FILE) {	/* Object is not found */
 					if (_FS_RPATH && (ns & NS_DOT)) {	/* If dot entry is not exist, */
+						/*根目录下没有"." 目录*/
 						dp->sclust = 0; dp->dir = 0;	/* it is the root directory and stay there */
 						if (!(ns & NS_LAST)) continue;	/* Continue to follow if not last segment */
 						res = FR_OK;					/* Ended at the root directroy. Function completed. */
@@ -2051,21 +2190,35 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 						if (!(ns & NS_LAST)) res = FR_NO_PATH;	/* Adjust error code if not last segment */
 					}
 				}
+				printf("%s: Failed to find the object File or Dir\r\n", __func__);				
 				break;
 			}
-			if (ns & NS_LAST) break;			/* Last segment matched. Function completed. */
+			if (ns & NS_LAST) {
+				/*到了寻找路径的最后一个文件或者目录了*/
+				printf("%s: Last segment matched. Function completed. \r\n", __func__);
+				break;			/* Last segment matched. Function completed. */
+			}
 			dir = dp->dir;						/* Follow the sub-directory */
 			if (!(dir[DIR_Attr] & AM_DIR)) {	/* It is not a sub-directory and cannot follow */
 				res = FR_NO_PATH; break;
 			}
+			/*开始遍历下一个子目录的开始族*/
 			dp->sclust = ld_clust(dp->fs, dir);
+			printf("%s: *** dp->sclust=%d\r\n", __func__, dp->sclust);
 		}
 	}
 
 	return res;
 }
 
+/*
+	root 的族为0， root目录 下的目录user ，其目录项位于
+	root所在的族0中，user的族信息从目录项中得到，也就是
+	子目录user也有自己的族，user子目录下的文件目录项就是
+	保存在user子目录所在的开始族中。
 
+	dp->sclust代表目录所在的开始族Table start cluster (0:Root dir) 。
+*/
 
 
 /*-----------------------------------------------------------------------*/
@@ -2130,7 +2283,7 @@ int get_ldnumber (		/* Returns logical drive number (-1:invalid drive) */
 /*-----------------------------------------------------------------------*/
 /* Load a sector and check if it is an FAT boot sector                   */
 /*-----------------------------------------------------------------------*/
-
+/*load sect then check the VBR*/
 static
 BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a boot sector, 3:Disk error */
 	FATFS* fs,	/* File system object */
@@ -2158,7 +2311,10 @@ BYTE check_fs (	/* 0:FAT boor sector, 1:Valid boor sector but not FAT, 2:Not a b
 /*-----------------------------------------------------------------------*/
 /* Find logical drive and check if the volume is mounted                 */
 /*-----------------------------------------------------------------------*/
-
+/*find the FATFS data, and save the FATFS information for any volume*/
+/*主要就是得到存储设备代表的FATFS信息
+如果FATFS还没读到，就从扇区中读出来，
+如果已经存在，就返回就可以了*/
 static
 FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	FATFS** rfs,		/* Pointer to pointer to the found file system object */
@@ -2243,12 +2399,17 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	if (fs->n_fats != 1 && fs->n_fats != 2)				/* (Must be 1 or 2) */
 		return FR_NO_FILESYSTEM;
 	fasize *= fs->n_fats;								/* Number of sectors for FAT area */
+	printf("%s: Number of FAT copies fs->n_fats(%d)\r\n", __func__, fs->n_fats);
+	printf("%s: Number of sectors for FAT area fasize(%d)\r\n", __func__, fasize);
 
 	fs->csize = fs->win[BPB_SecPerClus];				/* Number of sectors per cluster */
+	printf("%s: Number of sectors per cluster fs->csize(%d)\r\n", __func__, fs->csize);
+
 	if (!fs->csize || (fs->csize & (fs->csize - 1)))	/* (Must be power of 2) */
 		return FR_NO_FILESYSTEM;
 
 	fs->n_rootdir = LD_WORD(fs->win+BPB_RootEntCnt);	/* Number of root directory entries */
+	printf("%s: fs->n_rootdir(%d)\r\n", __func__, fs->n_rootdir);
 	if (fs->n_rootdir % (SS(fs) / SZ_DIR))				/* (Must be sector aligned) */
 		return FR_NO_FILESYSTEM;
 
@@ -2266,6 +2427,7 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	fmt = FS_FAT12;
 	if (nclst >= MIN_FAT16) fmt = FS_FAT16;
 	if (nclst >= MIN_FAT32) fmt = FS_FAT32;
+	printf("%s: fmt(%d), FS_FAT12=1 FS_FAT16=2, FS_FAT32=3\r\n", __func__, fmt);
 
 	/* Boundaries and Limits */
 	fs->n_fatent = nclst + 2;							/* Number of FAT entries */
@@ -2284,6 +2446,13 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 	}
 	if (fs->fsize < (szbfat + (SS(fs) - 1)) / SS(fs))	/* (BPB_FATSz must not be less than needed) */
 		return FR_NO_FILESYSTEM;
+
+	printf("%s: Number of FAT entries(=Number of clusters+2)" \
+		"fs->n_fatent(%d)\r\n", __func__, fs->n_fatent);
+	printf("%s: Volume start sector fs->volbase(%d)\r\n", __func__, fs->volbase);
+	printf("%s: FAT start sector fs->fatbase(%d)\r\n", __func__, fs->fatbase);
+	printf("%s: Root directory start sector fs->dirbase(%d)\r\n", __func__, fs->dirbase);
+	printf("%s: Data start sector fs->database(%d)\r\n", __func__, fs->database);
 
 #if !_FS_READONLY
 	/* Initialize cluster allocation information */
@@ -2319,6 +2488,45 @@ FRESULT find_volume (	/* FR_OK(0): successful, !=0: any error occurred */
 #if _FS_LOCK			/* Clear file lock semaphores */
 	clear_lock(fs);
 #endif
+
+/*
+1、mf_fmkfs("1:", 1, 4096):
+
+f_mount: path = 1:
+f_mount: vol = 1, path = 1:
+W25QXX_Init: W25QXX_TYPE = 0XEF14
+move_window: sector(0) != fs->winsect(-1)
+find_volume: Number of FAT copies fs->n_fats(1)
+find_volume: Number of sectors for FAT area fasize(7)
+find_volume: Number of sectors per cluster fs->csize(8)
+find_volume: fs->n_rootdir(512)
+find_volume: fmt(1), FS_FAT12=1 FS_FAT16=2, FS_FAT32=3
+find_volume: Number of FAT entries(=Number of clusters+2)fs->n_fatent(509)
+find_volume: Volume start sector fs->volbase(0)
+find_volume: FAT start sector fs->fatbase(1)
+find_volume: Root directory start sector fs->dirbase(8)
+find_volume: Data start sector fs->database(40)
+
+
+2、mf_fmkfs("1:", 1, 1024):
+
+move_window: sector(0) != fs->winsect(-1)
+find_volume: Number of FAT copies fs->n_fats(1)
+find_volume: Number of sectors for FAT area fasize(7)
+find_volume: Number of sectors per cluster fs->csize(2)
+find_volume: fs->n_rootdir(512)
+find_volume: fmt(1), FS_FAT12=1 FS_FAT16=2, FS_FAT32=3
+find_volume: Number of FAT entries(=Number of clusters+2)fs->n_fatent(2030)
+find_volume: Volume start sector fs->volbase(0)
+find_volume: FAT start sector fs->fatbase(1)
+find_volume: Root directory start sector fs->dirbase(8)
+find_volume: Data start sector fs->database(40)
+
+*/
+//以上代码主要是根据引导扇区里的数据，填
+//充文件系统对象结构体的信息：包括FAT表大小、
+//数目、根目录区起始地址、数据区起始扇区、
+//文件系统类型等等。
 
 	return FR_OK;
 }
@@ -2364,6 +2572,8 @@ FRESULT validate (	/* FR_OK(0): The object is valid, !=0: Invalid */
 /* Mount/Unmount a Logical Drive                                         */
 /*-----------------------------------------------------------------------*/
 
+//res = f_mount( fs[0], "1:", 1 );
+
 FRESULT f_mount (
 	FATFS* fs,			/* Pointer to the file system object (NULL:unmount)*/
 	const TCHAR* path,	/* Logical drive number to be mounted/unmounted */
@@ -2375,8 +2585,9 @@ FRESULT f_mount (
 	FRESULT res;
 	const TCHAR *rp = path;
 
-
+	printf("%s: path = %s\r\n", __func__, path);
 	vol = get_ldnumber(&rp);
+	printf("%s: vol = %d, path = %s\r\n", __func__, vol, path);
 	if (vol < 0) return FR_INVALID_DRIVE;
 	cfs = FatFs[vol];					/* Pointer to fs object */
 
@@ -2411,6 +2622,128 @@ FRESULT f_mount (
 /* Open or Create a File                                                 */
 /*-----------------------------------------------------------------------*/
 
+/*
+FAT文件系统根据根目录来寻址其他文件(包括文件夹)，
+故而根目录的位置必须在磁盘存取数据之前得以确定
+FAT文件系统就是根据分区的相关DBR参数与DBR中存放的
+已经计算好的FAT表(2份)的大小来确定的。格式化以后，
+跟目录的大小和位置其实都已经确定下来了：位置紧随
+FAT2之后，大小通常为32个扇区。根目录之后便是数据区
+第2簇。
+*/
+
+/*
+FAT32的另一项重大改革是根目录的文件化，
+即将根目录等同于普通的文件。这样根目录便没有了
+FAT16中512个目录项的限制
+不够用的时候增加簇链，分配空簇即可。
+而且，根目录的位置也不再硬性地固定了，
+可以存储在分区内可寻址的任意簇内，
+不过通常根目录是最早建立的(格式化就生成了)目录表。
+
+
+表11   FAT16目录项32个字节的表示定义
+字节偏移(16进制)			字节数				定义
+0x0~0x7							8						文件名
+0x8~0xA							3						扩展名
+0xB								1						属性字节	00000000(读写)
+																		00000001(只读)
+																		00000010(隐藏)
+																		00000100(系统)
+																		00001000(卷标)
+																		  00010000(子目录)
+																		00100000(归档)
+0xC~0x15						10										系统保留
+0x16~0x17						2										文件的最近修改时间
+0x18~0x19						2										文件的最近修改日期
+0x1A~0x1B						2										表示文件的首簇号
+0x1C~0x1F						4										表示文件的长度
+
+
+
+图4.3.11 Fat16的组织形式
+引导扇区	FAT1					FAT2(重复的)			
+(1扇区)		(实际情况取大小)		(同FAT1	)				
+ 
+
+根文件夹	其他文件夹及所有文件		剩余扇区
+(32个扇区)	(开始簇编号(从2开始))			(不足一簇)
+
+*/
+
+/*
+[root]1:/#
+[root]1:/#cat qq.txt
+follow_path: path = qq.txt
+follow_path: 1 dp->sect=536879052
+follow_path: 2 dp->sect=536879052
+follow_path: create_name after, path = , dp->fn=QQ      TXTX
+dir_find: need to find file name = QQ      TXT, dp->sect=536879052
+move_window: sector(8) != fs->winsect(9)
+dir_find, find the file !!! scuess!
+dir_find: out, dp->fn(QQ      TXT), dp->sect=8
+follow_path: Last segment matched. Function completed. 
+
+f_open: path(1:/qq.txt)
+f_open: after find_volume(), path(/qq.txt)
+follow_path: path = qq.txt
+follow_path: 1 dp->sect=134218791
+follow_path: 2 dp->sect=134218791
+follow_path: create_name after, path = , dp->fn=QQ      TXTX
+dir_find: need to find file name = QQ      TXT, dp->sect=134218791
+dir_find, find the file !!! scuess!
+dir_find: out, dp->fn(QQ      TXT), dp->sect=8
+follow_path: Last segment matched. Function completed. 
+f_open: after follow_path, path=/qq.txt
+f_open: fp init!!! dj.index = 2
+78efd
+
+
+f_open: path(1:/qq.txt)
+f_open: after find_volume(), path(/qq.txt)
+follow_path: path = qq.txt
+follow_path: 1 dp->sect=134218791
+follow_path: 2 dp->sect=134218791
+follow_path: create_name after, path = , dp->fn=QQ      TXTX
+dir_find: need to find file name = QQ      TXT, dp->sect=134218791
+in dir_sdi: dp->index(8192), dp->sect(134218791), dp->sclust(0)
+out dir_sdi: dp->index(0), dp->sect(8)
+dir_find, find the file !!! scuess!
+dir_find: out, dp->fn(QQ      TXT), dp->sect=8
+follow_path: Last segment matched. Function completed. 
+f_open: after follow_path, path=/qq.txt
+f_open: fp init!!! dj.index = 2
+78efd
+
+
+f_open: path(1:/USER./yang.txt)
+f_open: after find_volume(), path(/USER./yang.txt)
+follow_path: path = USER./yang.txt
+follow_path: 1 dp->sect=134218791
+follow_path: 2 dp->sect=134218791
+follow_path: create_name after, path = yang.txt, dp->fn=USER       
+dir_find: need to find file name = USER       , dp->sect=134218791
+in dir_sdi: dp->index(8192), dp->sect(134218791), dp->sclust(0)
+out dir_sdi: dp->index(0), dp->sect(8)
+move_window: sector(8) != fs->winsect(64)
+dir_find, find the file !!! scuess!
+dir_find: out, dp->fn(USER       ), dp->sect=8
+follow_path: 1 dp->sect=8
+follow_path: 2 dp->sect=8
+follow_path: create_name after, path = , dp->fn=YANG    TXTX
+dir_find: need to find file name = YANG    TXT, dp->sect=8
+in dir_sdi: dp->index(1), dp->sect(8), dp->sclust(5)
+out dir_sdi: dp->index(0), dp->sect(64)
+move_window: sector(64) != fs->winsect(8)
+dir_find, find the file !!! scuess!
+dir_find: out, dp->fn(YANG    TXT), dp->sect=64
+follow_path: Last segment matched. Function completed. 
+f_open: after follow_path, path=/USER./yang.txt
+f_open: fp init!!! dj.index = 3
+df
+
+
+*/
 FRESULT f_open (
 	FIL* fp,			/* Pointer to the blank file object */
 	const TCHAR* path,	/* Pointer to the file name */
@@ -2422,10 +2755,11 @@ FRESULT f_open (
 	BYTE *dir;
 	DEF_NAMEBUF;
 
-
+	
 	if (!fp) return FR_INVALID_OBJECT;
 	fp->fs = 0;			/* Clear file object */
-
+	//	1:/USER/yang.txt
+	printf("%s: path(%s)\r\n", __func__, path);
 	/* Get logical drive number */
 #if !_FS_READONLY
 	mode &= FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_OPEN_ALWAYS | FA_CREATE_NEW;
@@ -2434,9 +2768,19 @@ FRESULT f_open (
 	mode &= FA_READ;
 	res = find_volume(&dj.fs, &path, 0);
 #endif
+	// 	/USER/yang.txt
+	printf("%s: after find_volume(), path(%s)\r\n", __func__, path);
+
 	if (res == FR_OK) {
 		INIT_BUF(dj);
+		/*根据文件路径， 得到所对应的dir结构体
+		follow_path从文件目录项表中找到文件名字为path
+		的文件，把对应的扇区读出来，然后计算出
+		此文件目录项在扇区的偏移地址，然后把
+		dir.dir指向这个地址，从这个地址我们就要以读出
+		文件的大小，起始cluster*/
 		res = follow_path(&dj, path);	/* Follow the file path */
+		printf("%s: after follow_path, path=%s\r\n", __func__, path);
 		dir = dj.dir;
 #if !_FS_READONLY	/* R/W configuration */
 		if (res == FR_OK) {
@@ -2456,6 +2800,10 @@ FRESULT f_open (
 #if _FS_LOCK
 					res = enq_lock() ? dir_register(&dj) : FR_TOO_MANY_OPEN_FILES;
 #else
+					printf("%s: file is't ezixt! dir_register a file, dj.sclust(%d)\r\n", __func__, dj.sclust);
+					/*此时dj->sclust应该代表该文件要被创建的目录
+					如果是root 则dj->sclust = 0， 如果为子目录，肯定不
+					是为0， 也就是dj->sclust != 0*/
 					res = dir_register(&dj);
 #endif
 				mode |= FA_CREATE_ALWAYS;		/* File is created */
@@ -2470,16 +2818,32 @@ FRESULT f_open (
 				}
 			}
 			if (res == FR_OK && (mode & FA_CREATE_ALWAYS)) {	/* Truncate it if overwrite mode */
+				/*如果是覆盖式的打开文件
+					有可能导致，旧文件被移除，也就是
+					要移除the directory item of old file, and it's cluster chain
+				*/
 				dw = get_fattime();				/* Created time */
 				ST_DWORD(dir+DIR_CrtTime, dw);
 				dir[DIR_Attr] = 0;				/* Reset attribute */
+				/*设置文件的大小为0*/
 				ST_DWORD(dir+DIR_FileSize, 0);	/* size = 0 */
+				/*读取当前目录项的开始族，如果
+					是旧文件有内容，则它不为0*/
 				cl = ld_clust(dj.fs, dir);		/* Get start cluster */
+				/*设置新文件的开始族为0，文件在没有内容
+				时，它的大小为0，开始族也为0*/
 				st_clust(dir, 0);				/* cluster = 0 */
+				/*目录项信息被修改，要回写*/
 				dj.fs->wflag = 1;
 				if (cl) {						/* Remove the cluster chain if exist */
 					dw = dj.fs->winsect;
 					res = remove_chain(dj.fs, cl);
+					/*如果移除族链成功，会导致
+						dj.fs->winsect被修改，所以此时的
+						dj.fs->winsect  != dw	也就是，
+						move_window(dj.fs, dw)可以把被新文件
+						的目录项覆盖的缓存fs->win回写到flash中
+					*/
 					if (res == FR_OK) {
 						dj.fs->last_clust = cl - 1;	/* Reuse the cluster hole */
 						res = move_window(dj.fs, dw);
@@ -2492,6 +2856,7 @@ FRESULT f_open (
 				if (dir[DIR_Attr] & AM_DIR) {	/* It is a directory */
 					res = FR_NO_FILE;
 				} else {
+					/*只读文件，不能被写打开*/
 					if ((mode & FA_WRITE) && (dir[DIR_Attr] & AM_RDO)) /* R/O violation */
 						res = FR_DENIED;
 				}
@@ -2500,6 +2865,8 @@ FRESULT f_open (
 		if (res == FR_OK) {
 			if (mode & FA_CREATE_ALWAYS)		/* Set file change flag if created or overwritten */
 				mode |= FA__WRITTEN;
+			/*只读的话，不用保存，因为不会去更新
+			文件信息，大小、属性等*/
 			fp->dir_sect = dj.fs->winsect;		/* Pointer to the directory entry */
 			fp->dir_ptr = dir;
 #if _FS_LOCK
@@ -2522,6 +2889,7 @@ FRESULT f_open (
 		FREE_BUF();
 
 		if (res == FR_OK) {
+			printf("%s: fp init!!! dj.index = %d\r\n", __func__, dj.index);			
 			fp->flag = mode;					/* File access mode */
 			fp->err = 0;						/* Clear error flag */
 			fp->sclust = ld_clust(dj.fs, dir);	/* File start cluster */
@@ -2669,6 +3037,7 @@ FRESULT f_write (
 		LEAVE_FF(fp->fs, (FRESULT)fp->err);
 	if (!(fp->flag & FA_WRITE))				/* Check access mode */
 		LEAVE_FF(fp->fs, FR_DENIED);
+	/*溢出*/
 	if (fp->fptr + btw < fp->fptr) btw = 0;	/* File size cannot reach 4GB */
 
 	for ( ;  btw;							/* Repeat until all data written */
@@ -2679,7 +3048,11 @@ FRESULT f_write (
 				if (fp->fptr == 0) {		/* On the top of the file? */
 					clst = fp->sclust;		/* Follow from the origin */
 					if (clst == 0)			/* When no cluster is allocated, */
+					{	
+						/*when the file is created in f_open, fp->sclust is set to 0
+							it just open the file, alloc the directory item*/
 						clst = create_chain(fp->fs, 0);	/* Create a new cluster chain */
+					}
 				} else {					/* Middle or end of the file */
 #if _USE_FASTSEEK
 					if (fp->cltbl)
@@ -2892,10 +3265,13 @@ FRESULT f_chdir (
 		FREE_BUF();
 		if (res == FR_OK) {					/* Follow completed */
 			if (!dj.dir) {
+				/*root directory ? */
 				dj.fs->cdir = dj.sclust;	/* Start directory itself */
 			} else {
 				if (dj.dir[DIR_Attr] & AM_DIR)	/* Reached to the directory */
 					dj.fs->cdir = ld_clust(dj.fs, dj.dir);
+					/*找到子目录，把子目录的开始族
+						赋值给cdir*/
 				else
 					res = FR_NO_PATH;		/* Reached but a file */
 			}
@@ -2929,15 +3305,26 @@ FRESULT f_getcwd (
 		INIT_BUF(dj);
 		i = len;			/* Bottom of buffer (directory stack base) */
 		dj.sclust = dj.fs->cdir;			/* Start to follow upper directory from current directory */
+		//利用当前目录的开始族，往上遍历目录，
+		//到根目录为止
 		while ((ccl = dj.sclust) != 0) {	/* Repeat while current directory is a sub-directory */
+			/*获取子目录下的第1 个目录项信息，从0开始*/
 			res = dir_sdi(&dj, 1);			/* Get parent directory */
 			if (res != FR_OK) break;
+			/*读取第1个目录项的信息的缓存空间*/
 			res = dir_read(&dj, 0);
 			if (res != FR_OK) break;
+			/*获取到父亲目录的开始族*/
 			dj.sclust = ld_clust(dj.fs, dj.dir);	/* Goto parent directory */
+			/*或取父亲目录的第0个目录项的sector还有
+			所在扇区的偏移地址*/
 			res = dir_sdi(&dj, 0);
 			if (res != FR_OK) break;
 			do {							/* Find the entry links to the child directory */
+				/*遍历父亲目录，从父亲目录
+				中找到子目录的目录项，做这一步
+				是因为子目录的目录名都是放在这个目录
+				项中*/
 				res = dir_read(&dj, 0);
 				if (res != FR_OK) break;
 				if (ccl == ld_clust(dj.fs, dj.dir)) break;	/* Found the entry */
@@ -2949,6 +3336,8 @@ FRESULT f_getcwd (
 			fno.lfname = buff;
 			fno.lfsize = i;
 #endif
+			/*从这个父亲目录中的
+			目录项信息中获取dir的信息，放到FILINFO中*/
 			get_fileinfo(&dj, &fno);		/* Get the directory name and push it to the buffer */
 			tp = fno.fname;
 #if _USE_LFN
@@ -3170,14 +3559,21 @@ FRESULT f_opendir (
 		FREE_BUF();
 		if (res == FR_OK) {						/* Follow completed */
 			if (dp->dir) {						/* It is not the origin directory itself */
+				printf("%s: not only just /\r\n", __func__);
 				if (dp->dir[DIR_Attr] & AM_DIR)	/* The object is a sub directory */
+				{
 					dp->sclust = ld_clust(fs, dp->dir);
+					printf("%s: The object is a sub directory, sclust(%d) \r\n", 
+						__func__, dp->sclust);
+				}
 				else							/* The object is a file */
 					res = FR_NO_PATH;
 			}
 			if (res == FR_OK) {
 				dp->id = fs->id;
 				res = dir_sdi(dp, 0);			/* Rewind directory */
+				printf("%s: dp->sclust(%d), dp->index(%d), dp->sect(%d)\r\n", 
+					__func__, dp->sclust, dp->index, dp->sect);				
 #if _FS_LOCK
 				if (res == FR_OK) {
 					if (dp->sclust) {
@@ -3474,6 +3870,10 @@ FRESULT f_unlink (
 				} else {
 					mem_cpy(&sdj, &dj, sizeof (DIR));	/* Check if the sub-directory is empty or not */
 					sdj.sclust = dclst;
+					/*接下来查看子目录下，是否
+					有文件或者目录，因为index=1被占用，
+					只需要查看index=2是否有目录项存在
+					就可是知道子目录下是否有东西了*/
 					res = dir_sdi(&sdj, 2);		/* Exclude dot entries */
 					if (res == FR_OK) {
 						res = dir_read(&sdj, 0);	/* Read an item */
@@ -3518,7 +3918,7 @@ FRESULT f_mkdir (
 	DWORD dsc, dcl, pcl, tm = get_fattime();
 	DEF_NAMEBUF;
 
-
+	printf("%s: create dir(%s) start...\r\n", __func__, path);
 	/* Get logical drive number */
 	res = find_volume(&dj.fs, &path, 1);
 	if (res == FR_OK) {
@@ -3529,6 +3929,9 @@ FRESULT f_mkdir (
 			res = FR_INVALID_NAME;
 		if (res == FR_NO_FILE) {				/* Can create a new directory */
 			dcl = create_chain(dj.fs, 0);		/* Allocate a cluster for the new directory table */
+			printf("%s: Allocate a cluster for the new directory(%d)\r\n", 
+				__func__, dcl);
+			/*dcl为新的族头*/
 			res = FR_OK;
 			if (dcl == 0) res = FR_DENIED;		/* No space to allocate a new cluster */
 			if (dcl == 1) res = FR_INT_ERR;
@@ -3538,21 +3941,34 @@ FRESULT f_mkdir (
 			if (res == FR_OK) {					/* Initialize the new directory table */
 				dsc = clust2sect(dj.fs, dcl);
 				dir = dj.fs->win;
+				/*清除缓存win空间，dir代表新目录下的
+				第0个目录项，就是被"." 目录用去了*/
 				mem_set(dir, 0, SS(dj.fs));
 				mem_set(dir+DIR_Name, ' ', 11);	/* Create "." entry */
 				dir[DIR_Name] = '.';
 				dir[DIR_Attr] = AM_DIR;
 				ST_DWORD(dir+DIR_WrtTime, tm);
 				st_clust(dir, dcl);
+				/*新目录下的第二个目录项
+				被".." 占用去*/
 				mem_cpy(dir+SZ_DIR, dir, SZ_DIR); 	/* Create ".." entry */
 				dir[SZ_DIR+1] = '.'; pcl = dj.sclust;
+				/*pcl应该代表新目录的父亲目录的sclust
+					因为follow_path 后，dir.sclust一直没有被修改*/
 				if (dj.fs->fs_type == FS_FAT32 && pcl == dj.fs->dirbase)
 					pcl = 0;
+				/*把父亲目录的开始族，放到".."目录项的空间
+				中，也就是，通过".."的目录项，可以查到父亲
+				目录的族，知道了目录的开始族，也就是可以
+				回到父亲目录了*/
 				st_clust(dir+SZ_DIR, pcl);
 				for (n = dj.fs->csize; n; n--) {	/* Write dot entries and clear following sectors */
 					dj.fs->winsect = dsc++;
 					dj.fs->wflag = 1;
 					res = sync_window(dj.fs);
+					/*第一次回写时，前64bytes包含了"."和".."的
+					目录项信息，逻辑扇区中其它的空间为0
+					，第二次开始，缓存中的数据都是0*/
 					if (res != FR_OK) break;
 					mem_set(dir, 0, SS(dj.fs));
 				}
@@ -3564,6 +3980,7 @@ FRESULT f_mkdir (
 				dir = dj.dir;
 				dir[DIR_Attr] = AM_DIR;				/* Attribute */
 				ST_DWORD(dir+DIR_WrtTime, tm);		/* Created time */
+				/*当前目录项信息包含dcl 新的族头*/
 				st_clust(dir, dcl);					/* Table start cluster */
 				dj.fs->wflag = 1;
 				res = sync_fs(dj.fs);
@@ -3973,7 +4390,17 @@ FRESULT f_forward (
 #define N_ROOTDIR	512		/* Number of root directory entries for FAT12/16 */
 #define N_FATS		1		/* Number of FAT copies (1 or 2) */
 
+/*
+[root]1:/#mf_fmkfs("1:", 1, 1024)
+W25QXX_Init: W25QXX_TYPE = 0XEF14
+f_mkfs: n_vol = 4096
+f_mkfs: Number of sectors per cluster = 2
+f_mkfs: fmt = 1, n_clst = 2048, FS_FAT12=1, FS_FAT16=2, FS_FAT32=3
+f_mkfs: n_fat(7), b_fat(1), b_dir(8), b_data(40)
+f_mkfs: b_fat(1)
+f_mkfs: write VBR to 0 sector!
 
+*/
 FRESULT f_mkfs (
 	const TCHAR* path,	/* Logical drive number */
 	BYTE sfd,			/* Partitioning rule 0:FDISK, 1:SFD */
@@ -4024,9 +4451,12 @@ FRESULT f_mkfs (
 		if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &n_vol) != RES_OK || n_vol < 128)
 			return FR_DISK_ERR;
 		b_vol = (sfd) ? 0 : 63;		/* Volume start sector */
+		/*没有引导分区， b_vol = 0,    n_vol 为卷的扇区数目*/
 		n_vol -= b_vol;				/* Volume size */
 	}
 
+	printf("%s: n_vol = %d\r\n", __func__ , n_vol );
+	
 	if (!au) {				/* AU auto selection */
 		vs = n_vol / (2000 / (SS(fs) / 512));
 		for (i = 0; vs < vst[i]; i++) ;
@@ -4035,12 +4465,15 @@ FRESULT f_mkfs (
 	au /= SS(fs);		/* Number of sectors per cluster */
 	if (au == 0) au = 1;
 	if (au > 128) au = 128;
-
+	printf("%s: Number of sectors per cluster = %d\r\n", __func__, au);
 	/* Pre-compute number of clusters and FAT sub-type */
 	n_clst = n_vol / au;
 	fmt = FS_FAT12;
 	if (n_clst >= MIN_FAT16) fmt = FS_FAT16;
 	if (n_clst >= MIN_FAT32) fmt = FS_FAT32;
+
+	printf("%s: fmt = %d, n_clst = %d, FS_FAT12=1, FS_FAT16=2, FS_FAT32=3\r\n",
+		__func__, fmt, n_clst);
 
 	/* Determine offset and size of FAT structure */
 	if (fmt == FS_FAT32) {
@@ -4051,11 +4484,26 @@ FRESULT f_mkfs (
 		n_fat = (fmt == FS_FAT12) ? (n_clst * 3 + 1) / 2 + 3 : (n_clst * 2) + 4;
 		n_fat = (n_fat + SS(fs) - 1) / SS(fs);
 		n_rsv = 1;
+		/*for fat12\fat16 , it has reserved 1 sector for VBR?*/
 		n_dir = (DWORD)N_ROOTDIR * SZ_DIR / SS(fs);
 	}
+	/*文件分配表is FAT ?*/
 	b_fat = b_vol + n_rsv;				/* FAT area start sector */
 	b_dir = b_fat + n_fat * N_FATS;		/* Directory area start sector */
 	b_data = b_dir + n_dir;				/* Data area start sector */
+	/*目录区+ FAT  可以计算出---->file addr in flash?*/
+	printf("%s: n_fat(%d), b_fat(%d), b_dir(%d), b_data(%d)\r\n", 
+		__func__, n_fat, b_fat, b_dir, b_data );
+
+	/*
+		[root]1:/#mf_fmkfs("1:", 1, 4096)
+		W25QXX_Init: W25QXX_TYPE = 0XEF14
+		f_mkfs: n_vol = 4096
+		f_mkfs: Number of sectors per cluster = 8
+		f_mkfs: fmt = 1, n_clst = 512, FS_FAT12=1, FS_FAT16=2, FS_FAT32=3
+		f_mkfs: n_fat(2), b_fat(1), b_dir(3), b_data(35)
+		f_mkfs: b_fat(1)
+	*/
 	if (n_vol < b_data + au - b_vol) return FR_MKFS_ABORTED;	/* Too small volume */
 
 	/* Align data start sector to erase block boundary (for flash memory media) */
@@ -4068,6 +4516,7 @@ FRESULT f_mkfs (
 	} else {					/* FAT12/16: Expand FAT size */
 		n_fat += n;
 	}
+	printf("%s: b_fat(%d)\r\n", __func__, b_fat);
 
 	/* Determine number of clusters and final check of validity of the FAT sub-type */
 	n_clst = (n_vol - n_rsv - n_fat * N_FATS - n_dir) / au;
@@ -4110,11 +4559,23 @@ FRESULT f_mkfs (
 			ST_DWORD(tbl+8, 63);			/* Partition start in LBA */
 			ST_DWORD(tbl+12, n_vol);		/* Partition size in LBA */
 			ST_WORD(fs->win+BS_55AA, 0xAA55);	/* MBR signature */
+/*MBR （Main Boot Record）,按其字面上的理解即为主引导记录区
+不过,在总共512字节的主引导扇区中,
+MBR只占用了其中的 446个字节（偏移0--偏移1BDH）,
+另外的64个字节（偏移1BEH--偏移1FDH）交给了
+DPT(Disk Partition Table硬盘分区表)（见下表）,最后两个字节
+"55,AA"（偏移1FEH- 偏移1FFH）是分区的结束标志。
+这个整体构成了硬盘的主引导扇区。
+*/
 			if (disk_write(pdrv, fs->win, 0, 1))	/* Write it to the MBR */
 				return FR_DISK_ERR;
 			md = 0xF8;
 		}
 	}
+
+//卷引导记录(VBR, Volume Boot Record), 又称为：
+//卷引导扇区(Volume Boot Sector), DBR,
+// BIOS Parameter Block (BPB)
 
 	/* Create BPB in the VBR */
 	tbl = fs->win;							/* Clear sector */
@@ -4126,6 +4587,7 @@ FRESULT f_mkfs (
 	ST_WORD(tbl+BPB_RsvdSecCnt, n_rsv);		/* Reserved sectors */
 	tbl[BPB_NumFATs] = N_FATS;				/* Number of FATs */
 	i = (fmt == FS_FAT32) ? 0 : N_ROOTDIR;	/* Number of root directory entries */
+	/*目录项个数，对于fat12/16 为N_ROOTDIR个*/
 	ST_WORD(tbl+BPB_RootEntCnt, i);
 	if (n_vol < 0x10000) {					/* Number of total sectors */
 		ST_WORD(tbl+BPB_TotSec16, n_vol);
@@ -4135,6 +4597,7 @@ FRESULT f_mkfs (
 	tbl[BPB_Media] = md;					/* Media descriptor */
 	ST_WORD(tbl+BPB_SecPerTrk, 63);			/* Number of sectors per track */
 	ST_WORD(tbl+BPB_NumHeads, 255);			/* Number of heads */
+	/*隐藏的分区，SFD b_vol = 0, 	 FDISK: b_vol = x*/
 	ST_DWORD(tbl+BPB_HiddSec, b_vol);		/* Hidden sectors */
 	n = get_fattime();						/* Use current time as VSN */
 	if (fmt == FS_FAT32) {
@@ -4154,17 +4617,43 @@ FRESULT f_mkfs (
 		mem_cpy(tbl+BS_VolLab, "NO NAME    " "FAT     ", 19);	/* Volume label, FAT signature */
 	}
 	ST_WORD(tbl+BS_55AA, 0xAA55);			/* Signature (Offset is fixed here regardless of sector size) */
+	printf("%s: write VBR to %d sector!\r\n", __func__ , b_vol );
 	if (disk_write(pdrv, tbl, b_vol, 1))	/* Write it to the VBR sector */
 		return FR_DISK_ERR;
 	if (fmt == FS_FAT32)					/* Write backup VBR if needed (VBR+6) */
 		disk_write(pdrv, tbl, b_vol + 6, 1);
+/*
+FATFS文件系统剖析1：?
+FAT16：?
+数据按照其不同的特点和作用大致可分为5部分：
+MBR区、DBR区、FAT区、DIR区和DATA区，
+相比fat12多了DBR区?????Main?boot?record:?MBR（0--1bdh）????????
+磁盘参数存放??????????????????????????????????DPT（1beh--1fdh）???
+磁盘分区表??????????????????????????????????55，aa?????????????????????
+分区结束标志?????DBR（Dos?Boot?Record）
+是操作系统引导记录区的意思?????
+FAT区（有两个，一个备份）：对于fat16，
+每一个fat项16位，所以可寻址的簇项数为
+65535（2的16次方）。而其每簇大小不超?过32k，
+所以其每个分区最大容量为2G。fat32，每一个fat项32位，
+可寻址簇数目为2的32次方。?????DIR区（根目录区）：
+紧接着第二FAT表（即备份的FAT表）之后，记录着根
+目录下每个文件（目录）的起始单元，文件的属性等。
+定位文件位置时，操作系统根据DIR中的起始单元，
+结合FAT表就可以知道文件在硬盘中的具体位置和大小了。
+?????
+DATA区：实际文件内容存放区。
 
+*/
 	/* Initialize FAT area */
 	wsect = b_fat;
 	for (i = 0; i < N_FATS; i++) {		/* Initialize each FAT copy */
 		mem_set(tbl, 0, SS(fs));			/* 1st sector of the FAT  */
 		n = md;								/* Media descriptor byte */
 		if (fmt != FS_FAT32) {
+			//The FAT is an array of up to 65,536 16-bit unsigned integers.	 for fat16
+			//其中FAT16是指文件分配表使用16位数字
+			/*cluster 与FAT的关系， 族cluster*/
 			n |= (fmt == FS_FAT12) ? 0x00FFFF00 : 0xFFFFFF00;
 			ST_DWORD(tbl+0, n);				/* Reserve cluster #0-1 (FAT12/16) */
 		} else {
@@ -4175,13 +4664,21 @@ FRESULT f_mkfs (
 		}
 		if (disk_write(pdrv, tbl, wsect++, 1))
 			return FR_DISK_ERR;
+
+		//接下来所有的扇区都清0，表示该簇未被占用		
 		mem_set(tbl, 0, SS(fs));			/* Fill following FAT entries with zero */
 		for (n = 1; n < n_fat; n++) {		/* This loop may take a time on FAT32 volume due to many single sector writes */
 			if (disk_write(pdrv, tbl, wsect++, 1))
 				return FR_DISK_ERR;
 		}
 	}
-
+/*
+在磁盘上的每一个可用的簇在FAT中就只有一个登记项，
+通过在对应簇号的登记项内填入“表项值”来表明数据
+区中的该簇是否占用、空闲或是已损坏的。损坏的簇是
+在格式化的过程中，通过FORMAT命令发现。在一个簇中，
+只要有一个扇区有问题，该簇就不能够使用
+*/
 	/* Initialize root directory */
 	i = (fmt == FS_FAT32) ? au : (UINT)n_dir;
 	do {
@@ -4191,6 +4688,7 @@ FRESULT f_mkfs (
 
 #if _USE_ERASE	/* Erase data area if needed */
 	{
+/*用于格式化卷时，探险data sectors*/	
 		DWORD eb[2];
 
 		eb[0] = wsect; eb[1] = wsect + (n_clst - ((fmt == FS_FAT32) ? 1 : 0)) * au - 1;
