@@ -7,9 +7,12 @@
 /* storage control module to the FatFs module with a defined API.        */
 /*-----------------------------------------------------------------------*/
 
-#include "diskio.h"		/* FatFs lower layer API */
+/* FatFs lower layer API */
+
+#include "diskio.h"		
 #include "sdio_sdcard.h"
 #include "w25qxx.h"
+#include "rtc.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -21,7 +24,6 @@
 //u16	    FLASH_SECTOR_COUNT=2048*12;	//W25Q1218,前12M字节给FATFS占用
 u16	    FLASH_SECTOR_COUNT = 2048*2;	
 
-//初始化磁盘
 DSTATUS disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber (0..) */
 )
@@ -44,7 +46,6 @@ DSTATUS disk_initialize (
 	else return 0; //初始化成功
 }  
 
-//获得磁盘状态
 DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber (0..) */
 )
@@ -201,20 +202,33 @@ DRESULT disk_ioctl (
     return res;
 }
 #endif
-//获得时间
-//User defined function to give a current time to fatfs module      */
-//31-25: Year(0-127 org.1980), 24-21: Month(1-12), 20-16: Day(1-31) */                                                                                                                                                                                                                                          
-//15-11: Hour(0-23), 10-5: Minute(0-59), 4-0: Second(0-29 *2) */                                                                                                                                                                                                                                                
+
+/* 
+	User defined function to give a current time to fatfs module 
+	31-25: Year(0-127 org.1980), 
+	24-21: Month(1-12), 
+	20-16: Day(1-31)                                                                                                                                                                                                                                         
+	15-11: Hour(0-23), 
+	10-5: Minute(0-59),
+	4-0: Second(0-29 *2) 
+*/                                                                                                                                                                                                                                                
 DWORD get_fattime ( void )
-{				 
-	return 0;
-}			 
-//动态分配内存
+{	
+	unsigned char hour,min,sec,ampm;
+	unsigned char year,month,date,week;
+
+	RTC_Get_Time( &hour, &min, &sec, &ampm );
+	RTC_Get_Date(&year,&month,&date,&week);
+	return ( ( 2000 + year - 1980 ) << 25 ) | 
+				(month << 21) | (date << 16) | 
+				(hour << 11) | (min << 5) | (sec >> 1);
+}
+
 void *ff_memalloc ( UINT size )			
 {
 	return ( void* ) pvPortMalloc( size );
 }
-//释放内存
+
 void ff_memfree ( void* mf )		 
 {
 	( void ) vPortFree( mf );

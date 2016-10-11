@@ -324,8 +324,14 @@ u8 mf_scan_files_(u8 * path)
 			//sprintf( name, "%s/%s", path, fn );
 			//mf_stat_( (u8*) name, &fno );
 			//printf("%s/", path);//打印路径	
-			printf("%s/%s\t\t(%d)bytes\tAttribute(%d)\r\n",
-				path, fn, fileinfo.fsize, fileinfo.fattrib );//打印文件名	  
+			printf("%s/%s\t\t(%d)bytes\tAttribute(%d)\tLastModify(%d-%d-%d, %d:%d:%d)\r\n",
+				path, fn, fileinfo.fsize, fileinfo.fattrib, 
+				( fileinfo.fdate >> 9 ) + 1980,
+				( fileinfo.fdate & 0x1ff ) >> 5, 
+				fileinfo.fdate & 0x1f,
+				fileinfo.ftime >> 11,
+				( fileinfo.ftime & 0x7ff ) >> 5,
+				( fileinfo.ftime & 0x1f )*2 );	  
 		} 
     }	  
 #if _USE_LFN		

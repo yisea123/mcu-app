@@ -137,6 +137,8 @@
 #if _USE_LFN == 1
 #error Static LFN work area cannot be used at thread-safe configuration.
 #endif
+/*互斥锁的申请与释放
+针对不同的操作系统，有不同的实现*/
 #define	ENTER_FF(fs)		{ if (!lock_fs(fs)) return FR_TIMEOUT; }
 #define	LEAVE_FF(fs, res)	{ unlock_fs(fs, res); return res; }
 #else
@@ -1005,6 +1007,7 @@ FRESULT remove_chain (
 			if (nxt == 0) break;				/* Empty cluster? */
 			if (nxt == 1) { res = FR_INT_ERR; break; }	/* Internal error? */
 			if (nxt == 0xFFFFFFFF) { res = FR_DISK_ERR; break; }	/* Disk error? */
+			/*把当前族设置为空闲族*/
 			res = put_fat(fs, clst, 0);			/* Mark the cluster "empty" */
 			if (res != FR_OK) break;
 			if (fs->free_clust != 0xFFFFFFFF) {	/* Update FSINFO */
@@ -1151,8 +1154,8 @@ FRESULT dir_sdi (
 	DWORD clst, sect;
 	UINT ic;
 
-	printf("in %s: dp->index(%d), dp->sect(%d), dp->sclust(%d)\r\n", 
-		__func__, dp->index, dp->sect, dp->sclust);
+	//printf("in %s: dp->index(%d), dp->sect(%d), dp->sclust(%d)\r\n", 
+	//	__func__, dp->index, dp->sect, dp->sclust);
 	dp->index = (WORD)idx;	/* Current index */
 	clst = dp->sclust;		/* Table start cluster (0:root) */
 	if (clst == 1 || clst >= dp->fs->n_fatent)	/* Check start cluster range */
@@ -1184,15 +1187,15 @@ FRESULT dir_sdi (
 			idx -= ic;
 		}
 		sect = clust2sect(dp->fs, clst);
-		printf("%s: sub dir, clst(%d), sect=%d\r\n", __func__, clst, sect);
+		//printf("%s: sub dir, clst(%d), sect=%d\r\n", __func__, clst, sect);
 	}
 	dp->clust = clst;	/* Current cluster# */
 	if (!sect) return FR_INT_ERR;
 	dp->sect = sect + idx / (SS(dp->fs) / SZ_DIR);					/* Sector# of the directory entry */
 	/*当前目录项在所在扇区的偏移地址*/
 	dp->dir = dp->fs->win + (idx % (SS(dp->fs) / SZ_DIR)) * SZ_DIR;	/* Ptr to the entry in the sector */
-	printf("out %s: dp->index(%d), dp->sect(%d)\r\n", 
-		__func__, dp->index, dp->sect);
+	//printf("out %s: dp->index(%d), dp->sect(%d)\r\n", 
+	//	__func__, dp->index, dp->sect);
 
 	return FR_OK;
 }
@@ -1225,7 +1228,7 @@ FRESULT dir_next (	/* FR_OK:Succeeded, FR_NO_FILE:End of table, FR_DENIED:Could 
 
 	if (!(i % (SS(dp->fs) / SZ_DIR))) {	/* Sector changed? */
 		dp->sect++;					/* Next sector */
-		printf("%s: Sector changed, dp->sect = %d\r\n", __func__, dp->sect);
+		//printf("%s: Sector changed, dp->sect = %d\r\n", __func__, dp->sect);
 		if (!dp->clust) {		/* Static table */
 			/*如果是在0族，也就是root目录族
 			root目录族最多只能有目录项n_rootdir 个*/
@@ -1576,7 +1579,7 @@ FRESULT dir_find (
 	BYTE a, ord, sum;
 #endif
 
-	printf("%s: need to find file name = %s, dp->sect=%d\r\n", __func__, dp->fn, dp->sect);
+	//printf("%s: need to find file name = %s, dp->sect=%d\r\n", __func__, dp->fn, dp->sect);
 	/* Set directory index */
 	/*从第0个目录表项开始找*/
 	res = dir_sdi(dp, 0);			/* Rewind directory object */
@@ -1623,9 +1626,9 @@ FRESULT dir_find (
 #else		/* Non LFN configuration */
 		if (!(dir[DIR_Attr] & AM_VOL) && !mem_cmp(dir, dp->fn, 11)) /* Is it a valid entry? */
 		{
-			printf("%s, find the file or dir scuess!\r\n", __func__);
-			printf("%s: out, dp->fn(%s), dp->sect=%d\r\n", 
-				__func__, dp->fn, dp->sect);			
+			//printf("%s, find the file or dir scuess!\r\n", __func__);
+			//printf("%s: out, dp->fn(%s), dp->sect=%d\r\n", 
+			//	__func__, dp->fn, dp->sect);			
 			break;
 		}
 #endif
@@ -1830,6 +1833,8 @@ FRESULT dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
 		res = move_window(dp->fs, dp->sect);
 		if (res == FR_OK) {
 			mem_set(dp->dir, 0, SZ_DIR);	/* Clear and mark the entry "deleted" */
+			/*在目录项的第一个字节放0xE5
+			用于标示一个被删除的目录项信息*/
 			*dp->dir = DDE;
 			dp->fs->wflag = 1;
 		}
@@ -2134,7 +2139,11 @@ FRESULT create_name (
 /*-----------------------------------------------------------------------*/
 
 /*从patch找到最后一个目录，或者文件的目录项
-信息，并把信息放到dp中，重点是返回值跟dp->dir*/
+信息，并把信息放到dp中，重点是返回值跟dp->dir
+
+返回后，如果找到文件or目录，dp->sclust代表的是
+文件or目录的父亲目录的族，如果是父亲目录是
+root，dp->sclust = 0*/
 static
 FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	DIR* dp,			/* Directory object to return last directory and found object */
@@ -2144,12 +2153,12 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	FRESULT res;
 	BYTE *dir, ns;
 
-	printf("%s: path = %s\r\n", __func__, path);
+	//printf("%s: path = %s\r\n", __func__, path);
 #if _FS_RPATH
 	if (*path == '/' || *path == '\\') {	/* There is a heading separator */
 		/*如果是根目录*/
 		path++;	dp->sclust = 0;				/* Strip it and start from the root directory */
-		printf("%s: (have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);		
+		//printf("%s: (have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);		
 	} else {								/* No heading separator */
 		/*如果不是根目录*/
 		dp->sclust = dp->fs->cdir;			/* Start from the current directory */
@@ -2174,8 +2183,8 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 				同时修改path(不断的减少最前的目录)*/
 			res = create_name(dp, &path);	/* Get a segment name of the path */
 			// 			path = yang.txt, dp->fn=USER
-			printf("%s: create_name after, path(%s), dp->fn(%s)\r\n", 
-				__func__, path, dp->fn);
+			//printf("%s: create_name after, path(%s), dp->fn(%s)\r\n", 
+			//	__func__, path, dp->fn);
 			if (res != FR_OK) break;
 			res = dir_find(dp);				/* Find an object with the sagment name */
 			ns = dp->fn[NS];
@@ -2204,7 +2213,7 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 			}
 			/*开始遍历下一个子目录的开始族*/
 			dp->sclust = ld_clust(dp->fs, dir);
-			printf("%s: *** dp->sclust=%d\r\n", __func__, dp->sclust);
+			//printf("%s: *** dp->sclust=%d\r\n", __func__, dp->sclust);
 		}
 	}
 
@@ -3241,6 +3250,8 @@ FRESULT f_chdrive (
 	vol = get_ldnumber(&path);
 	if (vol < 0) return FR_INVALID_DRIVE;
 
+	/*获取当前路径是，会用到当前
+	卷号*/
 	CurrVol = (BYTE)vol;
 
 	return FR_OK;
@@ -3620,10 +3631,14 @@ FRESULT f_closedir (
 #endif
 			dp->fs = 0;				/* Invalidate directory object */
 #if _FS_REENTRANT
-		unlock_fs(fs, FR_OK);		/* Unlock volume */
+		//unlock_fs(fs, FR_OK);		/* Unlock volume */
+		/*释放并且返回*/
+		LEAVE_FF(fs, FR_OK);
 #endif
 	}
-	LEAVE_FF(dp->fs,res);		//FATFS新版本的bug,必须加上这句,否则在使用OS的时候,可能导致关闭中断后,一直不开启,从而假死.
+	/*释放并且返回*/
+	LEAVE_FF(dp->fs,res);		
+	//FATFS新版本的bug,必须加上这句,否则在使用OS的时候,可能导致关闭中断后,一直不开启,从而假死.
 	//return res;
 }
 
@@ -3730,12 +3745,17 @@ FRESULT f_getfree (
 	if (res == FR_OK) {
 		/* If free_clust is valid, return it without full cluster scan */
 		if (fs->free_clust <= fs->n_fatent - 2) {
+			/*如果fs->free_clust有效，直接返回，不进行扫描*/
 			*nclst = fs->free_clust;
 		} else {
 			/* Get number of free clusters */
 			fat = fs->fs_type;
 			n = 0;
 			if (fat == FS_FAT12) {
+				/*对于fat12从fat表中的第二项开始
+				直到最后的n_fatent，原理是查看
+				第一族是否有下一族，如果是0,带个空闲
+				族，进行n++*/
 				clst = 2;
 				do {
 					stat = get_fat(fs, clst);
@@ -3778,6 +3798,12 @@ FRESULT f_getfree (
 /* Truncate File                                                         */
 /*-----------------------------------------------------------------------*/
 
+/**
+The f_truncate function truncates the file size to the current file read/write pointer. 
+This function has no effect if the file read/write pointer is already pointing end of the file.
+这个函数是用来截断文件当前读写位置fptr后面的文件
+数据，如果当前文件fptr在文件最后，则对文件没什么影响。
+**/
 FRESULT f_truncate (
 	FIL* fp		/* Pointer to the file object */
 )
@@ -3797,9 +3823,12 @@ FRESULT f_truncate (
 	}
 	if (res == FR_OK) {
 		if (fp->fsize > fp->fptr) {
+			/*把当前文件的大小设置了读写位置*/
 			fp->fsize = fp->fptr;	/* Set file size to current R/W point */
 			fp->flag |= FA__WRITTEN;
 			if (fp->fptr == 0) {	/* When set file size to zero, remove entire cluster chain */
+				/*当文件内容全被删除
+				删除整条文件的族链*/
 				res = remove_chain(fp->fs, fp->sclust);
 				fp->sclust = 0;
 			} else {				/* When truncate a part of the file, remove remaining clusters */
@@ -3808,6 +3837,7 @@ FRESULT f_truncate (
 				if (ncl == 0xFFFFFFFF) res = FR_DISK_ERR;
 				if (ncl == 1) res = FR_INT_ERR;
 				if (res == FR_OK && ncl < fp->fs->n_fatent) {
+					/*把当前族设置成最后一族0x0FFFFFFF->0xFFFF FF0F*/
 					res = put_fat(fp->fs, fp->clust, 0x0FFFFFFF);
 					if (res == FR_OK) res = remove_chain(fp->fs, ncl);
 				}
@@ -4102,6 +4132,8 @@ FRESULT f_rename (
 		djn.fs = djo.fs;
 		INIT_BUF(djo);
 		res = follow_path(&djo, path_old);		/* Check old object */
+		/*dp->sclust代表的是
+		文件or目录的父亲目录的族*/		
 		if (_FS_RPATH && res == FR_OK && (djo.fn[NS] & NS_DOT))
 			res = FR_INVALID_NAME;
 #if _FS_LOCK
@@ -4127,20 +4159,36 @@ FRESULT f_rename (
 						dir[DIR_Attr] = buf[0] | AM_ARC;
 						djo.fs->wflag = 1;
 						if (djo.sclust != djn.sclust && (dir[DIR_Attr] & AM_DIR)) {		/* Update .. entry in the directory if needed */
+							/*如果是目录，要更新父亲目录的目录项信息*/
 							dw = clust2sect(djo.fs, ld_clust(djo.fs, dir));
 							if (!dw) {
 								res = FR_INT_ERR;
 							} else {
 								res = move_window(djo.fs, dw);
 								dir = djo.fs->win+SZ_DIR;	/* .. entry */
+								/*此时，dir为父亲目录的目录项信息，
+								保存了父亲目录的开始族*/
 								if (res == FR_OK && dir[1] == '.') {
 									dw = (djo.fs->fs_type == FS_FAT32 && djn.sclust == djo.fs->dirbase) ? 0 : djn.sclust;
+									//修改父亲目录的开始族，
+									//也就是新目录跟旧目录的父亲目录不一样
+									//证明这个目录的修改，不是发生在同一级目录下
+									//比如如mv 	/user/abc	/abc
+									printf("%s: mv 	/user/abc  /abc !\r\n", __func__);
+									printf("%s: djo.sclust(%d) djn.sclust(%d)\r\n", __func__, djo.sclust, djn.sclust);
 									st_clust(dir, dw);
 									djo.fs->wflag = 1;
 								}
 							}
 						}
+						else if (djo.sclust == djn.sclust && (dir[DIR_Attr] & AM_DIR))
+						{
+							//add for debug..
+							printf("%s: mv	/user/abc  /user/abc1 !!!!!\r\n", __func__);
+							printf("%s: djo.sclust(%d) djn.sclust(%d)\r\n", __func__, djo.sclust, djn.sclust);
+						}
 						if (res == FR_OK) {
+							/*删除旧的目录项信息*/
 							res = dir_remove(&djo);		/* Remove old entry */
 							if (res == FR_OK)
 								res = sync_fs(djo.fs);
@@ -4219,6 +4267,8 @@ FRESULT f_getlabel (
 		res = move_window(dj.fs, dj.fs->volbase);
 		if (res == FR_OK) {
 			i = dj.fs->fs_type == FS_FAT32 ? BS_VolID32 : BS_VolID;
+			/* Volume serial number (4 bytes ) 
+				卷标的串码放在DBR扇区中*/			
 			*vsn = LD_DWORD(&dj.fs->win[i]);
 		}
 	}
@@ -4283,6 +4333,9 @@ FRESULT f_setlabel (
 
 	/* Set volume label */
 	dj.sclust = 0;					/* Open root directory */
+	/*把卷标放在root目录下的一个目录项中
+	第11个字节为0x08，卷名字放第0字节开始
+	11个字节中*/
 	res = dir_sdi(&dj, 0);
 	if (res == FR_OK) {
 		res = dir_read(&dj, 1);		/* Get an entry with AM_VOL */
@@ -4790,6 +4843,21 @@ FRESULT f_fdisk (
 /* Get a string from the file                                            */
 /*-----------------------------------------------------------------------*/
 
+/*
+从文件结构体指针stream中读取数据，每次读取一行。
+读取的数据保存在buf指向的字符数组中，每次最多
+读取bufsize-1个字符（第bufsize个字符赋'\0'），如果文件
+中的该行，不足bufsize个字符，则读完该行就结束。
+如若该行（包括最后一个换行符）的字符数超过
+bufsize-1，则fgets只返回一个不完整的行，但是，
+缓冲区总是以NULL字符结尾，对fgets的下一次调用会
+继续读该行。函数成功将返回buf，失败或读到文件
+结尾返回NULL。因此我们不能直接通过fgets的返回值
+来判断函数是否是出错而终止的，应该借助feof函数
+或者ferror函数来判断。
+
+*/
+//f_eof
 TCHAR* f_gets (
 	TCHAR* buff,	/* Pointer to the string buffer to read */
 	int len,		/* Size of string buffer (characters) */
@@ -4801,7 +4869,7 @@ TCHAR* f_gets (
 	BYTE s[2];
 	UINT rc;
 
-
+	/*读字符直到buffer填满*/
 	while (n < len - 1) {	/* Read characters until buffer gets filled */
 #if _USE_LFN && _LFN_UNICODE
 #if _STRF_ENCODE == 3		/* Read a character in UTF-8 */
@@ -4857,6 +4925,10 @@ TCHAR* f_gets (
 		if (c == '\n') break;		/* Break on EOL */
 	}
 	*p = 0;
+	/*当读到了文件末尾，或者发生error*/
+	/*是不读到了文件的末尾，用f_eof(fp)去判断，
+	所以当返回null时，要用f_eof(fp)才能判断是否
+	发生了读error*/
 	return n ? buff : 0;			/* When no data read (eof or error), return with error. */
 }
 
@@ -4868,6 +4940,12 @@ TCHAR* f_gets (
 /* Put a character to the file                                           */
 /*-----------------------------------------------------------------------*/
 
+/*
+	输出缓冲区
+	idx代表buf的哪个偏移上
+	nchr应该是buf上有多少个字符+ 已经写
+	入文件的字节数
+*/
 typedef struct {
 	FIL* fp;
 	int idx, nchr;
@@ -4924,6 +5002,7 @@ void putc_bfd (
 	if (i >= (int)(sizeof pb->buf) - 3) {	/* Write buffered characters to the file */
 		f_write(pb->fp, pb->buf, (UINT)i, &bw);
 		i = (bw == (UINT)i) ? 0 : -1;
+		//当写错误，idx = -1, 否则为0
 	}
 	pb->idx = i;
 	pb->nchr++;
@@ -4985,6 +5064,10 @@ int f_puts (
 /*-----------------------------------------------------------------------*/
 /* Put a formatted string to the file                                    */
 /*-----------------------------------------------------------------------*/
+
+/*
+	把打印输出到文件fp中,可以用来保存log到flash中
+*/
 
 int f_printf (
 	FIL* fp,			/* Pointer to the file object */

@@ -35,7 +35,7 @@ int ff_cre_syncobj (	/* 1:Function succeeded, 0:Could not create due to any erro
 //	*sobj = OSMutexCreate(0, &err);	/* uC/OS-II */
 //	ret = (int)(err == OS_NO_ERR);
 
-  *sobj = xSemaphoreCreateMutex();	/* FreeRTOS */
+  	*sobj = xSemaphoreCreateMutex();	/* FreeRTOS */
 	ret = (int)(*sobj != NULL);
 
 	return ret;
@@ -65,7 +65,7 @@ int ff_del_syncobj (	/* 1:Function succeeded, 0:Could not delete due to any erro
 //	OSMutexDel(sobj, OS_DEL_ALWAYS, &err);	/* uC/OS-II */
 //	ret = (int)(err == OS_NO_ERR);
 
-  vSemaphoreDelete(sobj);		/* FreeRTOS */
+  	vSemaphoreDelete(sobj);		/* FreeRTOS */
 
 	ret = 1;
 

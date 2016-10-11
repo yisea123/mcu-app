@@ -14,7 +14,8 @@ extern "C" {
 
 #include "integer.h"
 
-#define FLASH_BLOCK_SIZE   	2     	//每个BLOCK有8个扇区
+#define FLASH_BLOCK_SIZE   	2     	
+//每个BLOCK有2个扇区		was 8 before
 
 #define FLASH_SECTOR_SIZE 	512		
 

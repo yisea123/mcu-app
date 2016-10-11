@@ -157,7 +157,12 @@ void Software_Hardware_Init( void )
 void Read_Fatfs(void * pvParameters)
 {
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -195,7 +200,12 @@ void Timer_func1( TimerHandle_t xTimer )
 void LED0_Task(void * pvParameters)
 {
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}	
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -221,7 +231,12 @@ void LED0_Task(void * pvParameters)
 void LED1_Task( void * pvParameters )
 {
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}		
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -244,7 +259,12 @@ void Feed_Wdg_Task( void * pvParameters )
 {
 	TickType_t pxPreviousWakeTime;
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}		
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -268,7 +288,12 @@ void Temprate_Task(void * pvParameters)
 {
 	short temp;
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}	
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -306,7 +331,12 @@ void Printf_Log_Task(void * pvParameters)
 	int len;
 
 	UBaseType_t pre;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}		
 	pre = uxTaskPriorityGet( NULL );
 	//MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
 	/*mLogSemaphore create as has value, take it.*/
@@ -348,6 +378,12 @@ void Key_Detect_Task(void * pvParameters)
 {
 	int count = 0;
 	unsigned int random;	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}		
 	printf("%s ...\r\n", __func__);	
 	vSetTaskLogLevel(NULL, eLogLevel_0);
 
@@ -444,7 +480,12 @@ void RTC_read_Task(void * pvParameters)
 	unsigned char year,month,date,week;
 	unsigned char tbuf[40];
 	TickType_t pxPreviousWakeTime;
-	
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}	
 	printf("%s ...\r\n", __func__);	
 	vSetTaskLogLevel(NULL, eLogLevel_1);	
 	pxPreviousWakeTime = xTaskGetTickCount();

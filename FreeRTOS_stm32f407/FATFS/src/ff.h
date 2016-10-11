@@ -132,7 +132,9 @@ typedef struct {
 	DWORD	fsize;			/* File size */
 	/*文件数据开始的 cluster*/
 	DWORD	sclust;			/* File start cluster (0:no cluster chain, always 0 when fsize is 0) */
+	/*文件读写位置fpter所在的族*/
 	DWORD	clust;			/* Current cluster of fpter (not valid when fprt is 0) */
+	
 	DWORD	dsect;			/* Sector number appearing in buf[] (0:invalid) */
 #if !_FS_READONLY
 	/*当前目录项所在的扇区数*/
@@ -161,9 +163,11 @@ typedef struct {
 	/*此结构在目录项表中的位置*/
 	WORD	index;			/* Current read/write index number */
 	/*对应的起始族，文件的数据就是从这里开始
-	或者子目录的开始族*/
+		或者子目录的开始族*/
 	DWORD	sclust;			/* Table start cluster (0:Root dir) */
-	/*当前目录项所在的cluster , if is Static table   clust = 0--> fat12/16*/
+	/*当前目录项所在的cluster ,  如果是子目录下的文件
+	有可能文件很多，导致目录项的clust不跟sclust一样，
+	也就是会为子目录的目录项信息分配了多个族*/
 	DWORD	clust;			/* Current cluster */
 	/*当前目录项所在的扇区*/
 	DWORD	sect;			/* Current sector */
@@ -310,13 +314,20 @@ int ff_del_syncobj (_SYNC_t sobj);				/* Delete a sync object */
 /* File access control and file status flags (FIL.flag) */
 
 #define	FA_READ				0x01
+//以读的权限打开文件
 #define	FA_OPEN_EXISTING	0x00
+//打开存在的文件，如果返回失败，就是
+//没有文件
 
 #if !_FS_READONLY
 #define	FA_WRITE			0x02
+//以写的权限打开文件
 #define	FA_CREATE_NEW		0x04
+//FA_CREATE_NEW 文件已以存在的话，就创建失败
 #define	FA_CREATE_ALWAYS	0x08
+//FA_CREATE_ALWAYS 覆盖 式的打开文件
 #define	FA_OPEN_ALWAYS		0x10
+//FA_OPEN_ALWAYS 存在就打开，没有就创建
 #define FA__WRITTEN			0x20
 #define FA__DIRTY			0x40
 #endif
