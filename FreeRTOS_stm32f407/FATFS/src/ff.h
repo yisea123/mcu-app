@@ -330,6 +330,7 @@ int ff_del_syncobj (_SYNC_t sobj);				/* Delete a sync object */
 //FA_OPEN_ALWAYS 存在就打开，没有就创建
 #define FA__WRITTEN			0x20
 #define FA__DIRTY			0x40
+
 #endif
 
 

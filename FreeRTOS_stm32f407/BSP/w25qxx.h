@@ -2,8 +2,14 @@
 #define __W25QXX_H			    
 #include "sys.h"  
 
+#define BOARD_NUM	1		
+// 1:W25Q16    2:W25Q128
+	
 extern unsigned int FLASH_SIZE;
-//= 2*1024*1024;//16*1024*1024;	//FLASH 大小为16M字节
+//= 2*1024*1024;
+//FLASH 大小为2M字节
+//16*1024*1024;	
+//FLASH 大小为16M字节
 
 //W25X系列/Q系列芯片列表	   
 //W25Q80  ID  0XEF13
@@ -17,12 +23,16 @@ extern unsigned int FLASH_SIZE;
 #define W25Q64 	0XEF16
 #define W25Q128	0XEF17
 
-extern u16 W25QXX_TYPE;					//定义W25QXX芯片型号		   
+extern u16 W25QXX_TYPE;	   
 
-#define	W25QXX_CS 		PBout(0)  		//W25QXX的片选信号  //14
+#if(BOARD_NUM == 1)
+#define	W25QXX_CS 		PBout(0)  		
+//W25QXX的片选信号  PB0
+#elif(BOARD_NUM == 2)
+//W25QXX的片选信号  PB14
+#define	W25QXX_CS 		PBout(14) 
+#endif
 
-////////////////////////////////////////////////////////////////////////////////// 
-//指令表
 #define W25X_WriteEnable		0x06 
 #define W25X_WriteDisable		0x04 
 #define W25X_ReadStatusReg		0x05 
@@ -54,6 +64,7 @@ void W25QXX_Erase_Sector(u32 Dst_Addr);	//扇区擦除
 void W25QXX_Wait_Busy(void);           	//等待空闲
 void W25QXX_PowerDown(void);        	//进入掉电模式
 void W25QXX_WAKEUP(void);				//唤醒
+
 #endif
 
 

@@ -8,6 +8,7 @@
 extern void vSetPrintfTime(int time);
 extern void Save_String_To_Flash( unsigned int addr, const char *data );
 extern void Read_String_From_Flash( unsigned int addr, int size );
+extern void saveStringToLog( const char *string );
 
 struct _m_usmart_nametab usmart_nametab[]=
 {
@@ -17,6 +18,7 @@ struct _m_usmart_nametab usmart_nametab[]=
 #endif
 	(void*)delay_ms, "void delay_ms(u16 nms)",
 	(void*)delay_us, "void delay_us(u32 nus)",
+	(void*)saveStringToLog, "void saveStringToLog( const char *string )",
 	(void*)vSetPrintfTime, "void vSetPrintfTime(int time)",
 	(void*)Save_String_To_Flash, "void Save_String_To_Flash( unsigned int addr, const char *data )",
 	(void*)Read_String_From_Flash, "void Read_String_From_Flash( unsigned int addr, int size )",

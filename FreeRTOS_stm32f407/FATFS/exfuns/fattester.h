@@ -44,7 +44,7 @@ u8 mf_getcwd( void );
 u8 mf_stat( u8* path );
 u8 mf_stat_( u8* path , FILINFO *fno );
 u8 mf_getcwd_( char*buff, int len );
-u8 mf_scan_files_(u8 * path);
+u8 mf_scan_files_( char * path, char * buffer, int len );
 extern char pDir[128];
 #endif
 

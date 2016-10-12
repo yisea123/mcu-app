@@ -11,7 +11,11 @@
 #include "ff.h"
 #include "string.h"
 
+extern Ringfifo mLogFifo;
+extern TaskHandle_t pxTimeTask;
+extern TaskHandle_t pxTempretureTask;
 extern void Printf_Application_Version( void );
+extern void vPrintRamdDisk( unsigned int sector );
 
 typedef enum
 {
@@ -27,7 +31,6 @@ typedef enum
 	ABORTTASK
 } vActionType;
 
-
 typedef struct commandRecord
 {
 	char *command;
@@ -35,19 +38,37 @@ typedef struct commandRecord
 	ListItem_t			xStateListItem;
 } cmdRecord;
 
-static unsigned int destination = ADDR_FLASH_SECTOR_7;
 static List_t xCommandRecordList;
 vUserType xUserID = ROOT;
 static char xUserName[36] = { 'r', 'o', 'o', 't', '\0' };
 static char pBuf[512];
 Ringfifo uart1fifo;
 u8 USART_RX_BUF[USART_REC_LEN];
-u16 USART_RX_STA=0;
-extern Ringfifo mLogFifo;
-extern TaskHandle_t pxTimeTask;
-extern TaskHandle_t pxTempretureTask;
-
 char buff[128];
+static unsigned int destination = ADDR_FLASH_SECTOR_7;
+
+void Fatfs_Dump_Ram( char *str )
+{
+	int sector;
+	char tmp[12];
+	#define IsDigit(c)	(((c)>='0')&&((c)<='9'))
+	
+	while( *str == ' ')
+		str++;
+
+	memset( tmp, '\0', sizeof(tmp) );
+	memcpy( tmp, str, strlen( str ));
+	while( *str != '\0' )
+	{
+		if( !IsDigit( *str ) )
+		{
+			printf("%s: command error! dump + sector number\r\n", __func__);
+		}
+		str++;
+	}
+	sector = atoi( tmp );
+	vPrintRamdDisk( sector );
+}
 
 void Fatfs_Get_Volume_Free( char *str )
 {
@@ -64,16 +85,23 @@ void Fatfs_Get_Volume_Free( char *str )
 		printf("FLASH:\r\n");
 		mf_showfree("1:");
 	}
+	else if( memcmp(str, "ram", strlen("ram")) == 0 )
+	{
+		printf("RAM:\r\n");
+		mf_showfree("2:");
+	}	
 	else if ( strlen( str ) == 0 )
 	{
 		printf("SD Card:\r\n");
 		mf_showfree("0:");
 		printf("FLASH:\r\n");
 		mf_showfree("1:");
+		printf("RAM:\r\n");
+		mf_showfree("2:");		
 	}
 	else
 	{
-		printf("please input df [sd/flash]");
+		printf("please input df [sd/flash/ram]");
 	}
 }
 
@@ -90,7 +118,8 @@ void Fatfs_Get_Dir_More_Ll( char *str )
 	else
 	{
 		if( strncmp( str, "1:", strlen("1:") ) == 0  ||
-			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 		{
 			memcpy( buff, str, strlen(str) );
 		}
@@ -102,8 +131,8 @@ void Fatfs_Get_Dir_More_Ll( char *str )
 	}
 	if( strlen(buff) > 0 )
 	{
-		printf("%s: dir = %s\r\n", __func__, buff);
-		mf_scan_files_( (unsigned char *)buff );
+		//printf("%s: dir = %s\r\n", __func__, buff);
+		mf_scan_files_( buff, pBuf, sizeof( pBuf ) );
 	}
 }
 
@@ -121,7 +150,8 @@ void Fatfs_Get_Dir_More_Ls( char *str )
 	else 
 	{
 		if( strncmp( str, "1:", strlen("1:") ) == 0  ||
-			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0  )
 		{
 			memcpy( buff, str, strlen(str) );
 		}
@@ -140,7 +170,7 @@ void Fatfs_Get_Dir_More_Ls( char *str )
 	}
 	if( strlen( buff ) > 0 )
 	{
-		printf("%s: dir = %s\r\n", __func__, buff);
+		//printf("%s: dir = %s\r\n", __func__, buff);
 		mf_scan_files( (unsigned char *)buff );
 	}
 }
@@ -172,10 +202,21 @@ void Fatfs_Mount( char *str )
 		{
 			printf("mount flash fail!\r\n");
 		}		
+	}
+	else if( memcmp(str, "ram", strlen("ram")) == 0 )
+	{
+		if( FR_OK == mf_chdrive( "2:" ) )
+		{
+			printf("mount ram scueess!\r\n");
+		}
+		else
+		{
+			printf("mount ram fail!\r\n");
+		}		
 	}	
 	else
 	{
-		printf("please input mount sd/flash\r\n");
+		printf("please input mount sd/flash/ram\r\n");
 	}
 }
 
@@ -213,7 +254,8 @@ void Fatfs_Echo_To_File( char *str )
 			str++;
 
 		if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
-				strncmp( str, "0:/", strlen("0:/") ) == 0 )
+				strncmp( str, "0:/", strlen("0:/") ) == 0 ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 		{
 			if( strlen(str) > strlen("1:/") )
 			{	
@@ -283,7 +325,8 @@ void Fatfs_Touch_File( char *str )
 	memset(buff, '\0', sizeof(buff));
 
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
-			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
@@ -355,7 +398,8 @@ void Fatfs_Cat_File( char *str )
 	memset(buff, '\0', sizeof(buff));
 	
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0 ||
-			strncmp( str, "0:/", strlen("0:/") ) == 0 )
+			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
@@ -397,7 +441,7 @@ void Fatfs_Cat_File( char *str )
 					if( f_read(&file, buffer, fno.fsize, &br) == FR_OK ) 
 					{
 						//printf("cat result:\r\n");
-						printf("%s\r\n", buffer);
+						printf("%s\n", buffer);
 					}
 					else
 					{
@@ -431,12 +475,13 @@ void Fatfs_Rm_Dir( char *str )
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
 	
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
-		strncmp( str, "0:/", strlen("0:/") ) == 0 )
+		strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
 			mf_unlink( (unsigned char*)str );
-			printf("rm direct %s\r\n", str);
+			//printf("rm direct %s\r\n", str);
 		}
 		else
 		{
@@ -456,7 +501,7 @@ void Fatfs_Rm_Dir( char *str )
 		}		
 		//memcpy( buff+strlen(buff), str, strlen(str) );
 		mf_unlink( (unsigned char*)buff );
-		printf("rm direct %s\r\n", buff);
+		//printf("rm direct %s\r\n", buff);
 	}
 
 	vTaskPrioritySet( NULL, pre );	
@@ -472,10 +517,11 @@ void Fatfs_Make_Dir( char *str )
 
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
-		strncmp( str, "0:/", strlen("0:/") ) == 0 )
+		strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 	{
 		mf_mkdir( (unsigned char*)str );
-		printf("make direct %s\r\n", str);
+		//printf("make direct %s\r\n", str);
 	}
 	else
 	{
@@ -483,7 +529,7 @@ void Fatfs_Make_Dir( char *str )
 		sprintf( buff+strlen(buff), "%s%s", "./", str );
 		//memcpy( buff+strlen(buff), str, strlen(str) );
 		mf_mkdir( (unsigned char*)buff );
-		printf("make direct %s\r\n", buff);
+		//printf("make direct %s\r\n", buff);
 	}
 
 	vTaskPrioritySet( NULL, pre );		
@@ -507,27 +553,28 @@ void Fatfs_Change_Dir( char *str )
 			return;
 		}
 		sprintf( buff+strlen(buff), "%s%s", "/", str );
-		printf("buff = %s\r\n", buff);
+		//printf("buff = %s\r\n", buff);
 		mf_chdir( ( unsigned char * )buff );
 	}
 	else if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
-		strncmp( str, "0:/", strlen("0:/") ) == 0 )
+		strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 	{
-		printf("change to %s\r\n", str);
+		//printf("change to %s\r\n", str);
 		mf_chdir((unsigned char *)str);
 	}
 	else if( strncmp( str, "./", strlen("./") )  == 0 )
 	{
 		mf_getcwd_( buff, sizeof(buff) );
 		memcpy( buff+strlen(buff), str, strlen(str) );
-		printf("change to %s\r\n", buff);
+		//printf("change to %s\r\n", buff);
 		mf_chdir( ( unsigned char * )buff );
 	}
 	else
 	{
 		mf_getcwd_( buff, sizeof(buff) );
 		sprintf( buff+strlen(buff), "%s%s", "./", str );
-		printf("change to %s\r\n", buff);
+		//printf("change to %s\r\n", buff);
 		mf_chdir( ( unsigned char * )buff );
 	}			
 
@@ -958,6 +1005,7 @@ u8 *sys_cmd_tab[]=
 	"mount",
 	"df",
 	"ll",
+	"dump",
 };	    
 
 /*
@@ -1021,7 +1069,22 @@ UBaseType_t pre;
 			printf("oslevel:  oslevel + level num ( 0 ~ 8 ).\r\n");
 			printf("testflash: test flash write and read.\r\n");
 			printf("----------------FreeRTOS---------------\r\n");		
-   
+
+			printf("\r\n----------------Fatfs---------------\r\n");
+			printf("pwd: 	display current directory.\r\n");
+			printf("ls: 	display current directory's file and dir.\r\n");
+			printf("df: 	display the size of volume be used and free size.\r\n");
+			printf("ll: 	display more information about current directory's file and dir.\r\n");			
+			printf("cd: 	chang directory, use as: cd + dir_path.\r\n");
+			printf("mkdir:  create an directory, use as: mkdir + dir_path.\r\n");
+			printf("rm: 	delete an directory, use as: rm + dir_path/file_path.\r\n");
+			printf("cat: 	display file's content, use as: cat + file_path.\r\n");
+			printf("echo: 	append contents to file, use as: echo xxx > file_path.\r\n");
+			printf("touch: 	create a zero size file, use as: touch + file_path.\r\n");
+			printf("mount: 	chang driver for fatfs current dir, use as: mount + sd/flash/ram.\r\n");
+			printf("dump: 	dump sector data for ram disk, use as: dump + sector number.\r\n");
+			printf("----------------Fatfs---------------\r\n");		
+ 
 			//printf("--------------------------------------------- \r\n");
 			vTaskPrioritySet( NULL, pre );				
 #else
@@ -1227,6 +1290,9 @@ UBaseType_t pre;
 			break;
 		case 35:
 			Fatfs_Get_Dir_More_Ll( (char *) str );
+			break;
+		case 36:
+			Fatfs_Dump_Ram( (char *) str );
 			break;
 		/*Add For FreeRTOS*/
 		default://·Ç·¨Ö¸Áî
@@ -1454,16 +1520,17 @@ void usmart_scan( int uart1DataLen )
 	static int index = 0;
 	static unsigned int num = 0xffffffff;
 	cmdRecord *cmdItem;
-	unsigned char sta, len, add = 0;
+	unsigned char status, len, add = 0;
 	
 	while( rfifo_len( &uart1fifo ) > 0 ) 
 	{
-		rfifo_get( &uart1fifo, USART_RX_BUF+index, 1 );
+		rfifo_get( &uart1fifo, USART_RX_BUF + index, 1 );
 
-		if( index >= 2 && ( USART_RX_BUF[index] == 0x41 ||
-					USART_RX_BUF[index] == 0x42 ) && 
-					USART_RX_BUF[index-1] == 0x5b &&
-					USART_RX_BUF[index-2] == 0x1b)
+		if( index >= 2 && 
+			( USART_RX_BUF[index] == 0x41 ||
+			USART_RX_BUF[index] == 0x42 ) && 
+			USART_RX_BUF[index-1] == 0x5b &&
+			USART_RX_BUF[index-2] == 0x1b )
 		{
 			if( listLIST_IS_EMPTY( &xCommandRecordList ) != pdFALSE )
 			{
@@ -1502,13 +1569,14 @@ void usmart_scan( int uart1DataLen )
 					{
 						printf(" %s ", cmdItem->command);
 					}
-					memset( USART_RX_BUF, '\0', sizeof(USART_RX_BUF) );
-					memcpy( USART_RX_BUF, cmdItem->command, cmdItem->len);
+					memset( USART_RX_BUF, '\0', sizeof( USART_RX_BUF ) );
+					memcpy( USART_RX_BUF, cmdItem->command, cmdItem->len );
 					index = cmdItem->len;
 				}
 			}			
 			continue;
 		}
+		
 		/*check if is backspace key*/
 		if( USART_RX_BUF[index] == 0x08 )
 		{
@@ -1524,7 +1592,12 @@ void usmart_scan( int uart1DataLen )
 		}
 		
 		index++;
-		if( USART_RX_BUF[index - 1] == 0x0d )
+		/*if character is enter, just print it.*/
+		if( USART_RX_BUF[index - 1] != 0x0d )
+		{
+			printf("%c", USART_RX_BUF[index - 1]);
+		}		
+		else
 		{		
 			if( index == 1 || index > 69 )
 			{
@@ -1532,11 +1605,9 @@ void usmart_scan( int uart1DataLen )
 				{
 					printf("Error command!\r\n");
 				}
-				printf("\r\n");
 				mf_getcwd();
-				printf("\r\n");
-				printf("\r\n[%s]%s#", xUserName, pDir);				
-				//printf("\r\n%s#", xUserName);
+				//root@octopus-t8v10:/system # 				
+				printf("\r\n%s@%s #", xUserName, pDir);
 				index = 0;
 				continue;
 			}
@@ -1546,28 +1617,30 @@ void usmart_scan( int uart1DataLen )
 			}
 						
 			printf("\r\n");
-			/*system function*/
-			sta = usmart_dev.cmd_rec( USART_RX_BUF );	
-			if( sta == USMART_OK ) 
-			{				
+			/*parse buffer to check it if match functions in defined list*/
+			status = usmart_dev.cmd_rec( USART_RX_BUF );	
+			if( status == USMART_OK ) 
+			{		
+				/*match function*/
 				add = 1;
 				usmart_dev.exe();
 			}
 			else 
 			{  
-				/*system command*/
+				/*parse buffer to check it if match commands in defined list*/
 				len = usmart_sys_cmd_exe( USART_RX_BUF );
 				if( len == USMART_OK)
 				{
+					/*match command*/
 					add = 1;
 				}
 				if( len != USMART_FUNCERR ) 
 				{
-					sta = len;
+					status = len;
 				}
-				if( sta )
+				if( status )
 				{
-					switch( sta )
+					switch( status )
 					{
 						case USMART_FUNCERR:
 							printf("Error command!\r\n");
@@ -1587,27 +1660,25 @@ void usmart_scan( int uart1DataLen )
 
 			if( add )
 			{
+			cmdRecord *pxFirstCmd, *pxNextCmd;
+			
+				cmdItem = NULL;
+				if( listCURRENT_LIST_LENGTH( &xCommandRecordList ) > ( UBaseType_t ) 0 )
 				{
-				cmdRecord *pxFirstCmd, *pxNextCmd;
-
-					cmdItem = NULL;
-					if( listCURRENT_LIST_LENGTH( &xCommandRecordList ) > ( UBaseType_t ) 0 )
+					listGET_OWNER_OF_NEXT_ENTRY( pxFirstCmd, &xCommandRecordList );
+				
+					do
 					{
-						listGET_OWNER_OF_NEXT_ENTRY( pxFirstCmd, &xCommandRecordList );
-					
-						do
+						listGET_OWNER_OF_NEXT_ENTRY( pxNextCmd, &xCommandRecordList );
+						if( memcmp(pxNextCmd->command, USART_RX_BUF, strlen( ( char* )USART_RX_BUF ) ) == 0 )
 						{
-							listGET_OWNER_OF_NEXT_ENTRY( pxNextCmd, &xCommandRecordList );
-							if( memcmp(pxNextCmd->command, USART_RX_BUF, strlen((char*)USART_RX_BUF)) == 0)
-							{
-								uxListRemove( &( pxNextCmd->xStateListItem ) );
-								cmdItem = pxNextCmd;
-								break;
-							}
+							uxListRemove( &( pxNextCmd->xStateListItem ) );
+							cmdItem = pxNextCmd;
+							break;
+						}
 
-						} while( pxNextCmd != pxFirstCmd );
-					}
-				}			
+					} while( pxNextCmd != pxFirstCmd );
+				}
 				if( cmdItem == NULL )
 				{
 					cmdItem =  pvPortMalloc( sizeof( cmdRecord ) );
@@ -1624,11 +1695,11 @@ void usmart_scan( int uart1DataLen )
 							memcpy( cmdItem->command, USART_RX_BUF, index);
 							cmdItem->len = index;
 							vListInsert( &xCommandRecordList, &( cmdItem->xStateListItem ) );
-							(&xCommandRecordList)->pxIndex = (&( cmdItem->xStateListItem ))->pxPrevious;
+							(&xCommandRecordList)->pxIndex = ( &( cmdItem->xStateListItem ) )->pxPrevious;
 						}
 						else
 						{
-							vPortFree(cmdItem);
+							vPortFree( cmdItem );
 						}
 					}
 				}
@@ -1637,18 +1708,13 @@ void usmart_scan( int uart1DataLen )
 					listSET_LIST_ITEM_VALUE( &( cmdItem->xStateListItem ), num );
 					num--;
 					vListInsert( &xCommandRecordList, &( cmdItem->xStateListItem ) );
-					(&xCommandRecordList)->pxIndex = (&( cmdItem->xStateListItem ))->pxPrevious;
+					(&xCommandRecordList)->pxIndex = ( &( cmdItem->xStateListItem ) )->pxPrevious;
 				}
 			}
 			
 			index = 0;
 			mf_getcwd();
-			printf("[%s]%s#", xUserName, pDir);
-			USART_RX_STA = 0; 		
-		}
-		else
-		{
-			printf("%c", USART_RX_BUF[index - 1]);
+			printf("%s@%s #", xUserName, pDir);			
 		}
 	}
 }
@@ -1664,6 +1730,7 @@ void write_addr( u32 addr,u32 val )
 {
 	*( u32* ) addr = val; 	
 }
+
 #endif
 
 

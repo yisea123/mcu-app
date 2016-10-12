@@ -794,8 +794,8 @@ FRESULT move_window (
 	/*当sector与当前win缓存中的数据不是同个
 	扇区，重新去读flash的扇区。*/
 	if (sector != fs->winsect) {	/* Changed current window */
-		printf("%s: sector(%d) != fs->winsect(%d)\r\n", __func__, 
-			sector, fs->winsect);
+		//printf("%s: sector(%d) != fs->winsect(%d)\r\n", __func__, 
+		// sector, fs->winsect);
 #if !_FS_READONLY
 		if (sync_window(fs) != FR_OK)
 			return FR_DISK_ERR;
@@ -1725,7 +1725,7 @@ FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many 
 )
 {
 	FRESULT res;
-	printf("%s: dp->sclust(%d)\r\n", __func__, dp->sclust);
+
 #if _USE_LFN	/* LFN configuration */
 	UINT n, nent;
 	BYTE sn[12], *fn, sum;
@@ -1772,6 +1772,7 @@ FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many 
 		}
 	}
 #else	/* Non LFN configuration */
+	printf("%s: dp->sclust(%d)\r\n", __func__, dp->sclust);	
 	/*分配一个目录项空间，也就是32bytes
 		在此时dp所代表的当前目录下*/
 	res = dir_alloc(dp, 1);		/* Allocate an entry for SFN */
@@ -1881,12 +1882,6 @@ void get_fileinfo (		/* No return code */
 			c = ff_convert(c, 1);	/* OEM -> Unicode */
 			if (!c) c = '?';
 #endif
-
-/*add by lex*/
-#else
-			if (IsUpper(c) && (dir[DIR_NTres] & (i >= 9 ? NS_EXT : NS_BODY)))
-				c += 0x20;			/* To lower */
-/*add by lex*/
 #endif
 			*p++ = c;
 		}
@@ -2162,7 +2157,7 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 	} else {								/* No heading separator */
 		/*如果不是根目录*/
 		dp->sclust = dp->fs->cdir;			/* Start from the current directory */
-		printf("%s: (!!!not have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);
+		//printf("%s: (!!!not have root dir /) dp->sclust=%d\r\n", __func__, dp->sclust);
 	}
 #else
 	if (*path == '/' || *path == '\\')		/* Strip heading separator if exist */
@@ -2172,12 +2167,12 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 
 	if ((UINT)*path < ' ') {				/* Null path name is the origin directory itself */
 		/*只有根目录*/
-		printf("%s: just /\r\n", __func__);
+		//printf("%s: just /\r\n", __func__);
 		res = dir_sdi(dp, 0);
 		dp->dir = 0;
 	} else {								/* Follow path */
 		//	USER/yang.txt
-		printf("%s: path = %s\r\n", __func__, path);
+		//printf("%s: path = %s\r\n", __func__, path);
 		for (;;) {
 			/*格式化出一个文件or目录名,放在dp->fn
 				同时修改path(不断的减少最前的目录)*/
@@ -2199,12 +2194,12 @@ FRESULT follow_path (	/* FR_OK(0): successful, !=0: error code */
 						if (!(ns & NS_LAST)) res = FR_NO_PATH;	/* Adjust error code if not last segment */
 					}
 				}
-				printf("%s: Failed to find the object File or Dir\r\n", __func__);				
+				//printf("%s: Failed to find the object File or Dir\r\n", __func__);				
 				break;
 			}
 			if (ns & NS_LAST) {
 				/*到了寻找路径的最后一个文件或者目录了*/
-				printf("%s: Last segment matched. Function completed. \r\n", __func__);
+				//printf("%s: Last segment matched. Function completed. \r\n", __func__);
 				break;			/* Last segment matched. Function completed. */
 			}
 			dir = dp->dir;						/* Follow the sub-directory */
@@ -2537,6 +2532,179 @@ find_volume: Data start sector fs->database(40)
 //数目、根目录区起始地址、数据区起始扇区、
 //文件系统类型等等。
 
+
+/*
+
+DBR :
+
+find_volume: Number of FAT copies fs->n_fats(1)
+find_volume: Number of sectors for FAT area fasize(2)
+find_volume: Number of sectors per cluster fs->csize(2)
+find_volume: fs->n_rootdir(16)
+find_volume: fmt(1), FS_FAT12=1 FS_FAT16=2, FS_FAT32=3
+find_volume: Number of FAT entries(=Number of clusters+2)fs->n_fatent(10)
+find_volume: Volume start sector fs->volbase(0)
+find_volume: FAT start sector fs->fatbase(1)
+find_volume: Root directory start sector fs->dirbase(3)
+find_volume: Data start sector fs->database(4)
+
+Start Addr: 2000eb60, sector(0)
+          00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+
+00:       eb  fe 90 4d 53 44 4f 53 35 2e 30 (00 02) (02) 01 00
+01:       (01) (10 00) 14 00 f0  02 00 3f 00 ff  00 00 00 00 00
+02:       00 00 00 00 80 00 29 95 ae 4c 49 4e 4f 20 4e 41
+03:       4d 45 20 20 20 20 46 41 54 20 20 20 20 20 00 00
+04:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+05:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+06:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+08:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+09:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+10:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+12:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+13:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+14:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+15:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+16:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+17:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+18:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+19:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 aa
+
+FAT:
+
+root@2:/ #dump 1
+
+Start Addr: 2000ed60, sector(1)
+          00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+
+00:       f0  ff  ff 00 00 00 00 00 00 00 00 00 00 00 00 00
+01:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+02:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+03:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+04:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+05:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+06:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+08:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+09:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+10:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+12:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+13:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+14:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+15:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+16:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+17:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+18:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+19:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+root:
+
+root@2:/ #dump 3
+
+Start Addr: 2000f160, sector(3)
+          00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+
+00:       52 41 4d 44 49 53 4b 20 20 20 20 08 00 00 00 00
+01:       00 00 00 00 00 00 95 ae 4c 49 00 00 00 00 00 00
+02:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+03:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+04:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+05:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+06:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+08:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+09:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+10:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+12:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+13:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+14:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+15:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+16:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+17:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+18:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+19:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+root@2:/ #mkdir sys
+root@2:/ #dump 3
+
+Start Addr: 2000f160, sector(3)
+            00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 
+
+00:       52 41 4d 44 49 53 4b 20 20 20 20 (08) 00 00 00 00
+01:       00 00 00 00 00 00 95 ae 4c 49 00 00 00 00 00 00
+02:       53 59 53 20 20 20 20 20 20 20 20 (10) 00 00 00 00
+03:       00 00 00 00 00 00 8b b0 4c 49 (02 00) 00 00 00 00
+04:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+05:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+06:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+07:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+08:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+09:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+10:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+11:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+12:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+13:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+14:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+15:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+16:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+17:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+18:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+19:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1A:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1B:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1C:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1D:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+1F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+*/
+
 	return FR_OK;
 }
 
@@ -2768,7 +2936,7 @@ FRESULT f_open (
 	if (!fp) return FR_INVALID_OBJECT;
 	fp->fs = 0;			/* Clear file object */
 	//	1:/USER/yang.txt
-	printf("%s: path(%s)\r\n", __func__, path);
+	//printf("%s: path(%s)\r\n", __func__, path);
 	/* Get logical drive number */
 #if !_FS_READONLY
 	mode &= FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_OPEN_ALWAYS | FA_CREATE_NEW;
@@ -2778,7 +2946,7 @@ FRESULT f_open (
 	res = find_volume(&dj.fs, &path, 0);
 #endif
 	// 	/USER/yang.txt
-	printf("%s: after find_volume(), path(%s)\r\n", __func__, path);
+	//printf("%s: after find_volume(), path(%s)\r\n", __func__, path);
 
 	if (res == FR_OK) {
 		INIT_BUF(dj);
@@ -2789,7 +2957,7 @@ FRESULT f_open (
 		dir.dir指向这个地址，从这个地址我们就要以读出
 		文件的大小，起始cluster*/
 		res = follow_path(&dj, path);	/* Follow the file path */
-		printf("%s: after follow_path, path=%s\r\n", __func__, path);
+		//printf("%s: after follow_path, path=%s\r\n", __func__, path);
 		dir = dj.dir;
 #if !_FS_READONLY	/* R/W configuration */
 		if (res == FR_OK) {
@@ -2809,24 +2977,26 @@ FRESULT f_open (
 #if _FS_LOCK
 					res = enq_lock() ? dir_register(&dj) : FR_TOO_MANY_OPEN_FILES;
 #else
-					printf("%s: file is't ezixt! dir_register a file, dj.sclust(%d)\r\n", __func__, dj.sclust);
+					//printf("%s: file is't ezixt! dir_register a file, dj.sclust(%d)\r\n", __func__, dj.sclust);
 					/*此时dj->sclust应该代表该文件要被创建的目录
 					如果是root 则dj->sclust = 0， 如果为子目录，肯定不
 					是为0， 也就是dj->sclust != 0*/
 					res = dir_register(&dj);
 #endif
-				mode |= FA_CREATE_ALWAYS;		/* File is created */
+				//mode |= FA_CREATE_ALWAYS;		/* File is created */
 				dir = dj.dir;					/* New entry */
 			}
 			else {								/* Any object is already existing */
 				if (dir[DIR_Attr] & (AM_RDO | AM_DIR)) {	/* Cannot overwrite it (R/O or DIR) */
 					res = FR_DENIED;
 				} else {
+					/*if use FA_CREATE_NEW and file exist, return FR_EXIST*/
 					if (mode & FA_CREATE_NEW)	/* Cannot create as new file */
 						res = FR_EXIST;
 				}
 			}
-			if (res == FR_OK && (mode & FA_CREATE_ALWAYS)) {	/* Truncate it if overwrite mode */
+			if (res == FR_OK && (mode & FA_CREATE_ALWAYS)) {	
+				/* Truncate it if overwrite mode */
 				/*如果是覆盖式的打开文件
 					有可能导致，旧文件被移除，也就是
 					要移除the directory item of old file, and it's cluster chain
@@ -2898,7 +3068,7 @@ FRESULT f_open (
 		FREE_BUF();
 
 		if (res == FR_OK) {
-			printf("%s: fp init!!! dj.index = %d\r\n", __func__, dj.index);			
+			//printf("%s: fp init!!! dj.index = %d\r\n", __func__, dj.index);			
 			fp->flag = mode;					/* File access mode */
 			fp->err = 0;						/* Clear error flag */
 			fp->sclust = ld_clust(dj.fs, dir);	/* File start cluster */
@@ -3570,12 +3740,12 @@ FRESULT f_opendir (
 		FREE_BUF();
 		if (res == FR_OK) {						/* Follow completed */
 			if (dp->dir) {						/* It is not the origin directory itself */
-				printf("%s: not only just /\r\n", __func__);
+				//printf("%s: not only just /\r\n", __func__);
 				if (dp->dir[DIR_Attr] & AM_DIR)	/* The object is a sub directory */
 				{
 					dp->sclust = ld_clust(fs, dp->dir);
-					printf("%s: The object is a sub directory, sclust(%d) \r\n", 
-						__func__, dp->sclust);
+					//printf("%s: The object is a sub directory, sclust(%d) \r\n", 
+					//	__func__, dp->sclust);
 				}
 				else							/* The object is a file */
 					res = FR_NO_PATH;
@@ -3583,8 +3753,8 @@ FRESULT f_opendir (
 			if (res == FR_OK) {
 				dp->id = fs->id;
 				res = dir_sdi(dp, 0);			/* Rewind directory */
-				printf("%s: dp->sclust(%d), dp->index(%d), dp->sect(%d)\r\n", 
-					__func__, dp->sclust, dp->index, dp->sect);				
+				//printf("%s: dp->sclust(%d), dp->index(%d), dp->sect(%d)\r\n", 
+				//	__func__, dp->sclust, dp->index, dp->sect);				
 #if _FS_LOCK
 				if (res == FR_OK) {
 					if (dp->sclust) {
@@ -4440,7 +4610,7 @@ FRESULT f_forward (
 /*-----------------------------------------------------------------------*/
 /* Create File System on the Drive                                       */
 /*-----------------------------------------------------------------------*/
-#define N_ROOTDIR	512		/* Number of root directory entries for FAT12/16 */
+#define N_ROOTDIR	16/*512*/		/* Number of root directory entries for FAT12/16 */
 #define N_FATS		1		/* Number of FAT copies (1 or 2) */
 
 /*
@@ -4501,11 +4671,13 @@ FRESULT f_mkfs (
 		n_vol = LD_DWORD(tbl+12);	/* Volume size */
 	} else {
 		/* Create a partition in this function */
-		if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &n_vol) != RES_OK || n_vol < 128)
+		printf("GET_SECTOR_COUNT\r\n");
+		if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &n_vol) != RES_OK || n_vol < /*128*/6)
 			return FR_DISK_ERR;
 		b_vol = (sfd) ? 0 : 63;		/* Volume start sector */
 		/*没有引导分区， b_vol = 0,    n_vol 为卷的扇区数目*/
 		n_vol -= b_vol;				/* Volume size */
+		printf("b_vol=%d\r\n", b_vol);
 	}
 
 	printf("%s: n_vol = %d\r\n", __func__ , n_vol );
@@ -5168,3 +5340,12 @@ int f_printf (
 
 #endif /* !_FS_READONLY */
 #endif /* _USE_STRFUNC */
+
+
+
+
+
+
+
+
+

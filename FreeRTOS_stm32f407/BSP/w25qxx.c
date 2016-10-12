@@ -2,8 +2,13 @@
 #include "spi.h"
 #include "delay.h"	   
 #include "usart.h"	
- 
-unsigned int FLASH_SIZE = 2*1024*1024;
+
+#if(BOARD_NUM == 1)	
+unsigned int FLASH_SIZE = 2 * 1024 * 1024;
+#elif(BOARD_NUM == 2)
+unsigned int FLASH_SIZE = 8 * 2 * 1024 * 1024;
+#endif
+
 /*FLASH 大小为2M字节*/
 
 u16 W25QXX_TYPE = W25Q16;	//默认是W25Q128
@@ -20,23 +25,30 @@ void W25QXX_Init( void )
   GPIO_InitTypeDef  GPIO_InitStructure;
  
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);//使能GPIOB时钟
-  //RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);//使能GPIOG时钟
-
+#if(BOARD_NUM == 2)
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);//使能GPIOG时钟
+#endif
 	//GPIOB0
+#if(BOARD_NUM == 1)	
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;//PB14  PB0 CS片选信号
+#elif(BOARD_NUM == 2)
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
+#endif
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;//输出
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;//推挽输出
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;//100MHz
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;//上拉
   GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
 
-	//GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;//PB7
-  //GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
-	//GPIO_SetBits(GPIOB,GPIO_Pin_7);//PB7输出1,防止NRF干扰SPI FLASH的通信
-	
+#if(BOARD_NUM == 2)
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;//PB7
+  	GPIO_Init(GPIOB, &GPIO_InitStructure);//初始化
+	GPIO_SetBits(GPIOB,GPIO_Pin_7);//PB7输出1,防止NRF干扰SPI FLASH的通信
+#endif
+
 	W25QXX_CS=1;			//SPI FLASH不选中
 	SPI1_Init();		   			//初始化SPI
-	SPI1_SetSpeed(SPI_BaudRatePrescaler_2);		//设置为42M时钟,高速模式 
+	SPI1_SetSpeed( SPI_BaudRatePrescaler_2 );		//设置为42M时钟,高速模式 
 	W25QXX_TYPE = W25QXX_ReadID();	//读取FLASH ID.
 	printf("%s: W25QXX_TYPE = 0X%X\r\n", __func__, W25QXX_TYPE);
 }  

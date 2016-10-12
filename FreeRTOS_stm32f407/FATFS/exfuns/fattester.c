@@ -283,7 +283,14 @@ u8 mf_scan_files(u8 * path)
 #else							   
         	fn = fileinfo.fname;
 #endif	                                              /* It is a file. */
-			printf("%s/", path);//打印路径	
+			if( dir.sclust == 0 )
+			{
+				printf("%s", path);
+			}
+			else
+			{
+				printf("%s/", path);//打印路径	
+			}
 			printf("%s\r\n",  fn);//打印文件名	  
 		} 
     }	  
@@ -293,50 +300,80 @@ u8 mf_scan_files(u8 * path)
     return res;	  
 }
 
-u8 mf_scan_files_(u8 * path)
+static char *prvWritePathToBuffer( char *pcBuffer, const char *pcPath , const char *pcFn )
+{
+	int x;
+	if( strlen( pcPath ) + strlen( pcFn ) < 30 )
+		strcpy( pcBuffer, pcPath );
+	strcpy( pcBuffer + strlen( pcBuffer ), pcFn );
+	for( x = strlen( pcBuffer ); x < ( int ) ( 30 ); x++ )
+	{
+		pcBuffer[ x ] = ' ';
+	}
+	pcBuffer[ x ] = 0x00;
+	return &( pcBuffer[ x ] );
+}
+
+u8 mf_scan_files_( char * path, char * buffer, int len )
 {
 	DIR dir;
 	FILINFO fileinfo;
-	//char name[90];
-	//FILINFO fno;
 	FRESULT res;	  
-    char *fn;   /* This function is assuming non-Unicode cfg. */
-#if _USE_LFN
+    char *fn = NULL, *pbuf = NULL;
+	
+#if _USE_LFN 
  	fileinfo.lfsize = _MAX_LFN * 2 + 1;
 	fileinfo.lfname = pvPortMalloc( fileinfo.lfsize );
 #endif		  
 
-    res = f_opendir(&dir,(const TCHAR*)path); //打开一个目录
-    if (res == FR_OK) 
+    res = f_opendir( &dir,(const TCHAR*) path );
+    if ( res == FR_OK ) 
 	{	
+		pbuf = buffer;
 		printf("\r\n"); 
-		while(1)
+		while( 1 )
 		{
-	        res = f_readdir(&dir, &fileinfo);                   //读取目录下的一个文件
-	        if (res != FR_OK || fileinfo.fname[0] == 0) break;  //错误了/到末尾了,退出
-	        //if (fileinfo.fname[0] == '.') continue;             //忽略上级目录
+	        res = f_readdir( &dir, &fileinfo ); 
+	        if ( res != FR_OK || fileinfo.fname[0] == 0 ) break; 
 #if _USE_LFN
         	fn = *fileinfo.lfname ? fileinfo.lfname : fileinfo.fname;
 #else							   
         	fn = fileinfo.fname;
-#endif	                                              /* It is a file. */
-			//memset(name, '\0', sizeof(name));
-			//sprintf( name, "%s/%s", path, fn );
-			//mf_stat_( (u8*) name, &fno );
-			//printf("%s/", path);//打印路径	
-			printf("%s/%s\t\t(%d)bytes\tAttribute(%d)\tLastModify(%d-%d-%d, %d:%d:%d)\r\n",
-				path, fn, fileinfo.fsize, fileinfo.fattrib, 
-				( fileinfo.fdate >> 9 ) + 1980,
-				( fileinfo.fdate & 0x1ff ) >> 5, 
-				fileinfo.fdate & 0x1f,
-				fileinfo.ftime >> 11,
-				( fileinfo.ftime & 0x7ff ) >> 5,
-				( fileinfo.ftime & 0x1f )*2 );	  
+#endif
+			memset( buffer, '\0', len );
+			if( dir.sclust != 0 )
+			{
+				path[ strlen( path ) ] = '/';
+				path[ strlen( path ) ] = '\0';
+				buffer = prvWritePathToBuffer( buffer, path, fn );
+				/*we must resume the path string*/
+				path[ strlen( path ) - 1 ] = '\0';				
+			}
+			else
+			{
+				buffer = prvWritePathToBuffer( buffer, path, fn );
+			}
+			sprintf( buffer, "\t %5d bytes\t %s\t "
+					"%02d-%02d-%02d %02d:%02d:%02d\r\n",
+					fileinfo.fsize, 
+					( ( fileinfo.fattrib >> 4 ) & 0x01 ) == 1 ? 
+					"dir" : ( ( fileinfo.fattrib >> 5 ) == 1 ? "file" : "unknow" ), 
+					( fileinfo.fdate >> 9 ) + 1980,
+					( fileinfo.fdate & 0x1ff ) >> 5, 
+					fileinfo.fdate & 0x1f,
+					fileinfo.ftime >> 11,
+					( fileinfo.ftime & 0x7ff ) >> 5,
+					( fileinfo.ftime & 0x1f )*2 );
+			printf("%s", pbuf);
+			buffer = pbuf;
+			
 		} 
     }	  
+	
 #if _USE_LFN		
 		vPortFree( fileinfo.lfname );
 #endif		
+
     return res;	  
 } 
 

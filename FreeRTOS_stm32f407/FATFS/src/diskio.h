@@ -13,11 +13,20 @@ extern "C" {
 #define _USE_IOCTL	1	/* 1: Enable disk_ioctl fucntion */
 
 #include "integer.h"
-
-#define FLASH_BLOCK_SIZE   	2     	
-//每个BLOCK有2个扇区		was 8 before
+#include "w25qxx.h" 
 
 #define FLASH_SECTOR_SIZE 	512		
+
+#if(BOARD_NUM == 1)
+#define FLASH_BLOCK_SIZE   	2    
+//每个block 有2个扇区
+#elif(BOARD_NUM == 2)
+#define FLASH_BLOCK_SIZE   	8    
+//每个block 有8个扇区
+#endif
+
+#define RAM_BLOCK_SIZE   	2     	
+#define RAM_SECTOR_SIZE 	512		
 
 /* Status of Disk Functions */
 typedef BYTE	DSTATUS;

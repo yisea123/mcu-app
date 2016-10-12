@@ -1,4 +1,3 @@
-
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -6,7 +5,6 @@
 #include "timers.h"
 #include "misc.h"
 #include "usart.h"
-
 #include "delay.h"
 #include "usmart.h"
 #include "led.h"
@@ -57,19 +55,25 @@ TaskHandle_t pxUsmartTask;
 
 int main(void)
 {
+	FIL file;
 	( void ) Software_Hardware_Init();
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_WRITE|FA_OPEN_EXISTING) == FR_OK )
+	{
+		f_printf( &file ,"%s: task running...\r\n", __func__);
+		f_close( &file );
+	}	
 	vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 
 	xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, NULL );		
 	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
-	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );	
-	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL );
-	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL );
-	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE+20, NULL, tskIDLE_PRIORITY + 4, &pxTimeTask );
-	xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE+30, NULL, tskIDLE_PRIORITY + 5, &pxTempretureTask );		
-	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
-	xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
+	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 2, NULL );	
+	xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 2, NULL );
+	xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 3, NULL );
+	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE*2+20, NULL, tskIDLE_PRIORITY + 4, &pxTimeTask );
+	xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE*2+30, NULL, tskIDLE_PRIORITY + 5, &pxTempretureTask );		
+	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE*2, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
+	//xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE*3, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
 
 	vTaskStartScheduler();
 }
@@ -88,10 +92,11 @@ void Software_Hardware_Init( void )
 	(void) RTC_INIT();
 	(void) LED_Init();
 	(void) EXTIX_Init();
-	(void) IWDG_Init( 4, 2000 ); //Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
-	(void) Adc_Init();         //ÄÚ²¿ÎÂ¶È´«¸ÐÆ÷ADC³õÊ¼»
+	(void) IWDG_Init( 4, 2000 ); 
+	//Óë·ÖÆµÊýÎª64,ÖØÔØÖµÎª1000,Òç³öÊ±¼äÎª2s	
+	(void) Adc_Init(); 
 	(void) W25QXX_Init();	
-	while( W25QXX_ReadID() != W25Q16 )								//¼ì²â²»µ½W25Q16
+	while( W25QXX_ReadID() != ( BOARD_NUM == 1 ? W25Q16 : W25Q128 ))
 	{
 		printf("W25Q128 Check Failed!\r\n");
 		delay_ms(5000);
@@ -112,25 +117,23 @@ void Software_Hardware_Init( void )
 		if( SD_Init() == 0 )
 		{
 			printf("SD Card Init Scueess!\r\n");
-			f_mount(fs[1], "0:", 1);
+			f_mount(fs[0], "0:", 1);
 			break;
 		}
 		printf("SD Card Error!\r\nPlease Check! \r\n");
 		//delay_ms(500);					
 	}	
 
- 	res = f_mount( fs[0], "1:", 1 ); 				//¹ÒÔØFLASH.	
-	if( res == 0X0D )
-	//FLASH´ÅÅÌ,FATÎÄ¼þÏµÍ³´íÎó,ÖØÐÂ¸ñÊ½»¯FLASH
+ 	res = f_mount( fs[1], "1:", 1 );
+	if( res == FR_NO_FILESYSTEM )
 	{
 		printf("Flash Disk Formatting...\r\n");
 		res = f_mkfs( "1:", 1, FLASH_BLOCK_SIZE*FLASH_SECTOR_SIZE );
-		//¸ñÊ½»¯FLASH,1,ÅÌ·û;1,²»ÐèÒªÒýµ¼Çø,8¸öÉÈÇøÎª1¸ö´Ø
 		if( res == 0 )
 		{
-			f_setlabel( (const TCHAR *) "1:FreeRTOS" );	//ÉèÖÃFlash´ÅÅÌµÄÃû×ÖÎª£ºALIENTEK
+			f_setlabel( (const TCHAR *) "1:Flash" );
 			printf("Flash Disk Format Finish\r\n");
-			res = f_mount( fs[0], "1:", 1 );
+			res = f_mount( fs[1], "1:", 1 );
 			if( res == FR_OK )
 			{
 				printf("mount flash fatfs success.\r\n");
@@ -144,9 +147,35 @@ void Software_Hardware_Init( void )
 		{
 			printf("Flash Disk Format Error\r\n");
 		}
-		//delay_ms(1000);
-	}		
-	mf_chdrive( "1:" );
+	}
+	
+ 	res = f_mount( fs[2], "2:", 1 );
+	if( res == 0X0D )
+	{
+		printf("Ram Disk Formatting...\r\n");
+		res = f_mkfs( "2:", 1, RAM_BLOCK_SIZE * RAM_SECTOR_SIZE );
+		if( res == 0 )
+		{
+			f_setlabel( (const TCHAR *) "2:RamDisk" );
+			printf("Ram Disk Format Finish\r\n");
+			res = f_mount( fs[2], "2:", 1 );
+			if( res == FR_OK )
+			{
+				printf("mount Ram fatfs success.\r\n");
+			}
+			else
+			{
+				printf("mount Ram fatfs Fail!\r\n");
+			}
+		}
+		else 
+		{
+			printf("Ram Disk Format Error\r\n");
+		}		
+	}
+	
+	//mf_chdrive( "1:" );
+	mf_chdrive( "2:" );	
 	mf_getcwd();
 }
 
@@ -157,12 +186,7 @@ void Software_Hardware_Init( void )
 void Read_Fatfs(void * pvParameters)
 {
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}
+
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -200,12 +224,7 @@ void Timer_func1( TimerHandle_t xTimer )
 void LED0_Task(void * pvParameters)
 {
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}	
+
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -231,12 +250,7 @@ void LED0_Task(void * pvParameters)
 void LED1_Task( void * pvParameters )
 {
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}		
+	
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -259,12 +273,7 @@ void Feed_Wdg_Task( void * pvParameters )
 {
 	TickType_t pxPreviousWakeTime;
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}		
+	
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -288,12 +297,7 @@ void Temprate_Task(void * pvParameters)
 {
 	short temp;
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}	
+
 	pre = uxTaskPriorityGet( NULL );
 	
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
@@ -331,12 +335,7 @@ void Printf_Log_Task(void * pvParameters)
 	int len;
 
 	UBaseType_t pre;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}		
+	
 	pre = uxTaskPriorityGet( NULL );
 	//MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
 	/*mLogSemaphore create as has value, take it.*/
@@ -377,13 +376,7 @@ void Printf_Log_Task(void * pvParameters)
 void Key_Detect_Task(void * pvParameters)
 {
 	int count = 0;
-	unsigned int random;	
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}		
+	unsigned int random;			
 	printf("%s ...\r\n", __func__);	
 	vSetTaskLogLevel(NULL, eLogLevel_0);
 
@@ -480,13 +473,14 @@ void RTC_read_Task(void * pvParameters)
 	unsigned char year,month,date,week;
 	unsigned char tbuf[40];
 	TickType_t pxPreviousWakeTime;
-	FIL file;
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_OPEN_ALWAYS) == FR_OK )
+/*	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_WRITE|FA_OPEN_ALWAYS ) == FR_OK )
 	{
+		f_lseek( &file, file.fsize );
 		f_printf( &file ,"%s: task running...\r\n", __func__);
 		f_close( &file );
 	}	
-	printf("%s ...\r\n", __func__);	
+*/	printf("%s ...\r\n", __func__);	
 	vSetTaskLogLevel(NULL, eLogLevel_1);	
 	pxPreviousWakeTime = xTaskGetTickCount();
 	
@@ -512,6 +506,21 @@ void RTC_read_Task(void * pvParameters)
 const u8 TEXT_Buffer[]={"Explorer STM32F4 SPI TEST"};
 #define SIZE  sizeof(TEXT_Buffer)	 
 u8 datatemp[SIZE];
+
+void saveStringToLog( const char *string )
+{
+	FIL file;
+	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_WRITE|FA_OPEN_ALWAYS ) == FR_OK )
+	{
+		f_lseek( &file, file.fsize );
+		f_printf( &file ,"%s", string);
+		f_close( &file );
+	}
+	else
+	{
+		printf("%s: f_open file 1:/log.txt fail!\r\n", __func__ );
+	}
+}
 
 void Save_String_To_Flash( unsigned int addr, const char *data )
 {

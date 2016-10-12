@@ -11,9 +11,13 @@
 #error This file is not needed in current configuration. Remove from the project.
 #endif
 
+#define NEED_TO_BURN_DATA	0
+
+#if( NEED_TO_BURN_DATA == 1 )								
+
 static
 const WCHAR uni2oem[] = {
-/*  Unicode - OEM,  Unicode - OEM,  Unicode - OEM,  Unicode - OEM */
+//  Unicode - OEM,  Unicode - OEM,  Unicode - OEM,  Unicode - OEM 
 	0x00A4, 0xA1E8, 0x00A7, 0xA1EC, 0x00A8, 0xA1A7, 0x00B0, 0xA1E3,
 	0x00B1, 0xA1C0, 0x00B7, 0xA1A4, 0x00D7, 0xA1C1, 0x00E0, 0xA8A4,
 	0x00E1, 0xA8A2, 0x00E8, 0xA8A8, 0x00E9, 0xA8A6, 0x00EA, 0xA8BA,
@@ -5467,7 +5471,7 @@ const WCHAR uni2oem[] = {
 
 static
 const WCHAR oem2uni[] = {
-/*	OEM - Unicode,  OEM - Unicode,  OEM - Unicode,  OEM - Unicode */
+//	OEM - Unicode,  OEM - Unicode,  OEM - Unicode,  OEM - Unicode 
 	0x0080, 0x20AC, 0x8140, 0x4E02, 0x8141, 0x4E04, 0x8142, 0x4E05,
 	0x8143, 0x4E06, 0x8144, 0x4E0F, 0x8145, 0x4E12, 0x8146, 0x4E17,
 	0x8147, 0x4E1F, 0x8148, 0x4E20, 0x8149, 0x4E21, 0x814A, 0x4E23,
@@ -10918,39 +10922,239 @@ const WCHAR oem2uni[] = {
 	0xFE4C, 0xFA24, 0xFE4D, 0xFA27, 0xFE4E, 0xFA28, 0xFE4F, 0xFA29,
 	0, 0
 };
+#endif
 
+#include <stdio.h>
+#include "stmflash.h"
+extern void IWDG_Feed(void);
 
+#if( NEED_TO_BURN_DATA == 1 )
+void Flash_Read_Cc936(unsigned int addr )
+{
+	unsigned int destination = addr;
+	unsigned short value1, value2;
+	unsigned int i = 0, value ;
+	printf("%s: read enter.\r\n", __func__);
+
+	while( 1 )
+	{
+	  i++;
+	  STMFLASH_Read(destination, &value, 1);
+	  destination += 4;
+	  value2 = value >> 16;
+	  value1 = value & 0xffff;
+	  printf(" 0x%04X, 0x%04X,", value2, value1);  
+	  if( i % 4 == 0 )
+	  {
+	  	IWDG_Feed();
+	  	printf("\r\n");
+	  }
+	  if( i == 120 )
+	  	break;
+	}
+}
+
+void Flash_Wirte_Cc936( const unsigned short oem2uni[], int len, unsigned int  addr)
+{
+		unsigned int value, i = 0;
+		unsigned int preDestination, destination = addr;
+		
+		if( destination == addr )
+		{
+			FLASH_If_Erase_Sector( destination );
+		}
+
+		printf("%s: write enter.\r\n", __func__);
+		while( 1 )
+		{
+			value = oem2uni[2*i] << 16 | oem2uni[2*i+1];
+			preDestination = destination;
+			IWDG_Feed();
+			destination = STMFLASH_Write(destination, &value, 1);
+			if( destination == preDestination + sizeof(unsigned int) )
+			{
+				i++;
+				len -= 4;
+			}
+			else
+			{
+				printf("Flash write Fail!\r\n");
+				break;
+			}
+			if( len == 0 )
+			{
+				printf("%s: write (%d) bytes ok\r\n", __func__, len);
+				Flash_Read_Cc936( addr );
+				break;
+			}
+		}			
+}
+#endif
+
+#if( NEED_TO_BURN_DATA == 0 )
+
+char Flash_Check_Cc936( void )
+{
+	char ret = 0;
+	unsigned int i, value, destination;
+	unsigned short value1, value2, 
+		checkData6[] = { 
+						0x00A4, 0xA1E8, 
+						0x00A7, 0xA1EC, 
+					   	0x00A8, 0xA1A7, 
+					   	0x00B0, 0xA1E3 
+		},
+		checkData7[] = { 
+						0x0080, 0x20AC, 
+						0x8140, 0x4E02, 
+						0x8141, 0x4E04, 
+						0x8142, 0x4E05
+		};
+
+	i = 0;
+	destination = ADDR_FLASH_SECTOR_6;
+	
+	while( 1 )
+	{
+	  STMFLASH_Read(destination, &value, 1);
+	  value2 = value >> 16;
+	  value1 = value & 0xffff;
+	  ( void ) IWDG_Feed();
+	  
+	  if( destination < ADDR_FLASH_SECTOR_7 )
+	  {
+	  	if( value2 != checkData6[ 2 * i ] || value1 != checkData6[ 2 * i + 1 ])
+		{
+			ret = 1;
+			break;
+	  	}
+	  }
+	  else if( destination >= ADDR_FLASH_SECTOR_7 )
+	  {
+		  if( value2 != checkData7[ 2 * ( i - 4 ) ] || value1 != checkData7[ 2 * ( i - 4 ) + 1 ])
+		  {
+			  ret = 1;
+			  break;
+		  }
+
+	  }
+	  
+	  i++;  
+	  destination += 4;	  
+	  if( i == 4 )
+	  {
+		destination = ADDR_FLASH_SECTOR_7;
+	  }
+	  else if( i == 8 )
+	  {
+		break;
+	  }
+	}
+
+	return ret;
+}
+
+unsigned short getCc936StaticShort( unsigned int addr, int index )
+{
+	unsigned short sVal;
+	unsigned int value;
+
+	//0001 0203 | 0405 0607 | 0809  1011 | 1213 1415 |1617 1819 | ...
+	if( index % 2 == 0 )
+	{
+		STMFLASH_Read(addr + index * 2, &value, 1);
+		sVal = value >> 16;
+	}
+	else
+	{
+		if( index == 1 )
+		{
+			STMFLASH_Read(addr, &value, 1);
+			sVal = value & 0xffff;
+		}
+		else
+		{
+			STMFLASH_Read(addr + ( index - 3 ) * 2 + 4, &value, 1);
+			sVal = value & 0xffff;
+		}
+	}
+
+	return sVal;
+}
+
+#endif
 
 WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	WCHAR	chr,	/* Character code to be converted */
 	UINT	dir		/* 0: Unicode to OEMCP, 1: OEMCP to Unicode */
 )
 {
-	const WCHAR *p;
+	unsigned int addr;
 	WCHAR c;
 	int i, n, li, hi;
-
-
+#if( NEED_TO_BURN_DATA == 1 )
+	const WCHAR *p;
+	static char burn = 0;
+	
+	if( !burn )
+	{
+		burn = 1;
+		Flash_Wirte_Cc936(uni2oem, sizeof( uni2oem ), ADDR_FLASH_SECTOR_6);
+		Flash_Wirte_Cc936(oem2uni, sizeof( oem2uni ), ADDR_FLASH_SECTOR_7);
+	}
+#endif
+	static char check = 0;
+	if( !check )
+	{
+		check = 1;
+		if( 0 != Flash_Check_Cc936() )
+		{
+			printf("%s: Flash data error!!!! need to burn CC936 Data!!!!\r\n", __func__);
+		}
+		else
+		{
+			printf("CC936 Data in Flash Check Ok!\r\n");
+		}
+	}
 	if (chr < 0x80) {	/* ASCII */
 		c = chr;
 	} else {
 		if (dir) {		/* OEMCP to unicode */
+#if( NEED_TO_BURN_DATA == 1 )			
 			p = oem2uni;
 			hi = sizeof(oem2uni) / 4 - 1;
+#else			
+			hi = 21792;
+			addr = ADDR_FLASH_SECTOR_7;
+#endif
 		} else {		/* Unicode to OEMCP */
+#if( NEED_TO_BURN_DATA == 1 )					
 			p = uni2oem;
 			hi = sizeof(uni2oem) / 4 - 1;
+#else				
+			hi = 21792;
+			addr = ADDR_FLASH_SECTOR_6;
+#endif
 		}
 		li = 0;
 		for (n = 16; n; n--) {
 			i = li + (hi - li) / 2;
-			if (chr == p[i * 2]) break;
-			if (chr > p[i * 2])
+#if( NEED_TO_BURN_DATA == 1 )						
+			if ( chr == p[i * 2] ) break;
+			if ( chr > p[i * 2] )
+#else
+			if ( chr == getCc936StaticShort( addr, i * 2 ) ) break;
+			if ( chr > getCc936StaticShort( addr, i * 2 ) )
+#endif
 				li = i;
 			else
 				hi = i;
 		}
+#if( NEED_TO_BURN_DATA == 1 )								
 		c = n ? p[i * 2 + 1] : 0;
+#else
+		c = n ? getCc936StaticShort( addr, i * 2 + 1 ) : 0;
+#endif
 	}
 
 	return c;
