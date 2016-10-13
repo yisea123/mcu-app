@@ -260,6 +260,9 @@ u8 mf_readdir(void)
  //返回值:执行结果
 u8 mf_scan_files(u8 * path)
 {
+#if !_USE_LFN 
+	int i = 0;
+#endif
 	DIR dir;
 	FILINFO fileinfo;
 	FRESULT res;	  
@@ -283,6 +286,32 @@ u8 mf_scan_files(u8 * path)
 #else							   
         	fn = fileinfo.fname;
 #endif	                                              /* It is a file. */
+#if !_USE_LFN 
+			i = 0;
+			while( path[i] != '\0' )
+			{
+				if( path[i] >= 0x41 && path[i] <= 0x5a )
+					path[i] += 0x20;
+				i++;
+				if( i >= 200 )
+				{
+					printf("%s: error!!\r\n", __func__);
+					return 3;
+				}
+			}
+			i = 0;
+			while( fn[i] != '\0' )
+			{
+				if( fn[i] >= 0x41 && fn[i] <= 0x5a )
+					fn[i] += 0x20;
+				i++;
+				if( i >= 13 )
+				{
+					printf("%s: error!!\r\n", __func__);
+					return 3;
+				}
+			}
+#endif
 			if( dir.sclust == 0 )
 			{
 				printf("%s", path);
@@ -316,6 +345,7 @@ static char *prvWritePathToBuffer( char *pcBuffer, const char *pcPath , const ch
 
 u8 mf_scan_files_( char * path, char * buffer, int len )
 {
+	int i = 0;
 	DIR dir;
 	FILINFO fileinfo;
 	FRESULT res;	  
@@ -353,11 +383,24 @@ u8 mf_scan_files_( char * path, char * buffer, int len )
 			{
 				buffer = prvWritePathToBuffer( buffer, path, fn );
 			}
-			sprintf( buffer, "\t %5d bytes\t %s\t "
+			i = 0;
+			while( pbuf[i] != '\0' )
+			{
+				if( pbuf[i] >= 0x41 && pbuf[i] <= 0x5a )
+					pbuf[i] += 0x20;
+				i++;
+				if( i >= len )
+				{
+					printf("%s: error!!\r\n", __func__);
+					return 3;
+				}
+			}
+			
+			sprintf( buffer, "\t%8d bytes\t %s\t "
 					"%02d-%02d-%02d %02d:%02d:%02d\r\n",
 					fileinfo.fsize, 
 					( ( fileinfo.fattrib >> 4 ) & 0x01 ) == 1 ? 
-					"dir" : ( ( fileinfo.fattrib >> 5 ) == 1 ? "file" : "unknow" ), 
+					"DIR" : ( ( fileinfo.fattrib >> 5 & 0x01 ) == 1 ? "FIL" : "unknow" ), 
 					( fileinfo.fdate >> 9 ) + 1980,
 					( fileinfo.fdate & 0x1ff ) >> 5, 
 					fileinfo.fdate & 0x1f,

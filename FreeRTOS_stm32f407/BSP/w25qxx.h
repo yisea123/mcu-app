@@ -2,7 +2,7 @@
 #define __W25QXX_H			    
 #include "sys.h"  
 
-#define BOARD_NUM	1		
+#define BOARD_NUM	2		
 // 1:W25Q16    2:W25Q128
 	
 extern unsigned int FLASH_SIZE;

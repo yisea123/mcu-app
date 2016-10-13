@@ -11,7 +11,7 @@
 #error This file is not needed in current configuration. Remove from the project.
 #endif
 
-#define NEED_TO_BURN_DATA	0
+#define NEED_TO_BURN_DATA	0  //1  0
 
 #if( NEED_TO_BURN_DATA == 1 )								
 
@@ -10991,8 +10991,6 @@ void Flash_Wirte_Cc936( const unsigned short oem2uni[], int len, unsigned int  a
 }
 #endif
 
-#if( NEED_TO_BURN_DATA == 0 )
-
 char Flash_Check_Cc936( void )
 {
 	char ret = 0;
@@ -11054,6 +11052,8 @@ char Flash_Check_Cc936( void )
 	return ret;
 }
 
+#if( NEED_TO_BURN_DATA == 0 )
+
 unsigned short getCc936StaticShort( unsigned int addr, int index )
 {
 	unsigned short sVal;
@@ -11089,9 +11089,13 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	UINT	dir		/* 0: Unicode to OEMCP, 1: OEMCP to Unicode */
 )
 {
+#if( NEED_TO_BURN_DATA == 0 )
 	unsigned int addr;
+#endif
 	WCHAR c;
 	int i, n, li, hi;
+	static char check = 0;
+	
 #if( NEED_TO_BURN_DATA == 1 )
 	const WCHAR *p;
 	static char burn = 0;
@@ -11103,7 +11107,7 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 		Flash_Wirte_Cc936(oem2uni, sizeof( oem2uni ), ADDR_FLASH_SECTOR_7);
 	}
 #endif
-	static char check = 0;
+
 	if( !check )
 	{
 		check = 1;
@@ -11175,3 +11179,54 @@ WCHAR ff_wtoupper (	/* Upper converted character */
 
 	return tbl_lower[i] ? tbl_upper[i] : chr;
 }
+
+#ifdef 	MY_FF_CONVERT
+
+WCHAR ff_convert (	/* Converted code, 0 means conversion error */
+	WCHAR	src,	/* Character code to be converted */
+	UINT	dir		/* 0: Unicode to OEMCP, 1: OEMCP to Unicode */
+)
+{
+	
+	WCHAR c;
+	
+#if 0
+	WCHAR t[2];
+	
+	u32 i, li, hi;
+	u16 n;			 
+	u32 gbk2uni_offset=0;		  
+#endif				  
+	if (src < 0x80)c = src;//ASCII,直接不用转换.
+	
+#if 0
+	else 
+	{
+ 		if(dir)	//GBK 2 UNICODE
+		{
+			gbk2uni_offset=ftinfo.ugbksize/2;	 
+		}else	//UNICODE 2 GBK  
+		{   
+			gbk2uni_offset=0;	
+		}    
+		/* Unicode to OEMCP */
+		hi=ftinfo.ugbksize/2;//对半开.
+		hi =hi / 4 - 1;
+		li = 0;
+		for (n = 16; n; n--)
+		{
+			i = li + (hi - li) / 2;	
+			//W25QXX_Read((u8*)&t,ftinfo.ugbkaddr+i*4+gbk2uni_offset,4);//读出4个字节  
+			if (src == t[0]) break;
+			if (src > t[0])li = i;  
+			else hi = i;    
+		}
+		c = n ? t[1] : 0;  	    
+	}
+#endif
+	return c;
+}	
+
+#endif
+
+

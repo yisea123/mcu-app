@@ -4207,7 +4207,7 @@ TCB_t *pxTCB;
 
 				/* Write the rest of the string. */
 				#if( INCLUDE_xTaskLogLevel == 1 )	
-				sprintf( pcWriteBuffer, "\t%c\t%u\t%u\t%u\t%u\r\n", cStatus, ( unsigned int ) pxTaskStatusArray[ x ].uxCurrentPriority, 
+				sprintf( pcWriteBuffer, "\t%c\t%02u\t%03u\t   %02u\t%02u\r\n", cStatus, ( unsigned int ) pxTaskStatusArray[ x ].uxCurrentPriority, 
 					( unsigned int ) pxTaskStatusArray[ x ].usStackHighWaterMark, 
 					( unsigned int ) pxTaskStatusArray[ x ].xTaskNumber, 
 					( unsigned int ) pxTaskStatusArray[ x ].eLogLevel	);

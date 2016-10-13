@@ -32,6 +32,71 @@ static char xcInit = 0;
 static u16	RAM_DISK_SECTOR_COUNT = 60;
 static char pcRamdisk[ 10 * 1024 ];
 
+void vPrintSdDisk( unsigned int sector )
+{
+	char *p;
+	int i = 0;
+	unsigned char buff[512];
+	
+	memset( buff, 0, sizeof( buff ) );
+	if( 0 == SD_ReadDisk( buff, sector, 1 ) )
+	{
+		printf("\r\nStart SD Card sector(%d)\r\n", sector );
+		printf("	  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\r\n");
+		printf("\r\n");
+		for( i = 0 ; i < 512/16 ; i++ )
+		{
+			p = ( char * ) buff + i * 16;
+			if( ( i % 2 ) == 0 )
+			{
+				printf("%02X:	  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\r\n", 
+					i, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
+					 p[10], p[11], p[12], p[13], p[14], p[15]);
+			}
+			else
+			{
+				printf("	  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\r\n", 
+					p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
+					 p[10], p[11], p[12], p[13], p[14], p[15]);
+			}
+		}	
+	}
+	else
+	{
+		printf("%s: read sd card fail!\r\n", __func__);
+	}
+}
+
+void vPrintFlashDisk( unsigned int sector )
+{
+	char *p;
+	int i = 0;
+	unsigned char buff[512];
+	memset( buff, 0, sizeof( buff ) );
+	
+	printf("\r\nStart Flash sector(%d)\r\n", sector );
+	printf("	  00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f\r\n");
+	printf("\r\n");
+	W25QXX_Read( buff, sector * FLASH_SECTOR_SIZE, FLASH_SECTOR_SIZE );
+	
+	for( i = 0 ; i < 512/16 ; i++ )
+	{
+		p = ( char * ) buff + i * 16;
+		if( ( i % 2 ) == 0 )
+		{
+			printf("%02X:	  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\r\n", 
+				i, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
+				 p[10], p[11], p[12], p[13], p[14], p[15]);
+		}
+		else
+		{
+			printf("	  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\r\n", 
+				p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9],
+				 p[10], p[11], p[12], p[13], p[14], p[15]);
+		}
+	}	
+}
+
 void vPrintRamdDisk( unsigned int sector )
 {
 	char *p;

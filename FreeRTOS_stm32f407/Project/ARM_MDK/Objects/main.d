@@ -73,4 +73,7 @@
 .\objects\main.o: ..\..\FATFS\src\integer.h
 .\objects\main.o: ..\..\FATFS\src\ffconf.h
 .\objects\main.o: ..\..\FATFS\exfuns\fattester.h
+.\objects\main.o: ..\..\BSP\wm8978.h
+.\objects\main.o: ..\..\USER\audioplay.h
+.\objects\main.o: ..\..\USER\wavplay.h
 .\objects\main.o: ..\..\FATFS\src\diskio.h

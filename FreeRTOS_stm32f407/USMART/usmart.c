@@ -14,9 +14,13 @@
 extern Ringfifo mLogFifo;
 extern TaskHandle_t pxTimeTask;
 extern TaskHandle_t pxTempretureTask;
+extern FATFS *fs[_VOLUMES];
+
 extern void Printf_Application_Version( void );
 extern void vPrintRamdDisk( unsigned int sector );
-
+extern void vPrintFlashDisk( unsigned int sector );
+extern void vPrintSdDisk( unsigned int sector );
+	
 typedef enum
 {
 	ROOT = 0,
@@ -47,27 +51,215 @@ u8 USART_RX_BUF[USART_REC_LEN];
 char buff[128];
 static unsigned int destination = ADDR_FLASH_SECTOR_7;
 
+void Fatfs_Copy_File( char *str )
+{
+	unsigned int br, wr;
+	int i = 0;
+	FILINFO fno;	
+	FIL sfile, dfile;
+	char name[15];
+	memset( name, 0, sizeof(name) );
+	//cp 1:/user.txt 	0:/
+	while( *str == ' ' )
+		str++;
+	
+	printf("1 str(%s)\r\n", str);
+	memset(buff, 0, sizeof(buff) );
+	while( *str != ' ' )
+	{
+
+		if( i >= sizeof(buff) )
+		{
+			printf("file path is too long.\r\n");
+			return;
+		}
+		buff[i] = *str;
+		str++;
+		i++;
+	}
+
+	if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+	{				
+		if( ( fno.fattrib >> 5 & 0x01 ) == 1 && 
+			f_open( &sfile, (const TCHAR*) buff, FA_READ ) 
+			== FR_OK)
+		{
+			memcpy( name, fno.fname , strlen( fno.fname ) );
+			printf("file path (%s) open scuess!\r\n", buff);
+		}
+		else
+		{
+			printf("file path error!\r\n");
+			return ;
+		}
+	}	
+	else
+	{
+		printf("file path error!\r\n");
+		return ;
+	}
+
+	while( *str == ' ')
+		str++;	
+
+	i = 0;
+	printf("2 str(%s)\r\n", str);
+	memset( buff, 0, sizeof( buff ) );
+	while( *str != ' ' && *str != '\0' )
+	{
+
+		if( i >= sizeof( buff ) )
+		{
+			printf("##file path is too long.\r\n");
+			f_close(&sfile);
+			return;
+		}
+		buff[i] = *str;
+		str++;
+		i++;
+	}
+	if( buff[ i - 1] == '/' )
+	{
+		sprintf( buff + strlen( buff ), "%s", name );
+	}
+	printf("destination path(%s)", buff);
+
+	if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+	{	
+		printf("#file path(%s) exzit.\r\n", buff );
+		f_close(&sfile);
+		return;
+	}
+	else
+	{
+		if( f_open( &dfile, (const TCHAR*) buff, FA_WRITE | FA_CREATE_NEW ) == FR_OK)
+		{
+			while( FR_OK == f_read(&sfile, pBuf, sizeof(pBuf)/2, &br) )
+			{
+				f_write(&dfile, pBuf, br, &wr);
+				if( br != wr )
+				{
+					printf("f_write dfile fail. please check df\r\n");
+					f_close(&sfile);
+					f_close(&dfile);
+					return;
+				}
+				if( br < sizeof(pBuf)/2 )
+				{
+					printf("copy finish\r\n");
+					f_close(&sfile);
+					f_close(&dfile);	
+					return;
+				}
+			}
+
+			printf("f_read sfile fail.\r\n");
+			f_close(&sfile);
+			f_close(&dfile);
+		}
+		else
+		{
+			printf("open path(%s) fail.\r\n", buff );
+			f_close(&sfile);				
+		}
+	}
+}
+
+void Fatfs_Informantion( )
+{
+	int i;
+	FATFS *pf;
+
+	for( i = 0; i < _VOLUMES ; i++ )
+	{	
+		pf = fs[i];
+		if( pf )
+		{
+			printf("***************************************\r\n");
+			printf("Physical drive number (%d)\r\n", pf->drv);
+			printf("fat type (%s)\r\n", pf->fs_type==1?"fat12":
+				(pf->fs_type==2?"fat16":(pf->fs_type==3?"fat32":"unknow")));
+			printf("Sectors per cluster  (%d)\r\n", pf->csize);
+			printf("Number of FAT copies (%d)\r\n", pf->n_fats);
+			printf("File system mount ID (%d)\r\n", pf->id);
+			printf("Number of root directory entries (FAT12/16) (%d)\r\n", pf->n_rootdir);
+			printf("Last allocated cluster  (%u)\r\n", pf->last_clust);
+			printf("Number of free clusters (%u)\r\n", pf->free_clust);
+			printf("Number of FAT entries, = number of clusters + 2 (%d)\r\n", pf->n_fatent);
+			printf("Sectors per FAT (%d)\r\n", pf->fsize);
+			printf("Volume start sector (%d)\r\n", pf->volbase);
+			printf("FAT start sector (%d)\r\n", pf->fatbase);
+			printf("Root directory start sector (FAT32:Cluster#) (%d)\r\n", pf->dirbase);
+			printf("Data start sector (%d)\r\n", pf->database);
+		}
+	}
+}
+
 void Fatfs_Dump_Ram( char *str )
 {
 	int sector;
 	char tmp[12];
-	#define IsDigit(c)	(((c)>='0')&&((c)<='9'))
+	int index = -1;
+	#define IsDigit(c)	( ( (c) >= '0' ) && ( (c) <= '9' ) )
 	
 	while( *str == ' ')
 		str++;
+	//dump ram 0
+	//dump flash 1
+	//printf("str(%s)\r\n", str);
 
-	memset( tmp, '\0', sizeof(tmp) );
-	memcpy( tmp, str, strlen( str ));
+	if( memcmp( str, "sd", strlen( "sd" ) )  == 0 )
+	{
+		index = 0;
+	}
+	else if( memcmp( str, "flash", strlen( "flash" ) )  == 0 )
+	{
+		index = 1;
+	}
+	else if( memcmp( str, "ram", strlen( "ram" ) )  == 0 )
+	{
+		index = 2;
+	}
+	else
+	{
+		printf("command error! dump sd/flash/ram num\r\n");
+		return;
+	}
+
+	while( *str != ' ' )
+		str++;
+	while( *str == ' ')
+		str++;
+	
+	memset( tmp, '\0', sizeof( tmp ) );
+	memcpy( tmp, str, sizeof( tmp ));
+	
 	while( *str != '\0' )
 	{
 		if( !IsDigit( *str ) )
 		{
 			printf("%s: command error! dump + sector number\r\n", __func__);
+			return;
 		}
 		str++;
 	}
 	sector = atoi( tmp );
-	vPrintRamdDisk( sector );
+
+	switch( index )
+	{
+		case 0:
+			vPrintSdDisk( sector );
+			break;
+		case 1:
+			vPrintFlashDisk( sector );
+			break;
+		case 2:
+			vPrintRamdDisk( sector );
+			break;
+		default:
+			printf("command error! dump sd/flash/ram num\r\n");
+			break;
+	}
 }
 
 void Fatfs_Get_Volume_Free( char *str )
@@ -387,7 +579,6 @@ void Fatfs_Cat_File( char *str )
 	UINT br;
 	//UBaseType_t pre;
 
-	char *buffer;	
 	while( *str == ' ')
 		str++;
 	
@@ -435,19 +626,24 @@ void Fatfs_Cat_File( char *str )
 			//printf("%s: fno.fsize = %d\r\n", __func__, fno.fsize);
 			if( fno.fsize > 0 && f_open( &file, (const TCHAR*)buff, FA_READ) == FR_OK )
 			{
-				buffer = pvPortMalloc( fno.fsize );
-				if( buffer )
+				while( 1 )
 				{
-					if( f_read(&file, buffer, fno.fsize, &br) == FR_OK ) 
+					u8 res = 0;
+					memset( pBuf, 0, sizeof( pBuf ) );
+					res = f_read( &file, pBuf, 512, &br );
+					if( res )
 					{
-						//printf("cat result:\r\n");
-						printf("%s\n", buffer);
+						printf("Read Error:%d\r\n",res);
+						break;
 					}
 					else
 					{
-						printf("%s: f_read error!\r\n", __func__);
+						printf("%s", pBuf); 
+						if( br < 512 )
+						{
+							break;
+						}
 					}
-					vPortFree( buffer );
 				}
 				f_close( &file );
 			}
@@ -584,7 +780,7 @@ void Fatfs_Change_Dir( char *str )
 void Flash_Wirte_Test( void )
 {
 		static unsigned int value = 0x1010;
-		unsigned int preDestination, temp = ADDR_FLASH_SECTOR_7, tmpValue;
+		unsigned int preDestination, temp = ADDR_FLASH_SECTOR_5, tmpValue;
 		
 		do 
 		{
@@ -1006,6 +1202,8 @@ u8 *sys_cmd_tab[]=
 	"df",
 	"ll",
 	"dump",
+	"fatfs",
+	"cp",
 };	    
 
 /*
@@ -1082,7 +1280,10 @@ UBaseType_t pre;
 			printf("echo: 	append contents to file, use as: echo xxx > file_path.\r\n");
 			printf("touch: 	create a zero size file, use as: touch + file_path.\r\n");
 			printf("mount: 	chang driver for fatfs current dir, use as: mount + sd/flash/ram.\r\n");
-			printf("dump: 	dump sector data for ram disk, use as: dump + sector number.\r\n");
+			printf("dump: 	dump sector data for sd/flash/ram disk, use as: dump + sector number.\r\n");
+			printf("fatfs: 	dump all system Fatfs struct information.\r\n");
+			printf("cp: 	copy file to dir, use cp file_path + dir_path.\r\n");
+
 			printf("----------------Fatfs---------------\r\n");		
  
 			//printf("--------------------------------------------- \r\n");
@@ -1253,9 +1454,11 @@ UBaseType_t pre;
 			( void ) Set_Os_Log_Level((char *)str);
 			break;		
 		case 24:
+			/*
 			( void ) Flash_Read_Test();
 			( void ) Flash_Wirte_Test();
-			( void ) Flash_Read_Test();		
+			( void ) Flash_Read_Test();	
+			*/
 			break;			
 		case 25:
 			mf_getcwd();
@@ -1293,6 +1496,12 @@ UBaseType_t pre;
 			break;
 		case 36:
 			Fatfs_Dump_Ram( (char *) str );
+			break;
+		case 37:
+			Fatfs_Informantion( );
+			break;	
+		case 38:
+			Fatfs_Copy_File( (char *) str );
 			break;
 		/*Add For FreeRTOS*/
 		default://·Ç·¨Ö¸Áî
@@ -1526,12 +1735,35 @@ void usmart_scan( int uart1DataLen )
 	{
 		rfifo_get( &uart1fifo, USART_RX_BUF + index, 1 );
 
+		//printf("%02x ", USART_RX_BUF[index]);
+
 		if( index >= 2 && 
-			( USART_RX_BUF[index] == 0x41 ||
+			( USART_RX_BUF[index] == 0x44 ||
+			USART_RX_BUF[index] == 0x43 ||
+			USART_RX_BUF[index] == 0x41 ||
 			USART_RX_BUF[index] == 0x42 ) && 
 			USART_RX_BUF[index-1] == 0x5b &&
 			USART_RX_BUF[index-2] == 0x1b )
 		{
+			if( USART_RX_BUF[index] == 0x44 )
+			{
+				/*avoid right and left*/
+				printf("%c", 0x44);
+				printf("%c", 0x1b);
+				printf("%c", 0x5b);
+				printf("%c", 0x43);
+				index -= 2;
+				return;
+			}
+			if( USART_RX_BUF[index] == 0x43 )
+			{
+				printf("%c", 0x43);
+				printf("%c", 0x1b);
+				printf("%c", 0x5b);
+				printf("%c", 0x44);
+				index -= 2;
+				return;
+			}			
 			if( listLIST_IS_EMPTY( &xCommandRecordList ) != pdFALSE )
 			{
 				printf(" ");				

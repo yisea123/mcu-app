@@ -2703,6 +2703,20 @@ Start Addr: 2000f160, sector(3)
 1E:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 1F:       00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
 
+
+f_mount: path = 0:
+f_mount: vol = 0, path = 0:
+find_volume: Number of FAT copies fs->n_fats(2)
+find_volume: Number of sectors for FAT area fasize(7616)
+find_volume: Number of sectors per cluster fs->csize(64)
+find_volume: fs->n_rootdir(0)
+find_volume: fmt(3), FS_FAT12=1 FS_FAT16=2, FS_FAT32=3
+find_volume: Number of FAT entries(=Number of clusters+2)fs->n_fatent(487298)
+find_volume: Volume start sector fs->volbase(8192)
+find_volume: FAT start sector fs->fatbase(8768)
+find_volume: Root directory start sector fs->dirbase(2)
+find_volume: Data start sector fs->database(16384)
+
 */
 
 	return FR_OK;
