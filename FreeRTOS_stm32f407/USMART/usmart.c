@@ -10,6 +10,7 @@
 #include "fattester.h"	 
 #include "ff.h"
 #include "string.h"
+#include "wavplay.h" 
 
 extern Ringfifo mLogFifo;
 extern TaskHandle_t pxTimeTask;
@@ -1108,8 +1109,10 @@ void Printf_Memory_Information( void )
 void Deal_Command_For_Task( unsigned char *command , vActionType action)
 {
 	TaskHandle_t target;
-		char taskName[configMAX_TASK_NAME_LEN];
+	UBaseType_t pre;
 	
+		char taskName[configMAX_TASK_NAME_LEN];
+		pre = uxTaskPriorityGet( NULL );
 		printf("%s: command = %s\r\n", __func__, command);
 		memset(taskName, '\0', sizeof(taskName));
 		while( *command == ' ')
@@ -1128,7 +1131,9 @@ void Deal_Command_For_Task( unsigned char *command , vActionType action)
 								printf("delete task %s success!\r\n", taskName);
 								break;
 				case SUSPENDTASK:
+								vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );						
 								vTaskSuspend(target);
+								vTaskPrioritySet( NULL, pre );	
 								printf("suspend task %s success!\r\n", taskName);
 								break;
 				case RESUMETASK:
@@ -1204,6 +1209,13 @@ u8 *sys_cmd_tab[]=
 	"dump",
 	"fatfs",
 	"cp",
+	/*player*/
+	"add",
+	"del",
+	"next",
+	"pre",
+	"stop",
+	"continue",
 };	    
 
 /*
@@ -1503,6 +1515,24 @@ UBaseType_t pre;
 		case 38:
 			Fatfs_Copy_File( (char *) str );
 			break;
+		case 39:
+			MusicAddVolume();
+			break;
+		case 40:
+			MusicDelVolume();
+			break;	
+		case 41:
+			MusicNext();
+			break;
+		case 42:
+			MusicPrevious();
+			break;	
+		case 43:
+			MusicStop();
+			break;
+		case 44:
+			MusicContinue();
+			break;			
 		/*Add For FreeRTOS*/
 		default://∑«∑®÷∏¡Ó
 			return USMART_FUNCERR;

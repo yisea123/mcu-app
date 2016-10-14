@@ -61,3 +61,5 @@
 .\objects\usmart.o: ..\..\FATFS\src\integer.h
 .\objects\usmart.o: ..\..\FATFS\src\ffconf.h
 .\objects\usmart.o: ..\..\FreeRTOS\Source\include\semphr.h
+.\objects\usmart.o: ..\..\USER\wavplay.h
+.\objects\usmart.o: ..\..\Helix\pub\mp3dec.h

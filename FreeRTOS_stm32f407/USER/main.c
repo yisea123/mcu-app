@@ -22,6 +22,7 @@
 #include "fattester.h"
 #include "wm8978.h"	 
 #include "audioplay.h"	
+#include "wavplay.h" 
 
 #define BOOT_LOG   \
 printf(" \
@@ -69,7 +70,7 @@ int main(void)
 	vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 
-	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
+	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*5, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
 	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*5, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );	
@@ -88,7 +89,7 @@ int main(void)
 * function: Software_Hardware_Init.
 **/
 #include "diskio.h"		/* FatFs lower layer API */
-unsigned char xMusicVolume = 40;
+extern unsigned char xMusicVolume;
 void Software_Hardware_Init( void )
 {
 	unsigned char res, i;
@@ -198,7 +199,7 @@ void Music_Player(void * pvParameters)
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 2 );	
 	printf("%s ...\r\n", __func__);
 	vTaskPrioritySet( NULL, pre );
-	
+	vSetTaskLogLevel(NULL, eLogLevel_2);
 	while (1)
 	{
 		audio_play();

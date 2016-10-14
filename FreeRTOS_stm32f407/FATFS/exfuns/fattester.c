@@ -296,6 +296,7 @@ u8 mf_scan_files(u8 * path)
 				if( i >= 200 )
 				{
 					printf("%s: error!!\r\n", __func__);
+					f_closedir(&dir);
 					return 3;
 				}
 			}
@@ -308,6 +309,7 @@ u8 mf_scan_files(u8 * path)
 				if( i >= 13 )
 				{
 					printf("%s: error!!\r\n", __func__);
+					f_closedir(&dir);
 					return 3;
 				}
 			}
@@ -322,6 +324,8 @@ u8 mf_scan_files(u8 * path)
 			}
 			printf("%s\r\n",  fn);//打印文件名	  
 		} 
+		
+		f_closedir(&dir);
     }	  
 #if _USE_LFN		
 		vPortFree( fileinfo.lfname );
@@ -392,6 +396,7 @@ u8 mf_scan_files_( char * path, char * buffer, int len )
 				if( i >= len )
 				{
 					printf("%s: error!!\r\n", __func__);
+					f_closedir(&dir);
 					return 3;
 				}
 			}
@@ -410,13 +415,13 @@ u8 mf_scan_files_( char * path, char * buffer, int len )
 			printf("%s", pbuf);
 			buffer = pbuf;
 			
-		} 
+		} 		
+		f_closedir(&dir);
     }	  
 	
 #if _USE_LFN		
 		vPortFree( fileinfo.lfname );
 #endif		
-
     return res;	  
 } 
 

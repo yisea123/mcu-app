@@ -22,6 +22,7 @@
 
 
 //音乐播放控制器
+/*
 typedef __packed struct
 {  
 	//2个I2S解码的BUF
@@ -34,6 +35,46 @@ typedef __packed struct
 							//bit1:0,结束播放;1,开启播放 
 }__audiodev; 
 extern __audiodev audiodev;	//音乐播放控制器
+*/
+//音乐播放控制器
+typedef __packed struct
+{  
+	//2个I2S解码的BUF
+	uint8_t *i2sbuf1;
+	uint8_t *i2sbuf2; 
+	uint8_t *tbuf;			//零时数组
+	FIL *file;			//音频文件指针 	
+	vu8 status;			//bit0:0,暂停播放;1,继续播放
+						//bit1:0,结束播放;1,开启播放  
+						//bit2~3:保留
+						//bit4:0,无音乐播放;1,音乐播放中 (对外标记)		
+						//bit5:0,无动作;1,执行了一次切歌操作(对外标记)
+						//bit6:0,无动作;1,请求终止播放(但是不删除音频播放任务),处理完成后,播放任务自动清零该位
+ 						//bit7:0,音频播放任务已删除/请求删除;1,音频播放任务正在运行(允许继续执行)
+	uint8_t mode;			//播放模式
+						//0,全部循环;1,单曲循环;2,随机播放;
+	uint8_t *path;			//当前文件夹路径
+	uint8_t *name;			//当前播放的MP3歌曲名字
+	uint16_t namelen;		//name所占的点数.
+	uint16_t curnamepos;		//当前的偏移
+    uint32_t totsec ;		//整首歌时长,单位:秒
+    uint32_t cursec ;		//当前播放时长 
+    uint32_t bitrate;	   	//比特率(位速)
+	uint32_t samplerate;		//采样率 
+	uint16_t bps;			//位数,比如16bit,24bit,32bit
+	
+	uint16_t curindex;		//当前播放的音频文件索引
+	uint16_t mfilenum;		//音乐文件数目	    
+	uint16_t *mfindextbl;	//音频文件索引表
+	uint32_t(*file_seek)(uint32_t);//文件快进快退函数 
+	
+}__audiodev; 
+extern __audiodev audiodev;	//音乐播放控制器
+
+//取2个值里面的较小值.
+#ifndef AUDIO_MIN			
+#define AUDIO_MIN(x,y)	((x)<(y)? (x):(y))
+#endif
 
 
 void wav_i2s_dma_callback(void);

@@ -8,164 +8,128 @@ Project File Date:  10/07/2016
 
 <h2>Output:</h2>
 Build target 'FreeRTOS_STM32F4'
-compiling tasks.c...
+compiling dqchan.c...
+compiling huffman.c...
+compiling scalfact.c...
+compiling subband.c...
 linking...
-Program Size: Code=77006 RO-data=4914 RW-data=1108 ZI-data=70916  
+Program Size: Code=99702 RO-data=18438 RW-data=1136 ZI-data=125496  
 FromELF: creating hex file...
 ".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 0 Warning(s).
-Load "C:\\mcu\\mcu-app\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
-Set JLink Project File to "C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\JLinkSettings.ini"
-* JLink Info: Device "STM32F407VE" selected (512 KB flash, 128 KB RAM).
- 
-JLink info:
-------------
-DLL: V4.80g, compiled Feb 13 2014 20:50:02
-Firmware: J-Link ARM V8 compiled Nov 25 2013 19:20:08
-Hardware: V8.00
-S/N : 308622870 
-Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
- 
-* JLink Info: Found SWD-DP with ID 0x2BA01477
-* JLink Info: Found SWD-DP with ID 0x2BA01477
-* JLink Info: Found Cortex-M4 r0p1, Little endian.
-* JLink Info: FPUnit: 6 code (BP) slots and 2 literal slots
-* JLink Info: TPIU fitted.
-* JLink Info: ETM fitted.
-ROMTableAddr = 0xE00FF003
- 
-Target info:
-------------
-Device: STM32F407VE
-VTarget = 3.364V
-State of Pins: 
-TCK: 0, TDI: 1, TDO: 1, TMS: 1, TRES: 1, TRST: 1
-Hardware-Breakpoints: 6
-Software-Breakpoints: 8192
-Watchpoints:          4
-JTAG speed: 50 kHz
- 
-Erase Done.
-Programming Done.
-Verify OK.
-Application running ...
-piling ff.c...
+</pre>
+</body>
+</html>
+x_rtc.c...
+compiling stm32f4xx_syscfg.c...
+compiling stm32f4xx_rng.c...
+compiling stm32f4xx_iwdg.c...
+compiling stm32f4xx_adc.c...
+compiling stm32f4xx_dma.c...
+compiling stm32f4xx_flash.c...
+compiling stm32f4xx_spi.c...
+compiling stm32f4xx_sdio.c...
+compiling delay.c...
+compiling sys.c...
+compiling usart.c...
+compiling main.c...
+compiling rfifo.c...
+compiling wavplay.c...
+compiling audioplay.c...
+compiling port.c...
+compiling heap_2.c...
+compiling list.c...
+compiling queue.c...
+compiling tasks.c...
+compiling timers.c...
+compiling usmart.c...
+compiling usmart_config.c...
+compiling usmart_str.c...
+compiling led.c...
+compiling rtc.c...
+compiling exti.c...
+compiling key.c...
+compiling rng.c...
+compiling iwdg.c...
+compiling adc.c...
+compiling dma.c...
+compiling stmflash.c...
+compiling spi.c...
+compiling w25qxx.c...
+compiling sdio_sdcard.c...
+compiling wm8978.c...
+compiling i2s.c...
+compiling miic.c...
+compiling diskio.c...
+compiling ff.c...
 compiling fattester.c...
 compiling exfuns.c...
 compiling syscall.c...
 compiling cc936.c...
+compiling mp3tabs.c...
+compiling mp3dec.c...
+..\..\Helix\mp3dec.c(190): warning:  #223-D: function "printf" declared implicitly
+                printf("%s: !mp3DecInfo || mp3DecInfo->layer = %d\r\n", __func__,
+..\..\Helix\mp3dec.c: 1 warning, 0 errors
+compiling mp3_play.c...
+compiling bitstream.c...
+compiling buffers.c...
+compiling dct32.c...
+compiling dequant.c...
+compiling dqchan.c...
+..\..\Helix\real\dqchan.c(248): warning:  #550-D: variable "cbStartL" was set but never used
+        int cbStartL, cbEndL, cbStartS, cbEndS;
+..\..\Helix\real\dqchan.c: 1 warning, 0 errors
+compiling huffman.c...
+..\..\Helix\real\huffman.c(386): warning:  #550-D: variable "sfi" was set but never used
+        ScaleFactorInfo *sfi;
+..\..\Helix\real\huffman.c: 1 warning, 0 errors
+compiling hufftabs.c...
+compiling imdct.c...
+compiling scalfact.c...
+..\..\Helix\real\scalfact.c(211): warning:  #550-D: variable "iipTest" was set but never used
+        int i, sfb, sfcIdx, btIdx, nrIdx, iipTest;
+..\..\Helix\real\scalfact.c: 1 warning, 0 errors
+compiling stproc.c...
+compiling subband.c...
+..\..\Helix\real\subband.c(63): warning:  #550-D: variable "hi" was set but never used
+        HuffmanInfo *hi;
+..\..\Helix\real\subband.c: 1 warning, 0 errors
+compiling trigtabs.c...
+assembling asmmisc.S...
+assembling asmpoly_thumb2.S...
 linking...
-Program Size: Code=77130 RO-data=4914 RW-data=1108 ZI-data=70916  
+Program Size: Code=99686 RO-data=18438 RW-data=1136 ZI-data=125496  
 FromELF: creating hex file...
-".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 0 Warning(s).
-Load "C:\\mcu\\mcu-app\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
-Set JLink Project File to "C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\JLinkSettings.ini"
-* JLink Info: Device "STM32F407VE" selected (512 KB flash, 128 KB RAM).
- 
-JLink info:
-------------
-DLL: V4.80g, compiled Feb 13 2014 20:50:02
-Firmware: J-Link ARM V8 compiled Nov 25 2013 19:20:08
-Hardware: V8.00
-S/N : 308622870 
-Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
- 
-* JLink Info: Found SWD-DP with ID 0x2BA01477
-* JLink Info: Found SWD-DP with ID 0x2BA01477
-* JLink Info: Found Cortex-M4 r0p1, Little endian.
-* JLink Info: FPUnit: 6 code (BP) slots and 2 literal slots
-* JLink Info: TPIU fitted.
-* JLink Info: ETM fitted.
-ROMTableAddr = 0xE00FF003
- 
-Target info:
-------------
-Device: STM32F407VE
-VTarget = 3.371V
-State of Pins: 
-TCK: 0, TDI: 1, TDO: 1, TMS: 1, TRES: 1, TRST: 1
-Hardware-Breakpoints: 6
-Software-Breakpoints: 8192
-Watchpoints:          4
-JTAG speed: 50 kHz
- 
-Erase Done.
-Programming Done.
-Verify OK.
-Application running ...
-0+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(162): error:  #20: identifier "WHITE" is undefined
-                LCD_Fill(60,190,240,190+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(163): warning:  #223-D: function "Show_Str" declared implicitly
-                Show_Str(60,190,240-60,16,fn,16,0);                             //显示歌曲名字 
-..\..\USER\audioplay.c: 5 warnings, 6 errors
-".\Objects\FreeRTOS_STM32F4.axf" - 10 Error(s), 7 Warning(s).
+".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 5 Warning(s).
+ from main.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol uMusicPlayControl (referred from main.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol xMusicVolume (referred from main.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicAddVolume (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicContinue (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicDelVolume (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicNext (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicPrevious (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol MusicStop (referred from usmart.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol ff_convert (referred from ff.o).
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6218E: Undefined symbol ff_wtoupper (referred from ff.o).
+Not enough information to list image symbols.
+Finished: 1 information, 0 warning and 14 error messages.
+".\Objects\FreeRTOS_STM32F4.axf" - 14 Error(s), 5 Warning(s).
 Target not created
-implicitly
-                Show_Str(60,190,240-60,16,fn,16,0);                             //显示歌曲名字 
-..\..\USER\audioplay.c: 5 warnings, 6 errors
-".\Objects\FreeRTOS_STM32F4.axf" - 11 Error(s), 8 Warning(s).
-Target not created
-.\USER\audioplay.c(130): error:  #513: a value of type "int" cannot be assigned to an entity of type "u8 *"
-        pname=mymalloc(SRAMIN,wavfileinfo.lfsize);                              //为带路径的文件名分配内存
-..\..\USER\audioplay.c(131): error:  #513: a value of type "int" cannot be assigned to an entity of type "u16 *"
-        wavindextbl=mymalloc(SRAMIN,2*totwavnum);                               //申请2*totwavnum个字节的内存,用于存放音乐文件索引
-..\..\USER\audioplay.c(134): warning:  #223-D: function "Show_Str" declared implicitly
-                Show_Str(60,190,240,16,"内存分配失败!",16,0);
-..\..\USER\audioplay.c(136): warning:  #223-D: function "LCD_Fill" declared implicitly
-                LCD_Fill(60,190,240,146,WHITE);//清除显示            
-..\..\USER\audioplay.c(136): error:  #20: identifier "WHITE" is undefined
-                LCD_Fill(60,190,240,146,WHITE);//清除显示            
-..\..\USER\audioplay.c(168): warning:  #223-D: function "LCD_Fill" declared implicitly
-                LCD_Fill(60,190,240,190+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(168): error:  #20: identifier "WHITE" is undefined
-                LCD_Fill(60,190,240,190+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(169): warning:  #223-D: function "Show_Str" declared implicitly
-                Show_Str(60,190,240-60,16,fn,16,0);                             //显示歌曲名字 
-..\..\USER\audioplay.c(182): warning:  #223-D: function "myfree" declared implicitly
-        myfree(SRAMIN,wavfileinfo.lfname);      //释放内存                          
-..\..\USER\audioplay.c: 12 warnings, 10 errors
-".\Objects\FreeRTOS_STM32F4.axf" - 15 Error(s), 15 Warning(s).
-Target not created
-: function "myfree" declared implicitly
-        myfree(SRAMIN,wavfileinfo.lfname);      //释放内存                          
-..\..\USER\audioplay.c: 12 warnings, 10 errors
-".\Objects\FreeRTOS_STM32F4.axf" - 16 Error(s), 16 Warning(s).
-Target not created
-arning(s).
-Target not created
-             
-..\..\USER\audioplay.c(168): warning:  #223-D: function "LCD_Fill" declared implicitly
-                LCD_Fill(60,190,240,190+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(168): error:  #20: identifier "WHITE" is undefined
-                LCD_Fill(60,190,240,190+16,WHITE);                              //清除之前的显示
-..\..\USER\audioplay.c(169): warning:  #223-D: function "Show_Str" declared implicitly
-                Show_Str(60,190,240-60,16,fn,16,0);                             //显示歌曲名字 
-..\..\USER\audioplay.c(182): warning:  #223-D: function "myfree" declared implicitly
-        myfree(SRAMIN,wavfileinfo.lfname);      //释放内存                          
-..\..\USER\audioplay.c(182): error:  #136: struct "<unnamed>" has no field "lfname"
-        myfree(SRAMIN,wavfileinfo.lfname);      //释放内存                          
-..\..\USER\audioplay.c: 12 warnings, 25 errors
-compiling wavplay.c...
-..\..\USER\wavplay.c(48): warning:  #223-D: function "mymalloc" declared implicitly
-        ftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-..\..\USER\wavplay.c(48): error:  #20: identifier "SRAMIN" is undefined
-        ftemp=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-..\..\USER\wavplay.c(49): error:  #513: a value of type "int" cannot be assigned to an entity of type "u8 *"
-        buf=mymalloc(SRAMIN,512);
-..\..\USER\wavplay.c(90): warning:  #223-D: function "myfree" declared implicitly
-        myfree(SRAMIN,ftemp);//释放内存
-..\..\USER\wavplay.c(179): warning:  #223-D: function "mymalloc" declared implicitly
-        audiodev.file=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-..\..\USER\wavplay.c(179): error:  #20: identifier "SRAMIN" is undefined
-        audiodev.file=(FIL*)mymalloc(SRAMIN,sizeof(FIL));
-..\..\USER\wavplay.c(180): error:  #513: a value of type "int" cannot be assigned to an entity of type "u8 *"
-        audiodev.i2sbuf1=mymalloc(SRAMIN,WAV_I2S_TX_DMA_BUFSIZE);
-..\..\USER\wavplay.c(181): error:  #513: a value of type "int" cannot be assigned to an entity of type "u8 *"
-        audiodev.i2sbuf2=mymalloc(SRAMIN,WAV_I2S_TX_DMA_BUFSIZE);
-..\..\USER\wavplay.c(182): error:  #513: a value of type "int" cannot be assigned to an entity of type "u8 *"
-        audiodev.tbuf=mymalloc(SRAMIN,WAV_I2S_TX_DMA_BUFSIZE);
-..\..\USER\wavplay.c(248): warning:  #223-D: function "myfree" declared implicitly
-        myfree(SRAMIN,audiodev.tbuf);   //释放内存
-..\..\USER\wavplay.c: 4 warnings, 6 errors
-".\Objects\FreeRTOS_STM32F4.axf" - 31 Error(s), 16 Warning(s).
+arnings, 1 error
+compiling stproc.c...
+..\..\Helix\real\coder.h(47): error:  #5: cannot open source input file "mp3common.h": No such file or directory
+  #include "mp3common.h"
+..\..\Helix\real\stproc.c: 0 warnings, 1 error
+compiling subband.c...
+..\..\Helix\real\coder.h(47): error:  #5: cannot open source input file "mp3common.h": No such file or directory
+  #include "mp3common.h"
+..\..\Helix\real\subband.c: 0 warnings, 1 error
+compiling trigtabs.c...
+..\..\Helix\real\coder.h(47): error:  #5: cannot open source input file "mp3common.h": No such file or directory
+  #include "mp3common.h"
+..\..\Helix\real\trigtabs.c: 0 warnings, 1 error
+assembling asmmisc.S...
+assembling asmpoly_thumb2.S...
+".\Objects\FreeRTOS_STM32F4.axf" - 17 Error(s), 0 Warning(s).
 Target not created
