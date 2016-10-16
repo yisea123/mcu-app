@@ -26,7 +26,7 @@ u8*const FILE_TYPE_TBL[FILE_MAX_TYPE_NUM][FILE_MAX_SUBT_NUM]=
 {"LRC"},			//LRC文件
 {"NES"},			//NES文件
 {"TXT","C","H"},	//文本文件
-{"WAV","MP3","APE","FLAC"},//支持的音乐文件
+{"WAV","MP3",/*"APE"*/"AMR","FLAC"},//支持的音乐文件
 {"BMP","JPG","JPEG","GIF"},//图片文件
 {"AVI"},			//视频文件
 };

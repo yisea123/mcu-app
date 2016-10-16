@@ -21,7 +21,9 @@ extern void Printf_Application_Version( void );
 extern void vPrintRamdDisk( unsigned int sector );
 extern void vPrintFlashDisk( unsigned int sector );
 extern void vPrintSdDisk( unsigned int sector );
-	
+extern void MusicCircle( void );
+extern void amr_set_sample_rate( unsigned int rate );
+
 typedef enum
 {
 	ROOT = 0,
@@ -51,6 +53,30 @@ Ringfifo uart1fifo;
 u8 USART_RX_BUF[USART_REC_LEN];
 char buff[128];
 static unsigned int destination = ADDR_FLASH_SECTOR_7;
+
+void Amr_Set_Samplerate( char *str )
+{
+	int rate, i = 0;
+	char tmp[16];
+
+	memset(tmp, '\0', sizeof(tmp));
+	while( *str == ' ')
+		str++;
+	
+	strcpy(tmp, (char *)str);
+	printf("Set samplerate to %s!\r\n", tmp);
+	while( tmp[i] >= '0' && tmp[i] <= '9' )
+		i++;
+	
+	if( tmp[i] != '\0')
+	{
+		printf("Error command! use amrrate + rate\r\n");
+		return;
+	}
+	
+	rate = atoi( tmp );	
+	amr_set_sample_rate( ( unsigned int )rate );
+}
 
 void Fatfs_Copy_File( char *str )
 {
@@ -631,7 +657,7 @@ void Fatfs_Cat_File( char *str )
 				{
 					u8 res = 0;
 					memset( pBuf, 0, sizeof( pBuf ) );
-					res = f_read( &file, pBuf, 512, &br );
+					res = f_read( &file, pBuf, sizeof( pBuf ), &br );
 					if( res )
 					{
 						printf("Read Error:%d\r\n",res);
@@ -640,12 +666,13 @@ void Fatfs_Cat_File( char *str )
 					else
 					{
 						printf("%s", pBuf); 
-						if( br < 512 )
+						if( br < sizeof( pBuf ) )
 						{
 							break;
 						}
 					}
 				}
+				printf("\r\n");
 				f_close( &file );
 			}
 			else
@@ -1216,6 +1243,8 @@ u8 *sys_cmd_tab[]=
 	"pre",
 	"stop",
 	"continue",
+	"circle",
+	"amrrate",
 };	    
 
 /*
@@ -1297,7 +1326,16 @@ UBaseType_t pre;
 			printf("cp: 	copy file to dir, use cp file_path + dir_path.\r\n");
 
 			printf("----------------Fatfs---------------\r\n");		
- 
+			vTaskDelay( 10 / portTICK_RATE_MS );
+ 			printf("\r\n----------------Player---------------\r\n");	
+			printf("add:	add sound for DAC codec.\r\n");
+			printf("del:	del sound for DAC codec.\r\n");
+			printf("next:	play next music.\r\n");
+			printf("pre:	play previous music.\r\n");
+			printf("stop:	stop to play current music.\r\n");
+			printf("continue:	continue to play the sotp music.\r\n");
+			printf("circle:	circle to play current music.\r\n");
+			printf("----------------Player---------------\r\n");				
 			//printf("--------------------------------------------- \r\n");
 			vTaskPrioritySet( NULL, pre );				
 #else
@@ -1532,7 +1570,13 @@ UBaseType_t pre;
 			break;
 		case 44:
 			MusicContinue();
-			break;			
+			break;
+		case 45:
+			MusicCircle();
+			break;		
+		case 46:
+			Amr_Set_Samplerate( (char *) str );
+			break;
 		/*Add For FreeRTOS*/
 		default://·Ç·¨Ö¸Áî
 			return USMART_FUNCERR;

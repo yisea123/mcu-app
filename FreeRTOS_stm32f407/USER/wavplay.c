@@ -27,7 +27,7 @@ extern TaskHandle_t pxMusicPlayer;
 //fname:文件路径+文件名
 //wavx:wav 信息存放结构体指针
 //返回值:0,成功;1,打开文件失败;2,非WAV文件;3,DATA区域未找到.
-u8 wav_decode_init(u8* fname,__wavctrl* wavx)
+u8 wav_decode_init(u8* fname,__wavctrl* wavx, void *mFile)
 {
 	FIL*ftemp;
 	u8 *buf; 
@@ -38,8 +38,10 @@ u8 wav_decode_init(u8* fname,__wavctrl* wavx)
 	ChunkFMT *fmt;
 	ChunkFACT *fact;
 	ChunkDATA *data;
-	ftemp = (FIL*) pvPortMalloc( sizeof(FIL) );
-	buf = pvPortMalloc(512);
+	ftemp = (FIL*) mFile;
+	//(FIL*) pvPortMalloc( sizeof(FIL) );
+	buf = audiodev.i2sbuf1;
+	//pvPortMalloc(512);
 	if( ftemp && buf )
 	{
 		res=f_open(ftemp,(TCHAR*)fname,FA_READ);//打开文件
@@ -94,8 +96,8 @@ u8 wav_decode_init(u8* fname,__wavctrl* wavx)
 			res=1;
 		}
 	}
-	vPortFree(  ftemp );
-	vPortFree(  buf ); 
+	//vPortFree(  ftemp );
+	//vPortFree(  buf ); 
 	return 0;
 }
 
@@ -174,15 +176,9 @@ void wav_get_curtime(FIL*fx,__wavctrl *wavx)
  	wavx->totsec=wavx->datasize/(wavx->bitrate/8);	//歌曲总长度(单位:秒) 
 	fpos=fx->fptr-wavx->datastart; 					//得到当前文件播放到的地方 
 	wavx->cursec=fpos*wavx->totsec/wavx->datasize;	//当前播放到第多少秒了?	
-}
-//播放某个WAV文件
-//fname:wav文件路径.
-//返回值:
-//KEY0_PRES:下一曲
-//KEY1_PRES:上一曲
-//其他:错误
+} 
 
-u8 uMusicPlayControl = 0;
+unsigned char uMusicPlayControl = 0;
 unsigned char xMusicVolume = 20;
 
 u8 wav_play_song(u8* fname)
@@ -190,45 +186,53 @@ u8 wav_play_song(u8* fname)
 	u8 t=0; 
 	u8 res;  
 	u32 fillnum; 
-	audiodev.file = (FIL*)pvPortMalloc( sizeof(FIL));
-	audiodev.i2sbuf1 = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
-	audiodev.i2sbuf2 = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
-	audiodev.tbuf = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
-	uMusicPlayControl = 0;
-	audiodev.status = 0;
+	FIL mFilewav;
+	//audiodev.i2sbuf1 = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
+	//audiodev.i2sbuf2 = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
+	//audiodev.tbuf = pvPortMalloc( WAV_I2S_TX_DMA_BUFSIZE );
+	audiodev.file = &mFilewav;
+	//( FIL* ) pvPortMalloc( sizeof(FIL));
 	
-	if(audiodev.file&&audiodev.i2sbuf1&&audiodev.i2sbuf2&&audiodev.tbuf)
+	uMusicPlayControl = 0;
+	
+	if( audiodev.tbuf )
 	{ 
-		res = wav_decode_init( fname,&wavctrl );// get wav info
-		if( res==0 )// decode head scuess
+CIRCLEPLAY:		
+		audiodev.status = 0;
+		res = wav_decode_init( fname, &wavctrl, &mFilewav); 
+		if( res==0 ) 
 		{
 			if(wavctrl.bps==16)
 			{
-				WM8978_I2S_Cfg(2,0);	//飞利浦标准,16位数据长度
+				WM8978_I2S_Cfg(2,0); 
 				I2S2_Init(I2S_Standard_Phillips,I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_16bextended);		//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
 			}else if(wavctrl.bps==24)
 			{
-				WM8978_I2S_Cfg(2,2);	//飞利浦标准,24位数据长度
+				WM8978_I2S_Cfg(2,2); 
 				I2S2_Init(I2S_Standard_Phillips,I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_24b);		//飞利浦标准,主机发送,时钟低电平有效,24位扩展帧长度
 			}
 			I2S2_SampleRate_Set(wavctrl.samplerate);
-			I2S2_TX_DMA_Init(audiodev.i2sbuf1,audiodev.i2sbuf2,WAV_I2S_TX_DMA_BUFSIZE/2); //配置TX DMA
+			I2S2_TX_DMA_Init(audiodev.i2sbuf1,audiodev.i2sbuf2,
+				WAV_I2S_TX_DMA_BUFSIZE/2/*mono need to *2 in here , then make
+				the i2sbuf1/i2sbuf2 double !!!!!
+				there is bug for play mono music!
+				*/); //配置TX DMA
 			i2s_tx_callback = wav_i2s_dma_tx_callback;
 			audio_stop();
-			res=f_open( audiodev.file, (TCHAR*)fname, FA_READ );
+			res = f_open( audiodev.file, (TCHAR*)fname, FA_READ );
 			if( res == 0 )
 			{
 				f_lseek(audiodev.file, wavctrl.datastart);// jump to data
 				fillnum=wav_buffill(audiodev.i2sbuf1,WAV_I2S_TX_DMA_BUFSIZE,wavctrl.bps);
 				fillnum=wav_buffill(audiodev.i2sbuf2,WAV_I2S_TX_DMA_BUFSIZE,wavctrl.bps);
 				audio_start();  
-				while( res==0 )
+				while( res == 0 )
 				{ 
 					ulTaskNotifyTake( pdTRUE, 1000 / portTICK_RATE_MS );
 					
 					if( fillnum != WAV_I2S_TX_DMA_BUFSIZE )//go to end of file
 					{
-						res=KEY0_PRES;
+						res = KEY0_PRES;
 						break;
 					} 
  					if( wavwitchbuf )
@@ -237,20 +241,25 @@ u8 wav_play_song(u8* fname)
 						fillnum=wav_buffill(audiodev.i2sbuf1,WAV_I2S_TX_DMA_BUFSIZE,wavctrl.bps);//填充buf1
 					while( 1 )
 					{
-						if( uMusicPlayControl == WKUP_PRES )// stop
+						if( uMusicPlayControl == STOPRESUME )// stop
 						{
 							if( audiodev.status & 0X01 )
+							{
 								audiodev.status &= ~( 1 << 0 );
+							}
 							else 
-								audiodev.status|=0X01;  
+							{
+								audiodev.status |= 0X01;  
+							}
+							uMusicPlayControl = 0;
 						}
-						if(uMusicPlayControl==KEY2_PRES||uMusicPlayControl==KEY0_PRES)//下一曲/上一曲
+						if(uMusicPlayControl == NEXT || 
+							uMusicPlayControl == PREVIOUS)
 						{
-							res=uMusicPlayControl;
+							res = uMusicPlayControl;
 							uMusicPlayControl = 0;
 							break; 
 						}
-						uMusicPlayControl = 0;
 						wav_get_curtime( audiodev.file, &wavctrl );//得到总时间和当前播放的时间 
 						audio_msg_show(wavctrl.totsec,wavctrl.cursec,wavctrl.bitrate);
 						t++;
@@ -285,16 +294,24 @@ u8 wav_play_song(u8* fname)
 			printf("2file name error: %s\r\n", fname);
 			res=0XFF;
 		}
+
+		f_close( audiodev.file );
+		if( res != 0xff && uMusicPlayControl == CIRCLE )
+		{
+			vTaskDelay( 200 / portTICK_RATE_MS );
+			printf("%s: circle to play %s\r\n", __func__, fname);
+			goto CIRCLEPLAY;
+		}		
 	}
 	else 
 	{	
 		printf("Malloc error filename: %s\r\n", fname);	
-		res=0XFF; 
+		res = 0XFF; 
 	}
-	vPortFree( audiodev.tbuf );	
-	vPortFree( audiodev.i2sbuf1 );
-	vPortFree( audiodev.i2sbuf2 );
-	vPortFree( audiodev.file );
+	//vPortFree( audiodev.tbuf );	
+	//vPortFree( audiodev.i2sbuf1 );
+	//vPortFree( audiodev.i2sbuf2 );
+	//vPortFree( audiodev.file );
 	return res;
 } 
 
@@ -309,26 +326,26 @@ u8 wav_play_song(u8* fname)
 //4,支持所有比特率(MP3最高是320Kbps)解码
 ////////////////////////////////////////////////////////////////////////////////// 	
  
-__mp3ctrl * mp3ctrl;	//mp3控制结构体 
+__mp3ctrl * mp3ctrl, mMp3Contorl;	//mp3控制结构体 
 vu8 mp3transferend=0;	//i2s传输完成标志
 vu8 mp3witchbuf=0;		//i2sbufx指示标志
 
-//MP3 DMA发送回调函数
-void mp3_i2s_dma_tx_callback( void ) 
+ void mp3_i2s_dma_tx_callback( void ) 
 {    
 	u16 i;
 	
 	if( DMA1_Stream4->CR & ( 1 << 19 ) )
 	{
 		mp3witchbuf = 0;
-		if( ( audiodev.status & 0X01 ) == 0 )//暂停了,填充0
+		if( ( audiodev.status & 0X01 ) == 0 ) 
 		{
 			for(i=0;i<2304*2;i++)audiodev.i2sbuf1[i]=0;
 		}
-	}else 
+	}
+	else 
 	{
 		mp3witchbuf = 1;
-		if( ( audiodev.status & 0X01 ) == 0 )//暂停了,填充0
+		if( ( audiodev.status & 0X01 ) == 0 ) 
 		{
 			for(i=0;i<2304*2;i++)audiodev.i2sbuf2[i]=0;
 		}
@@ -337,14 +354,9 @@ void mp3_i2s_dma_tx_callback( void )
 
 	vTaskNotifyGiveFromISR( pxMusicPlayer, NULL);	
 } 
-
-//填充PCM数据到DAC
-//buf:PCM数据首地址
-//size:pcm数据量(16位为单位)
-//nch:声道数(1,单声道,2立体声)
-
-extern void Convert_Mono(short *buffer);
-extern void Convert_Stereo(short *buffer);
+ 
+extern void Convert_Mono( short *buffer );
+extern void Convert_Stereo( short *buffer );
 	
 void mp3_fill_buffer( int step, u16* buf, u16 size, u8 nch )
 {
@@ -358,7 +370,7 @@ void mp3_fill_buffer( int step, u16* buf, u16 size, u8 nch )
 	
 	if( mp3witchbuf == 0 || step == 0 )
 	{
-		p = ( u16* ) audiodev.i2sbuf1;//audiodev.i2sbuf1;
+		p = ( u16* ) audiodev.i2sbuf1;
 	}
 	else if( mp3witchbuf == 1 || step == 1) 
 	{
@@ -375,31 +387,36 @@ void mp3_fill_buffer( int step, u16* buf, u16 size, u8 nch )
 		Convert_Mono( (short *) p );
 	}
 } 
+ 
 
-//解析ID3V1 
-//buf:输入数据缓存区(大小固定是128字节)
-//pctrl:MP3控制器
-//返回值:0,获取正常
-//    其他,获取失败
-
-u8 mp3_id3v1_decode(u8* buf,__mp3ctrl *pctrl)
+u8 mp3_id3v1_decode( u8* buf, __mp3ctrl *pctrl )
 {
 	ID3V1_Tag *id3v1tag;
-	id3v1tag=(ID3V1_Tag*)buf;
-	if (strncmp("TAG",(char*)id3v1tag->id,3)==0)//是MP3 ID3V1 TAG
+	id3v1tag =( ID3V1_Tag* ) buf;
+	/*首部必须为TAG*/
+	if ( strncmp( "TAG", (char*) id3v1tag->id, 3) == 0 )
+		//是MP3 ID3V1 TAG
 	{
 		if(id3v1tag->title[0])strncpy((char*)pctrl->title,(char*)id3v1tag->title,30);
 		if(id3v1tag->artist[0])strncpy((char*)pctrl->artist,(char*)id3v1tag->artist,30); 
-	}else return 1;
+		if(id3v1tag->album[0])strncpy((char*)pctrl->album,(char*)id3v1tag->album,30);
+		if(id3v1tag->year[0])strncpy((char*)pctrl->year,(char*)id3v1tag->year,4);
+		if(id3v1tag->comment[0])strncpy((char*)pctrl->comment,(char*)id3v1tag->comment,30);
+		pctrl->genre = id3v1tag->genre ;
+
+		printf("%s: title(%s)\r\n", __func__, pctrl->title);
+		printf("%s: artist(%s)\r\n", __func__, pctrl->artist);
+		printf("%s: album(%s)\r\n", __func__, pctrl->album);
+		printf("%s: year(%s)\r\n", __func__, pctrl->year);
+		printf("%s: comment(%s)\r\n", __func__, pctrl->comment);
+		printf("%s: genre(%d)\r\n", __func__, pctrl->genre);
+	}
+	else 
+		return 1;
 	return 0;
 }
-//解析ID3V2 
-//buf:输入数据缓存区
-//size:数据大小
-//pctrl:MP3控制器
-//返回值:0,获取正常
-//    其他,获取失败
-u8 mp3_id3v2_decode(u8* buf,u32 size,__mp3ctrl *pctrl)
+
+u8 mp3_id3v2_decode(u8* buf, u32 size, __mp3ctrl *pctrl)
 {
 	ID3V2_TagHead *taghead;
 	ID3V23_FrameHead *framehead; 
@@ -407,32 +424,73 @@ u8 mp3_id3v2_decode(u8* buf,u32 size,__mp3ctrl *pctrl)
 	u32 tagsize;	//tag大小
 	u32 frame_size;	//帧大小 
 	taghead=(ID3V2_TagHead*)buf; 
+	/*首部必须为ID3，否则不存在这个信息*/
 	if(strncmp("ID3",(const char*)taghead->id,3)==0)//存在ID3?
 	{
-		tagsize=((u32)taghead->size[0]<<21)|((u32)taghead->size[1]<<14)|((u16)taghead->size[2]<<7)|taghead->size[3];//得到tag 大小
-		pctrl->datastart=tagsize;		//得到mp3数据开始的偏移量
-		if(tagsize>size)tagsize=size;	//tagsize大于输入bufsize的时候,只处理输入size大小的数据
-		if(taghead->mversion<3)
+		tagsize=((u32)taghead->size[0]<<21)|
+					((u32)taghead->size[1]<<14)|
+					((u16)taghead->size[2]<<7)|
+					taghead->size[3];
+		//得到tag 大小
+		pctrl->datastart = tagsize;		
+		//得到mp3数据开始的偏移量
+		if( tagsize > size )
+			tagsize = size;	
+		//tagsize大于输入bufsize的时候,只处理输入size大小的数据
+		if(taghead->mversion < 3 )
 		{
 			printf("not supported mversion!\r\n");
 			return 1;
 		}
+		
 		t=10;
-		while(t<tagsize)
+		while( t < tagsize )
 		{
-			framehead=(ID3V23_FrameHead*)(buf+t);
-			frame_size=((u32)framehead->size[0]<<24)|((u32)framehead->size[1]<<16)|((u32)framehead->size[2]<<8)|framehead->size[3];//得到帧大小
- 			if (strncmp("TT2",(char*)framehead->id,3)==0||strncmp("TIT2",(char*)framehead->id,4)==0)//找到歌曲标题帧,不支持unicode格式!!
+			framehead=(ID3V23_FrameHead*)( buf + t );
+			frame_size=((u32)framehead->size[0]<<24)|
+						((u32)framehead->size[1]<<16)|
+						((u32)framehead->size[2]<<8)|
+						framehead->size[3];
+						//得到帧大小
+ 			if (strncmp("TT2",(char*)framehead->id,3)==0||
+				strncmp("TIT2",(char*)framehead->id,4)==0)
+				//找到歌曲标题帧,不支持unicode格式!!
 			{
-				strncpy((char*)pctrl->title,(char*)(buf+t+sizeof(ID3V23_FrameHead)+1),AUDIO_MIN(frame_size-1,MP3_TITSIZE_MAX-1));
+				strncpy(( char* ) pctrl->title,
+					(char*)(buf + t + sizeof( ID3V23_FrameHead ) + 1 ),
+					AUDIO_MIN( frame_size - 1, MP3_TITSIZE_MAX - 1 ));
+				printf("%s: title(%s)\r\n", __func__, pctrl->title);
 			}
- 			if (strncmp("TP1",(char*)framehead->id,3)==0||strncmp("TPE1",(char*)framehead->id,4)==0)//找到歌曲艺术家帧
+ 			if (strncmp("TP1",(char*)framehead->id,3)==0||
+				strncmp("TPE1",(char*)framehead->id,4)==0)
+				//找到歌曲艺术家帧
 			{
-				strncpy((char*)pctrl->artist,(char*)(buf+t+sizeof(ID3V23_FrameHead)+1),AUDIO_MIN(frame_size-1,MP3_ARTSIZE_MAX-1));
+				strncpy((char*)pctrl->artist,
+					(char*)(buf+t+sizeof(ID3V23_FrameHead)+1),
+					AUDIO_MIN(frame_size-1,MP3_ARTSIZE_MAX-1));
+				printf("%s: artist(%s)\r\n", __func__, pctrl->artist);				
 			}
-			t+=frame_size+sizeof(ID3V23_FrameHead);
+/*
+TIT2：标题
+TPE1：作者
+TALB：专辑
+
+TRCK： 音轨，格式：N/M，N表示专辑中第几首，
+M为专辑中歌曲总数
+
+TYER：年份
+TCON：类型
+
+*/
+			t += frame_size + sizeof( ID3V23_FrameHead );
 		} 
-	}else pctrl->datastart=0;//不存在ID3,mp3数据是从0开始
+	}
+	else 
+	{
+		pctrl->datastart = 0;
+		//不存在ID3,mp3数据是从0开始
+	}
+
 	return 0;
 } 
 
@@ -441,13 +499,42 @@ u8 mp3_id3v2_decode(u8* buf,u32 size,__mp3ctrl *pctrl)
 //pctrl:MP3控制信息结构体 
 //返回值:0,成功
 //    其他,失败
-u8 mp3_get_info(u8 *pname,__mp3ctrl* pctrl)
+/**
+
+1)      无论帧长是多少，每帧的播放时间都是26ms
+2)      数据帧大小：
+FrameSize = 144 * Bitrate / SamplingRate + PaddingBit
+当144 * Bitrate / SamplingRate不能被8整除，则加上相应的paddingBit.
+
+
+C,LAME标签帧
+可是，当你真的打开一个MP3文件的时候，你会发现，
+很奇怪，很多时候第一个数据帧的帧头后面的32
+个字节居然都为0，这是为什么呢，这么奇怪的解码
+信息该如何解释？找到MP3 INFO TAG REV SPECIFICATION的网站，
+我才明白，原来第一帧并不是真正的数据帧，而是
+LAME编码的标志帧。
+这里又要牵涉到两个概念：CBR和VBR。CBR表示比特率
+不变，也就是每帧的长度是一致的，它以字符串“
+INFO”为标记。VBR是Variable BitRate的简称，也就是每帧的
+比特率和帧的长度是变化的，它以字符串“Xing”为
+标记。同时，它还存放了MP3文件里帧的总个数，和
+100个字节的播放总时间分段的帧的INDEX，还有其他一
+些参数，这被称为Zone A，传统Xing VBR标签数据，共120个
+字节。
+在二进制文本编辑器里我们还可看到一个字符串“
+LAME”，并且后面清楚地跟着版本号。这就是20个字
+节的Zone B初始LAME信息，表示该文件是用LAME编码技术。
+接下来一直到该帧结束就是Zone C－LAME标签。
+
+**/
+u8 mp3_get_info(u8 *pname, __mp3ctrl* pctrl)
 {
     HMP3Decoder decoder;
     MP3FrameInfo frame_info;
 	MP3_FrameXing* fxing;
 	MP3_FrameVBRI* fvbri;
-	FIL*fmp3;
+	FIL*fmp3, mFileMp3;
 	u8 *buf;
 	u32 br;
 	u8 res;
@@ -456,322 +543,368 @@ u8 mp3_get_info(u8 *pname,__mp3ctrl* pctrl)
 	short samples_per_frame;	//一帧的采样个数
 	u32 totframes;				//总帧数
 	
-	fmp3=pvPortMalloc(sizeof(FIL)); 
-	buf=pvPortMalloc(5*1024);		//申请5K内存 
+	fmp3= &mFileMp3;
+	//pvPortMalloc(sizeof(FIL)); 
+	buf=audiodev.i2sbuf1;
+	//pvPortMalloc(5*1024);		//申请5K内存 
 	if(fmp3&&buf)//内存申请成功
 	{ 		
 		f_open(fmp3,(const TCHAR*)pname,FA_READ);//打开文件
-		res=f_read(fmp3,(char*)buf,5*1024,&br);
+		res=f_read(fmp3,(char*)buf, 5*1024, &br);
 		if(res==0)//读取文件成功,开始解析ID3V2/ID3V1以及获取MP3信息
 		{  
-			mp3_id3v2_decode(buf,br,pctrl);	//解析ID3V2数据
+			mp3_id3v2_decode(buf, br, pctrl);	//解析ID3V2数据
 			f_lseek(fmp3,fmp3->fsize-128);	//偏移到倒数128的位置
 			f_read(fmp3,(char*)buf,128,&br);//读取128字节
 			mp3_id3v1_decode(buf,pctrl);	//解析ID3V1数据  
 			decoder=MP3InitDecoder(); 		//MP3解码申请内存
 			f_lseek(fmp3,pctrl->datastart);	//偏移到数据开始的地方
-			f_read(fmp3,(char*)buf,5*1024,&br);	//读取5K字节mp3数据
+			f_read(fmp3,(char*)buf, 5*1024, &br);	//读取5K字节mp3数据
  			offset=MP3FindSyncWord(buf,br);	//查找帧同步信息
-			if(offset>=0&&MP3GetNextFrameInfo(decoder,&frame_info,&buf[offset])==0)//找到帧同步信息了,且下一阵信息获取正常	
+			if(offset>=0 && MP3GetNextFrameInfo(decoder,&frame_info,&buf[offset]) == 0 )
+			//找到帧同步信息了,且下一阵信息获取正常	
 			{ 
-				p=offset+4+32;
-				fvbri=(MP3_FrameVBRI*)(buf+p);
-				if(strncmp("VBRI",(char*)fvbri->id,4)==0)//存在VBRI帧(VBR格式)
+				p = offset + 4 + 32;
+				fvbri = (MP3_FrameVBRI*)( buf + p );
+				
+				if( strncmp("VBRI", (char*)fvbri->id,4) == 0 )//存在VBRI帧(VBR格式)
 				{
 					printf("%s: VBRI\r\n", __func__);
-					if (frame_info.version==MPEG1)samples_per_frame=1152;//MPEG1,layer3每帧采样数等于1152
-					else samples_per_frame=576;//MPEG2/MPEG2.5,layer3每帧采样数等于576 
- 					totframes=((u32)fvbri->frames[0]<<24)|((u32)fvbri->frames[1]<<16)|((u16)fvbri->frames[2]<<8)|fvbri->frames[3];//得到总帧数
-					pctrl->totsec=totframes*samples_per_frame/frame_info.samprate;//得到文件总长度
+					if (frame_info.version==MPEG1)
+					{
+						samples_per_frame=1152;
+						//MPEG1,layer3每帧采样数等于1152
+					}
+					else 
+					{
+						samples_per_frame=576;
+						//MPEG2/MPEG2.5,layer3每帧采样数等于576 
+ 					}
+					totframes = ((u32)fvbri->frames[0]<<24)|
+						((u32)fvbri->frames[1]<<16)|
+						((u16)fvbri->frames[2]<<8)|
+						fvbri->frames[3];
+					//得到总帧数
+					pctrl->totsec=totframes*samples_per_frame/frame_info.samprate;
+					//得到文件总长度
 				}
 				else	//不是VBRI帧,尝试是不是Xing帧(VBR格式)
 				{  
-					if (frame_info.version==MPEG1)	//MPEG1 
+					if (frame_info.version==MPEG1)	
+						//MPEG1 
 					{
 						p=frame_info.nChans==2?32:17;
-						samples_per_frame = 1152;	//MPEG1,layer3每帧采样数等于1152
-					}else
+						samples_per_frame = 1152;	
+						//MPEG1,layer3每帧采样数等于1152
+					}
+					else
 					{
 						p=frame_info.nChans==2?17:9;
-						samples_per_frame=576;		//MPEG2/MPEG2.5,layer3每帧采样数等于576
+						samples_per_frame=576;		
+						//MPEG2/MPEG2.5,layer3每帧采样数等于576
 					}
 					p+=offset+4;
 					fxing=(MP3_FrameXing*)(buf+p);
-					if(strncmp("Xing",(char*)fxing->id,4)==0||strncmp("Info",(char*)fxing->id,4)==0)//是Xng帧
+					if(strncmp("Xing",(char*)fxing->id,4)==0||strncmp("Info",(char*)fxing->id,4)==0)
+						//是Xng帧
 					{
 						printf("%s: Xing \r\n", __func__);
 					
-						if(fxing->flags[3]&0X01)//存在总frame字段
+						if(fxing->flags[3]&0X01)
+							//存在总frame字段
 						{
 							totframes=((u32)fxing->frames[0]<<24)|((u32)fxing->frames[1]<<16)|((u16)fxing->frames[2]<<8)|fxing->frames[3];//得到总帧数
 							pctrl->totsec=totframes*samples_per_frame/frame_info.samprate;//得到文件总长度
-						}else	//不存在总frames字段
+						}
+						else	
+							//不存在总frames字段
 						{
 							pctrl->totsec=fmp3->fsize/(frame_info.bitrate/8);
 						} 
 					}
-					else 		//CBR格式,直接计算总播放时间
+					else 		
+						//CBR格式,直接计算总播放时间
 					{
-						pctrl->totsec=fmp3->fsize/(frame_info.bitrate/8);
+						pctrl->totsec = fmp3->fsize/(frame_info.bitrate/8);
 					}
 				} 
-				pctrl->bitrate=frame_info.bitrate;			//得到当前帧的码率
-				mp3ctrl->samplerate=frame_info.samprate; 	//得到采样率. 
+				pctrl->bitrate=frame_info.bitrate;			
+				//得到当前帧的码率
+				mp3ctrl->samplerate=frame_info.samprate; 	
+				//得到采样率. 
 				printf("%s:frame_info.bitsPerSample=%d\r\n", __func__, frame_info.bitsPerSample);
 				printf("%s:frame_info.nChans=%d\r\n", __func__, frame_info.nChans);
-				if(frame_info.nChans==2)
-					mp3ctrl->outsamples=frame_info.outputSamps; //输出PCM数据量大小 
+				if(frame_info.nChans == 2 )
+				{
+					mp3ctrl->outsamples=frame_info.outputSamps; 
+					//输出PCM数据量大小 
+				}
 				else 
-					mp3ctrl->outsamples=frame_info.outputSamps*2; //输出PCM数据量大小,对于单声道MP3,直接*2,补齐为双声道输出
-			}else res=0XFE;//未找到同步帧	
-			MP3FreeDecoder(decoder);//释放内存		
+				{
+					mp3ctrl->outsamples=frame_info.outputSamps * 2; 
+					//输出PCM数据量大小,对于单声道MP3,直接*2,
+					//补齐为双声道输出
+				}
+			}
+			else
+			{
+				res=0XFE;//未找到同步帧	
+			}
+			MP3FreeDecoder( decoder );//释放内存		
 		} 
-		f_close(fmp3);
-	}else res=0XFF;
-	vPortFree(  fmp3);
-	vPortFree(  buf);	
+		f_close( fmp3 );
+	}
+	else
+	{
+		res = 0XFF;
+	}
+	
+	//vPortFree( fmp3 );
+	//vPortFree( buf );	
 	return res;	
 }  
-//得到当前播放时间
-//fx:文件指针
-//mp3x:mp3播放控制器
-void mp3_get_curtime(FIL*fx,__mp3ctrl *mp3x)
+
+void mp3_get_curtime( FIL* fx, __mp3ctrl* mp3x )
 {
-	u32 fpos=0;  	 
-	if(fx->fptr>mp3x->datastart)fpos=fx->fptr-mp3x->datastart;	//得到当前文件播放到的地方 
-	mp3x->cursec=fpos*mp3x->totsec/(fx->fsize-mp3x->datastart);	//当前播放到第多少秒了?	
+	u32 fpos = 0;  	 
+	if( fx->fptr>mp3x->datastart )fpos = fx->fptr-mp3x->datastart;	//得到当前文件播放到的地方 
+	mp3x->cursec = fpos*mp3x->totsec/(fx->fsize-mp3x->datastart);	//当前播放到第多少秒了?	
 }
-//mp3文件快进快退函数
-//pos:需要定位到的文件位置
-//返回值:当前文件位置(即定位后的结果)
-u32 mp3_file_seek(u32 pos)
+
+u32 mp3_file_seek( u32 pos )
 {
-	if(pos>audiodev.file->fsize)
+	if( pos > audiodev.file->fsize )
 	{
-		pos=audiodev.file->fsize;
+		pos = audiodev.file->fsize;
 	}
-	f_lseek(audiodev.file,pos);
+	f_lseek( audiodev.file, pos );
 	return audiodev.file->fptr;
 }
-//播放一曲MP3音乐
-//fname:MP3文件路径.
-//返回值:0,正常播放完成
-//[b7]:0,正常状态;1,错误状态
-//[b6:0]:b7=0时,表示操作码 
-//       b7=1时,表示有错误(这里不判定具体错误,0X80~0XFF,都算是错误)
+
+static char pcMp3Buffer[MP3_FILE_BUF_SZ];
+
 u8 mp3_play_song( u8* fname )
 { 
-	u8 res;
-	u8* buffer;		//输入buffer  
-	u8* readptr;	//MP3解码读指针
-	int offset = 0;	//偏移量
-	int outofdata = 0;//超出数据范围
-	int bytesleft = 0;//buffer还剩余的有效数据
+	u8 res = NEXT;
+	u8* buffer = NULL;
+	u8* readptr = NULL;
+	int offset = 0;
+	int outofdata = 0;
+	int bytesleft = 0;
 	u32 br = 0; 
 	int err = 0;  
 	int step = 0;
-	HMP3Decoder mp3decoder;
+	HMP3Decoder mp3decoder = NULL;
 	MP3FrameInfo mp3frameinfo;
+	FIL mFileMp3;
 	
- 	mp3ctrl = pvPortMalloc( sizeof( __mp3ctrl ) ); 
-	buffer = pvPortMalloc( MP3_FILE_BUF_SZ ); 	//申请解码buf大小
-	audiodev.file = ( FIL* )pvPortMalloc( sizeof( FIL ) );
-	audiodev.i2sbuf1 = pvPortMalloc( 2304 * 2 );
-	audiodev.i2sbuf2 = pvPortMalloc( 2304 * 2 );
-	audiodev.tbuf = pvPortMalloc( 2304 * 2 );
+	buffer = pcMp3Buffer;
+	//pvPortMalloc( MP3_FILE_BUF_SZ );
+	//audiodev.i2sbuf1 = pvPortMalloc( 2304 * 2 );
+	//audiodev.i2sbuf2 = pvPortMalloc( 2304 * 2 );
+	//audiodev.tbuf = pvPortMalloc( 2304 * 2 );
+ 	mp3ctrl = &mMp3Contorl;
+	//pvPortMalloc( sizeof( __mp3ctrl ) ); 	
+	audiodev.file = &mFileMp3;
+	//( FIL* ) pvPortMalloc( sizeof( FIL ) );	
 	audiodev.file_seek = mp3_file_seek;
 	uMusicPlayControl = 0;
 	
-	if( !mp3ctrl || !buffer || !audiodev.file || 
-		!audiodev.i2sbuf1 || !audiodev.i2sbuf2 || !audiodev.tbuf )
+	if( mp3ctrl && buffer && audiodev.file && 
+		audiodev.i2sbuf1 && audiodev.i2sbuf2 && audiodev.tbuf )
 	{
-		vPortFree(mp3ctrl);
-		vPortFree(buffer);
-		vPortFree(audiodev.file);
-		vPortFree(audiodev.i2sbuf1);
-		vPortFree(audiodev.i2sbuf2);
-		vPortFree(audiodev.tbuf); 
-		vTaskDelay( 200 / portTICK_RATE_MS );
-		return WKUP_PRES;
-	} 
-	
-	memset( audiodev.i2sbuf1, 0, 2304*2 );	//数据清零 
-	memset( audiodev.i2sbuf2, 0, 2304*2 );	//数据清零 
-	memset( mp3ctrl, 0, sizeof( __mp3ctrl ) );//数据清零 
-	res = mp3_get_info( fname, mp3ctrl ); 
-	
-	if( res == 0 )
-	{ 
-		printf("title:%s\r\n", mp3ctrl->title); 
-		printf("artist:%s\r\n", mp3ctrl->artist); 
-		printf("bitrate:%dbps\r\n", mp3ctrl->bitrate);	
-		printf("samplerate:%d\r\n", mp3ctrl->samplerate);	
-		printf("totalsec:%d\r\n", mp3ctrl->totsec); 
-		printf("outsamples:%d\r\n", mp3ctrl->outsamples);
+CIRCLEPLAY:	
+		memset( audiodev.i2sbuf1, 0, 2304 * 2 );
+		memset( audiodev.i2sbuf2, 0, 2304 * 2 );
+		memset( mp3ctrl, 0, sizeof( __mp3ctrl ) );
+		res = mp3_get_info( fname, mp3ctrl ); 
 		
-		WM8978_I2S_Cfg( 2, 0 );	//飞利浦标准,16位数据长度
-		//I2S2_Init(0,2,0,1);		//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
-	 	I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx, I2S_CPOL_Low, I2S_DataFormat_16bextended );	
-		I2S2_SampleRate_Set( mp3ctrl->samplerate );		//设置采样率 
-		I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,  mp3ctrl->outsamples );//配置TX DMA
-		i2s_tx_callback = mp3_i2s_dma_tx_callback;		//回调函数指向mp3_i2s_dma_tx_callback
-		mp3decoder = MP3InitDecoder(); 					//MP3解码申请内存
-		res = f_open( audiodev.file, (char*)fname, FA_READ );	//打开文件
-	}
-	if( res == 0 && mp3decoder != 0 ) 
-	{ 
-		printf("%s: name = %s, mp3ctrl->datastart = %d\r\n", __func__, fname, mp3ctrl->datastart );
-		f_lseek( audiodev.file, mp3ctrl->datastart );	//跳过文件头中tag信息
-		audio_stop();
-		
-		while( res == 0 )
-		{
-			readptr = buffer;	// mp3 read pointer
-			offset = 0;	
-			outofdata = 0;
-			bytesleft = 0; 	
-			res = f_read( audiodev.file, buffer, MP3_FILE_BUF_SZ, &br );//一次读取MP3_FILE_BUF_SZ字节
-			if( res )
+		if( res == 0 )
+		{ 
+			printf("title:%s\r\n", mp3ctrl->title); 
+			printf("artist:%s\r\n", mp3ctrl->artist); 
+			printf("bitrate:%dbps\r\n", mp3ctrl->bitrate);	
+			printf("samplerate:%d\r\n", mp3ctrl->samplerate);	
+			printf("totalsec:%d\r\n", mp3ctrl->totsec); 
+			printf("outsamples:%d\r\n", mp3ctrl->outsamples);
+			
+			WM8978_I2S_Cfg( 2, 0 );
+		 	I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx, I2S_CPOL_Low, I2S_DataFormat_16bextended );	
+			I2S2_SampleRate_Set( mp3ctrl->samplerate );
+			I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,  mp3ctrl->outsamples );
+			i2s_tx_callback = mp3_i2s_dma_tx_callback;
+			mp3decoder = MP3InitDecoder();
+			res = f_open( audiodev.file, (char*)fname, FA_READ );
+		}
+		if( res == 0 && mp3decoder != 0 ) 
+		{ 
+			f_lseek( audiodev.file, mp3ctrl->datastart );
+			audio_stop();
+			printf("%s: name (%s), mp3ctrl->datastart (%d)\r\n", 
+				__func__, fname, mp3ctrl->datastart );
+			
+			while( res == 0 )
 			{
-				res = 0xff;
-				break;
-			}
-			if( br == 0 )
-			{
-				res = WKUP_PRES;// finish
-				break;
-			}
-			bytesleft += br; 
-			err = 0;			
-			while( !outofdata ) 
-			{
-				offset = MP3FindSyncWord( readptr, bytesleft ); 
-				if( offset < 0 ) 
-				{ 
-					outofdata = 1; 
-					res = KEY0_PRES;
-					printf("%s: outofdata=1\r\n", __func__);
-				}
-				else	 
+				readptr = buffer;	// mp3 read pointer
+				offset = 0;	
+				outofdata = 0;
+				bytesleft = 0; 	
+				res = f_read( audiodev.file, buffer, MP3_FILE_BUF_SZ, &br );//一次读取MP3_FILE_BUF_SZ字节
+				if( res )
 				{
-					readptr += offset;		 
-					bytesleft -= offset;		 
-					err = MP3Decode( mp3decoder, &readptr, &bytesleft, (short*)audiodev.tbuf,0 ); 
-					if( err != 0 )
-					{
-						printf("decode error:%d\r\n",err);
-						break;
-					}
-					else
-					{
-						MP3GetLastFrameInfo( mp3decoder, &mp3frameinfo );
-						if(mp3ctrl->bitrate!= mp3frameinfo.bitrate)		
-						{
-							printf("mp3ctrl->bitrate!=mp3frameinfo.bitrate\r\n");
-							mp3ctrl->bitrate = mp3frameinfo.bitrate; 
-						}
-						if( step > 2 )
-						{
-							mp3_fill_buffer(step, (u16*)audiodev.tbuf, mp3frameinfo.outputSamps, mp3frameinfo.nChans );						
-						}
-						else if( step == 0 || step == 1 )
-						{
-							mp3_fill_buffer(step, (u16*)audiodev.tbuf, mp3frameinfo.outputSamps, mp3frameinfo.nChans ); 
-							step++;
-						}
-						else if( step == 2 )
-						{
-							step++;
-							audio_start();
-						}
-					}
-					
-					if( bytesleft < MAINBUF_SIZE * 2 )
+					res = 0xff;
+					break;
+				}
+				if( br == 0 )
+				{
+					res = NEXT;// finish
+					break;
+				}
+				bytesleft += br; 
+				err = 0;			
+				while( !outofdata ) 
+				{
+					offset = MP3FindSyncWord( readptr, bytesleft ); 
+					if( offset < 0 ) 
 					{ 
-						memmove( buffer, readptr, bytesleft );
-						f_read( audiodev.file, buffer+bytesleft, MP3_FILE_BUF_SZ - bytesleft, &br );
-						if( br < MP3_FILE_BUF_SZ - bytesleft )
-						{
-							memset(buffer+bytesleft+br,0,MP3_FILE_BUF_SZ-bytesleft-br); 
-						}
-						bytesleft=MP3_FILE_BUF_SZ;  
-						readptr=buffer; 
-					} 	
-
-					while( 1 )
+						outofdata = 1; 
+						res = NEXT;
+						printf("%s: outofdata(1)\r\n", __func__);
+					}
+					else	 
 					{
-						if( uMusicPlayControl == WKUP_PRES )// stop
+						readptr += offset;		 
+						bytesleft -= offset;
+						//printf("in bytesleft(%d)\r\n", bytesleft);
+						err = MP3Decode( mp3decoder, &readptr, &bytesleft, (short*)audiodev.tbuf, 0 ); 
+						if( err != 0 )
 						{
-							if( audiodev.status & 0X01 )
-								audiodev.status &= ~( 1 << 0 );
-							else 
-								audiodev.status |= 0X01;  
-
-							uMusicPlayControl = 0;
-						}
-						if( uMusicPlayControl == KEY2_PRES ||
-							uMusicPlayControl == KEY0_PRES ) // next pre
-						{
-							res = uMusicPlayControl;
-							uMusicPlayControl = 0;
-							outofdata = 1;
-							printf("next or pre! res = %d\r\n", res);							
-							break; 
-						}	
-						
-						if( ( audiodev.status & 0X01 ) == 0 && step > 2 ) 
-						{
-							vTaskDelay( 200 / portTICK_RATE_MS );
+							printf("MP3Decode error:%d\r\n",err);
+							res = NEXT;
+							break;
 						}
 						else
 						{
-							break;
+							//printf("out bytesleft(%d)\r\n", bytesleft);
+							MP3GetLastFrameInfo( mp3decoder, &mp3frameinfo );
+							if(mp3ctrl->bitrate!= mp3frameinfo.bitrate)		
+							{
+								printf("bitrate change from %d to %d\r\n", mp3ctrl->bitrate,
+									mp3frameinfo.bitrate);
+								mp3ctrl->bitrate = mp3frameinfo.bitrate; 
+							}
+							if( step > 2 )
+							{
+								mp3_fill_buffer(step, (u16*)audiodev.tbuf, 
+									mp3frameinfo.outputSamps, mp3frameinfo.nChans );						
+							}
+							else if( step == 0 || step == 1 )
+							{
+								mp3_fill_buffer(step, (u16*)audiodev.tbuf, 
+									mp3frameinfo.outputSamps, mp3frameinfo.nChans ); 
+								step++;
+							}
+							else if( step == 2 )
+							{
+								step++;
+								audio_start();
+							}
 						}
-					}
-					/*
- 					while( audiodev.status & ( 1 << 1 ) )// stop
-					{			 
-						vTaskDelay( 400 / portTICK_RATE_MS );
-						mp3_get_curtime(audiodev.file,mp3ctrl); 
-						audiodev.totsec=mp3ctrl->totsec;	//参数传递
-						audiodev.cursec=mp3ctrl->cursec;
-						audiodev.bitrate=mp3ctrl->bitrate;
-						audiodev.samplerate=mp3ctrl->samplerate;
-						audiodev.bps=16;//MP3仅支持16位
- 						if( audiodev.status & 0X01 )break;//没有按下暂停 
-					}
-					
-					if((audiodev.status&( 1 << 1 )) == 0 )//请求结束播放/播放完成
-					{  
-						res = KEY0_PRES;//跳出上上级循环
-						outofdata = 1;//跳出上一级循环
-						break;
-					}  
-					*/
-					
-				}					
-			}  
+						
+						if( bytesleft < MAINBUF_SIZE * 2 )
+						{ 
+							memmove( buffer, readptr, bytesleft );
+							f_read( audiodev.file, buffer + bytesleft, MP3_FILE_BUF_SZ - bytesleft, &br );
+							if( br < MP3_FILE_BUF_SZ - bytesleft )
+							{
+								memset(buffer+bytesleft+br,0,MP3_FILE_BUF_SZ-bytesleft-br); 
+							}
+							bytesleft = MP3_FILE_BUF_SZ;  
+							readptr = buffer; 
+						} 	
+
+						while( 1 )
+						{
+							if( uMusicPlayControl == STOPRESUME )// stop
+							{
+								if( audiodev.status & 0X01 )
+									audiodev.status &= ~( 1 << 0 );
+								else 
+									audiodev.status |= 0X01;  
+
+								uMusicPlayControl = 0;
+							}
+							if( uMusicPlayControl == NEXT ||
+								uMusicPlayControl == PREVIOUS ) // next pre
+							{
+								res = uMusicPlayControl;
+								uMusicPlayControl = 0;
+								outofdata = 1;
+								printf("next or pre! res(%d)\r\n", res);							
+								break; 
+							}	
+							
+							if( ( audiodev.status & 0X01 ) == 0 && step > 2 ) 
+							{
+								vTaskDelay( 200 / portTICK_RATE_MS );
+							}
+							else
+							{
+								break;
+							}
+						}
+						
+						/*
+	 					while( audiodev.status & ( 1 << 1 ) )// stop
+						{			 
+							vTaskDelay( 400 / portTICK_RATE_MS );
+							mp3_get_curtime(audiodev.file,mp3ctrl); 
+							audiodev.totsec=mp3ctrl->totsec;	//参数传递
+							audiodev.cursec=mp3ctrl->cursec;
+							audiodev.bitrate=mp3ctrl->bitrate;
+							audiodev.samplerate=mp3ctrl->samplerate;
+							audiodev.bps=16;//MP3仅支持16位
+	 						if( audiodev.status & 0X01 )break;//没有按下暂停 
+						}
+						
+						if((audiodev.status&( 1 << 1 )) == 0 )//请求结束播放/播放完成
+						{  
+							res = KEY0_PRES;//跳出上上级循环
+							outofdata = 1;//跳出上一级循环
+							break;
+						}  
+						*/
+					}					
+				}  
+			}
+			audio_stop();
 		}
-		audio_stop();//关闭音频输出
+		else 
+		{
+			res = 0xff;
+		}
+		
+		f_close( audiodev.file );
+		if( res != 0xff && uMusicPlayControl == CIRCLE )
+		{
+			vTaskDelay( 200 / portTICK_RATE_MS );
+			printf("%s: circle to play %s\r\n", __func__, fname);
+			goto CIRCLEPLAY;
+		}
 	}
-	else 
+	else
 	{
-		res=0xff;//错误
+		printf("%s: pvPortMalloc fail!\r\n", __func__ );
 	}
-	f_close(audiodev.file);
-	MP3FreeDecoder(mp3decoder);		//释放内存	
-	vPortFree(mp3ctrl);
-	vPortFree(buffer);
-	vPortFree(audiodev.file);
-	vPortFree(audiodev.i2sbuf1);
-	vPortFree(audiodev.i2sbuf2);
-	vPortFree(audiodev.tbuf);
-	
+	MP3FreeDecoder( mp3decoder );
+	//vPortFree(  mp3ctrl );
+	//vPortFree( buffer );
+	//vPortFree( audiodev.file );
+	//vPortFree( audiodev.i2sbuf1 );
+	//vPortFree( audiodev.i2sbuf2 );
+	//vPortFree( audiodev.tbuf );
 	return res;
 }
-
-
-
 
 void MusicAddVolume( void )
 {
@@ -787,24 +920,28 @@ void MusicDelVolume( void )
 
 void MusicNext( void )
 {
-	uMusicPlayControl = 1;
+	uMusicPlayControl = NEXT;
 }
 
 void MusicPrevious( void )
 {
-	uMusicPlayControl = 3;
+	uMusicPlayControl = PREVIOUS;
 }
 
 void MusicStop( void )
 {
-	uMusicPlayControl = 4;
+	uMusicPlayControl = STOPRESUME;
 }
 
 void MusicContinue( void )
 {
-	uMusicPlayControl = 4;
+	uMusicPlayControl = STOPRESUME;
 }	
 
+void MusicCircle( void )
+{
+	uMusicPlayControl = CIRCLE;
+}	
 
 
 

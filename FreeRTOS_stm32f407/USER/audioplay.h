@@ -37,12 +37,12 @@ typedef __packed struct
 extern __audiodev audiodev;	//音乐播放控制器
 */
 //音乐播放控制器
-typedef __packed struct
+typedef struct
 {  
 	//2个I2S解码的BUF
-	uint8_t *i2sbuf1;
-	uint8_t *i2sbuf2; 
-	uint8_t *tbuf;			//零时数组
+	uint8_t i2sbuf1[WAV_I2S_TX_DMA_BUFSIZE];
+	uint8_t i2sbuf2[WAV_I2S_TX_DMA_BUFSIZE]; 
+	uint8_t tbuf[WAV_I2S_TX_DMA_BUFSIZE];			//零时数组
 	FIL *file;			//音频文件指针 	
 	vu8 status;			//bit0:0,暂停播放;1,继续播放
 						//bit1:0,结束播放;1,开启播放  

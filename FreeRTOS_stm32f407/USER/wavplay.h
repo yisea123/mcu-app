@@ -90,7 +90,7 @@ typedef __packed struct
 }__wavctrl; 
 
 
-u8 wav_decode_init(u8* fname,__wavctrl* wavx);
+u8 wav_decode_init(u8* fname, __wavctrl* wavx, void *mFile);
 u32 wav_buffill(u8 *buf,u16 size,u8 bits);
 void wav_i2s_dma_tx_callback(void); 
 u8 wav_play_song(u8* fname);
@@ -123,6 +123,7 @@ typedef __packed struct
     uint8_t id[3];		   	//ID,TAG三个字母
     uint8_t title[30];		//歌曲名字
     uint8_t artist[30];		//艺术家名字
+    uint8_t album[30];		//专辑名称
 	uint8_t year[4];			//年代
 	uint8_t comment[30];		//备注
 	uint8_t genre;			//流派 
@@ -131,24 +132,32 @@ typedef __packed struct
 
 
 
-//ID3V2 标签头 
+//ID3V2 标签头 10个字节
 typedef __packed struct 
 {
-    uint8_t id[3];		   	//ID
-    uint8_t mversion;		//主版本号
-    uint8_t sversion;		//子版本号
-    uint8_t flags;			//标签头标志
-    uint8_t size[4];			//标签信息大小(不包含标签头10字节).所以,标签大小=size+10.
+    uint8_t id[3];		   	
+	//ID
+    uint8_t mversion;		
+	//主版本号应该为3，否则不支持
+    uint8_t sversion;		
+	//子版本号
+    uint8_t flags;			
+	//标签头标志
+    uint8_t size[4];			
+	//标签信息大小(不包含标签头10字节).
+	//所以,标签大小= size + 10.
 }ID3V2_TagHead;
 
 
-
-//ID3V2.3 版本帧头
+//ID3V2.3 版本帧头10个字节
 typedef __packed struct 
 {
-    uint8_t id[4];		   	//帧ID
-    uint8_t size[4];			//帧大小
-    uint16_t flags;			//帧标志
+    uint8_t id[4];		   	
+	//帧ID    用于标示是什么帧
+    uint8_t size[4];			
+	//帧大小
+    uint16_t flags;			
+	//帧标志
 }ID3V23_FrameHead;
 
 
@@ -181,20 +190,44 @@ typedef __packed struct
 //MP3控制结构体
 typedef __packed struct 
 {
-    uint8_t title[MP3_TITSIZE_MAX];	//歌曲名字
-    uint8_t artist[MP3_ARTSIZE_MAX];	//艺术家名字
-    uint32_t totsec ;				//整首歌时长,单位:秒
-    uint32_t cursec ;				//当前播放时长
+    uint8_t title[MP3_TITSIZE_MAX];	
+	//歌曲名字
+    uint8_t artist[MP3_ARTSIZE_MAX];	
+	//艺术家名字
+    uint8_t album[30];		
+	//专辑名称
+	uint8_t year[4];			
+	//年代
+	uint8_t comment[30];		
+	//备注
+	uint8_t genre;			
+	//流派 
 	
-    uint32_t bitrate;	   			//比特率
-	uint32_t samplerate;				//采样率
-	uint16_t outsamples;				//PCM输出数据量大小(以16位为单位),单声道MP3,则等于实际输出*2(方便DAC输出)
+    uint32_t totsec ;				
+	//整首歌时长,单位:秒
+    uint32_t cursec ;				
+	//当前播放时长
 	
-	uint32_t datastart;				//数据帧开始的位置(在文件里面的偏移)
+    uint32_t bitrate;	   			
+	//比特率
+	uint32_t samplerate;				
+	//采样率
+	uint16_t outsamples;				
+	//PCM输出数据量大小(以16位为单位),
+	//单声道MP3,则等于实际输出*2(方便DAC输出)
+	
+	uint32_t datastart;				
+	//数据帧开始的位置(在文件里面的偏移)
 }__mp3ctrl;
 
 
-
+typedef enum 
+{
+	NEXT = 	1,
+	CIRCLE,
+	PREVIOUS,
+	STOPRESUME
+} PlayStatus;
 
 extern __mp3ctrl * mp3ctrl;
 

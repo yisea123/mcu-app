@@ -187,8 +187,6 @@ void MP3GetLastFrameInfo(HMP3Decoder hMP3Decoder, MP3FrameInfo *mp3FrameInfo)
 
 	if ( !mp3DecInfo || mp3DecInfo->layer != 3 ) 
 	{
-		printf("%s: !mp3DecInfo || mp3DecInfo->layer = %d\r\n", __func__,
-			mp3DecInfo->layer);
 		mp3FrameInfo->bitrate = 0;
 		mp3FrameInfo->nChans = 0;
 		mp3FrameInfo->samprate = 0;

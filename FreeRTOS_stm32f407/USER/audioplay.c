@@ -116,9 +116,9 @@ void audio_play(void)
 		vTaskDelay( 20000 / portTICK_RATE_MS );				   				  
 	}										   
   	wavfileinfo.lfsize=_MAX_LFN*2+1;						//长文件名最大长度
-	wavfileinfo.lfname=pvPortMalloc(  wavfileinfo.lfsize );	//为长文件缓存区分配内存
- 	pname=pvPortMalloc( wavfileinfo.lfsize );				//为带路径的文件名分配内存
- 	wavindextbl=pvPortMalloc(  2*totwavnum );				//申请2*totwavnum个字节的内存,用于存放音乐文件索引
+	wavfileinfo.lfname = pvPortMalloc(  wavfileinfo.lfsize );	//为长文件缓存区分配内存
+ 	pname = pvPortMalloc( wavfileinfo.lfsize );				//为带路径的文件名分配内存
+ 	wavindextbl = pvPortMalloc(  2*totwavnum );				//申请2*totwavnum个字节的内存,用于存放音乐文件索引
  	while(wavfileinfo.lfname==NULL||pname==NULL||wavindextbl==NULL)//内存分配出错
  	{	    
 		vTaskDelay( 2000000 / portTICK_RATE_MS );			  
@@ -160,19 +160,19 @@ void audio_play(void)
 		strcat(( char* ) pname, ( const char* ) fn ); 
 		audio_index_show( curindex + 1, totwavnum );
 		key = audio_play_song( pname ); 
-		if( key == KEY2_PRES )
+		if( key == PREVIOUS )
 		{
-			if(curindex)curindex--;
-			else curindex=totwavnum-1;
+			if( curindex ) curindex--;
+			else curindex = totwavnum - 1;
  		}
-		else if(key==KEY0_PRES)
+		else if( key == NEXT )
 		{
 			curindex++;		   	
 			if( curindex >= totwavnum )
-				curindex=0; 
+				curindex = 0; 
  		}
-		else { 			
-			
+		else 
+		{ 				
 			printf("%s: error happend\r\n", __func__ );
 			curindex++;		   	
 			if( curindex >= totwavnum )
@@ -183,10 +183,12 @@ void audio_play(void)
 		}
 	} 	
 	
-	vPortFree(  wavfileinfo.lfname);			    
-	vPortFree(  pname);			    
-	vPortFree( wavindextbl);
+	vPortFree(  wavfileinfo.lfname );			    
+	vPortFree(  pname );			    
+	vPortFree( wavindextbl );
 } 
+
+extern int amr_play ( char *serialFileName );
 
 u8 audio_play_song(u8* fname)
 {
@@ -202,6 +204,10 @@ u8 audio_play_song(u8* fname)
 		case T_MP3:
 			res = mp3_play_song( fname );
 			printf("%s: 2 res = %d\r\n", __func__, res );		
+			break;
+		case T_APE:
+			res = amr_play( fname );
+			printf("%s: 3 res = %d\r\n", __func__, res );		
 			break;
 		default://其他文件,自动跳转到下一曲
 			printf("can't play:%s\r\n",fname);
