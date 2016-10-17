@@ -30,7 +30,7 @@ static u16 FLASH_SECTOR_COUNT = 2048 * 2 * 8;
 #endif
 static char xcInit = 0;
 static u16	RAM_DISK_SECTOR_COUNT = 60;
-static char pcRamdisk[ 10 * 1024 ];
+static char pcRamdisk[ 17 * 1024 ];
 
 void vPrintSdDisk( unsigned int sector )
 {

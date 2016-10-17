@@ -101,7 +101,7 @@
 #define configTIMER_TASK_STACK_DEPTH (128+128)
 
 #define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )
-#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 30 * 1024 ) )
+#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 25 * 1024 ) )
 
 #define configMAX_TASK_NAME_LEN		( 16 )
 #define configUSE_MUTEXES					1

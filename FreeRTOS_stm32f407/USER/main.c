@@ -73,7 +73,7 @@ int main(void)
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*8, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
 	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
-	//xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );	
+	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
 	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE*1+20, NULL, tskIDLE_PRIORITY + 4, &pxTimeTask );
@@ -99,7 +99,7 @@ void Software_Hardware_Init( void )
 	(void) RTC_INIT();
 	(void) LED_Init();
 	(void) EXTIX_Init();
-	//(void) IWDG_Init( 4, 2000 ); 
+	(void) IWDG_Init( 4, 2000 ); 
 	//与分频数为64,重载值为1000,溢出时间为2s	
 	(void) Adc_Init(); 
 	(void) W25QXX_Init();	

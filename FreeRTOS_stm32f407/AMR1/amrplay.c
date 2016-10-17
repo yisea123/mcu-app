@@ -57,21 +57,18 @@
 #include "i2s.h"
 #include "wm8978.h"
 #include "led.h"
-#include "iwdg.h"
 
 extern TaskHandle_t pxMusicPlayer;
 extern unsigned char uMusicPlayControl;
+
 #define AMR_MAGIC_NUMBER "#!AMR\n"
 #define MAX_PACKED_SIZE (MAX_SERIAL_SIZE / 8 + 2)
-const char decoder_id[] = "@(#)$Id $";
 /* frame size in serial bitstream file (frame type + serial stream + flags) */
 #define SERIAL_FRAMESIZE (1+MAX_SERIAL_SIZE+5)
-
-/*
-********************************************************************************
-*                             MAIN PROGRAM 
-********************************************************************************
-*/
+#define N_L_FRAME 			12
+//add  N_L_FRAME for play more data in one DMA transfer
+#define AMR_CHANNEL_TYPE	1 
+// 1: mono   2:stereo
 
 typedef enum 
 {
@@ -81,14 +78,16 @@ typedef enum
 	STEP3,
 } INITSTEP;
 
+const char decoder_id[] = "@(#)$Id $";
 unsigned char amrwitchbuf = 0;
 unsigned char amrtransferend = 0;
 unsigned int amrsamplerate = 8000;
 
 void amr_set_sample_rate( unsigned int rate )
 {
+	/*aways set to 8000HZ for AMR format*/
 	amrsamplerate = rate;
-	printf("%s: amrsamplerate = %d\r\n", __func__, amrsamplerate);
+	printf("%s: amrsamplerate = %d\r\n", __func__, amrsamplerate );
 }
 
  void amr_i2s_dma_tx_callback( void ) 
@@ -100,8 +99,10 @@ void amr_set_sample_rate( unsigned int rate )
 		amrwitchbuf = 0;
 		if( ( audiodev.status & 0X01 ) == 0 ) 
 		{
-			for( i = 0; i < 20 * L_FRAME * 2; i++ )
+			for( i = 0; i < 20 * L_FRAME *( 2 / AMR_CHANNEL_TYPE ); i++ )
+			{
 				audiodev.i2sbuf1[i] = 0;
+			}
 		}
 	}
 	else 
@@ -109,8 +110,10 @@ void amr_set_sample_rate( unsigned int rate )
 		amrwitchbuf = 1;
 		if( ( audiodev.status & 0X01 ) == 0 ) 
 		{
-			for( i = 0; i < 20 * L_FRAME * 2; i++ )
+			for( i = 0; i < 20 * L_FRAME *( 2 / AMR_CHANNEL_TYPE ); i++ )
+			{
 				audiodev.i2sbuf2[i] = 0;
+			}
 		}
 	} 
 	
@@ -119,70 +122,74 @@ void amr_set_sample_rate( unsigned int rate )
 } 
 
 
-void amr_fill_buffer(short *p, Word16 *synth, int channel)
+void amr_fill_buffer( short *p, Word16 *synth, int channel )
 {
 	int i, size = L_FRAME;
 
 	
-	if( channel == 2 )//Stereo
+	if( channel == 2 )
+	//Stereo
 	{
-		for(i=0; i < size; i++)
+		for( i = 0; i < size; i++ )
 		{
-			p[i] = synth[i];
+			p[ i ] = synth[ i ];
 		}
 	}
-	else//mono
+	else
+	//mono
 	{
-		for( i=0; i<size; i++)
+		for( i = 0; i < size; i++ )
 		{
-			p[ 2*i ] = synth[i];
-			p[ 2*i + 1] = synth[i];
+			p[ 2*i ] = synth[ i ];
+			p[ 2*i + 1] = synth[ i ];
 		}
 	}
 
 }
 
-#define N_L_FRAME 12
-
+/*
+	AMR都是8000HZ, 单声道，16位采样精度?
+*/ 
 int amr_play ( char *serialFileName )
 {
-  int res = NEXT, times = 0;
+  int res = NEXT, times;
   unsigned char *p = NULL;
-  INITSTEP step = 0;
+  INITSTEP step;
   unsigned int br;
-  Speech_Decode_FrameState *speech_decoder_state = NULL;
+  Speech_Decode_FrameState *speech_decoder_state;
   Word16 serial[SERIAL_FRAMESIZE];   /* coded bits                    */
   Word16 synth[L_FRAME];             /* Synthesis                     */
   FIL *file_serial = NULL, mFileAmr;
   enum Mode mode = (enum Mode)0;
   enum RXFrameType rx_type = (enum RXFrameType)0;
-  Word16 reset_flag = 0;
-  Word16 reset_flag_old = 1;
+  Word16 reset_flag;
+  Word16 reset_flag_old;
   Word16 i;
-  
   UWord8 toc, q, ft;
   Word8 magic[8];
   UWord8 packed_bits[MAX_PACKED_SIZE];
   Word16 packed_size[16] = {12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0};
 
-  //audiodev.i2sbuf1 = pvPortMalloc( 2 * L_FRAME * 20 );
-  //audiodev.i2sbuf2 = pvPortMalloc( 2 * L_FRAME * 20 );
   file_serial = &mFileAmr;
-  //( FIL* ) pvPortMalloc( sizeof( FIL ) ); 
-  if( !file_serial )
-  {
-  	printf("%s: pvPortMalloc fail!\r\n", __func__);
-  	goto FAIL1;
-  }
-  proc_head ("Decoder");
 
-  printf("start f_open %s\r\n", serialFileName);  
+  proc_head ("Decoder");
+  uMusicPlayControl = 0;
+
+CIRCLEPLAY:  
+  times = 0;
+  reset_flag = 0;
+  reset_flag_old = 1;
+  mode = (enum Mode)0;
+  rx_type = (enum RXFrameType)0;
+  step = STEP0;
+  speech_decoder_state = NULL;
+  
+  printf("AMR start play (%s).\r\n", serialFileName);  
   if ((f_open (file_serial, (const TCHAR*)serialFileName, FA_READ )) != FR_OK)
   {
       printf("Input file '%s' does not exist !!\n", serialFileName);
       goto FAIL1;
   }
-  printf("Input bitstream file:   %s\r\n", serialFileName);
 
   memset(magic, 0, 8);
    /* read and verify magic number */
@@ -191,16 +198,17 @@ int amr_play ( char *serialFileName )
   	/*br != sizeof(Word8) * strlen(AMR_MAGIC_NUMBER) ||*/
   	strncmp((const char *)magic, AMR_MAGIC_NUMBER, strlen(AMR_MAGIC_NUMBER)))
   {
-	   printf("%s%s\n", "Invalid magic number: \r\n", magic);
+  	   res = 0XFF;  
+	   printf("%s: Invalid magic number (%s)\r\n", __func__, magic);
 	   goto FAIL2;
   }
-  printf("magic=%s\r\n", magic);
 
   /*-----------------------------------------------------------------------*
    * Initialization of decoder                                             *
    *-----------------------------------------------------------------------*/
   if (Speech_Decode_Frame_init(&speech_decoder_state, "Decoder"))
   {
+  	  res = 0XFF;
       goto FAIL2;
   }
   else
@@ -208,9 +216,9 @@ int amr_play ( char *serialFileName )
 	printf("%s: Speech_Decode_Frame_init ok!\r\n", __func__);
   }
 
-  uMusicPlayControl = 0;
-  WM8978_I2S_Cfg( 2, 0 );
-  I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx, I2S_CPOL_Low, I2S_DataFormat_16b );	  
+  WM8978_I2S_Cfg( 2, 0 );//i2s	16bit
+  I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx, 
+  	I2S_CPOL_Low, I2S_DataFormat_16b );	  
   if( 0 == I2S2_SampleRate_Set( amrsamplerate ) )
   {
   	printf("%s: set sample rate to %d scueess!\r\n", __func__, amrsamplerate);
@@ -220,9 +228,10 @@ int amr_play ( char *serialFileName )
   	printf("%s: set sample rate to %d fail!!!\r\n", __func__, amrsamplerate);
 	goto FAIL2;
   }
-  I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,  L_FRAME * N_L_FRAME * 2 );
-  //L_FRAME * N_L_FRAME * 2 for mono
-  //L_FRAME * N_L_FRAME  for stero
+  I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,  
+  				L_FRAME * N_L_FRAME * ( 2 / AMR_CHANNEL_TYPE ) );
+  //	L_FRAME * N_L_FRAME * 2 for mono
+  //	L_FRAME * N_L_FRAME  for stero
   i2s_tx_callback = amr_i2s_dma_tx_callback;
   audio_stop();
   
@@ -275,77 +284,78 @@ int amr_play ( char *serialFileName )
          /* decode frame */
          Speech_Decode_Frame(speech_decoder_state, mode, &serial[1],
                              rx_type, synth);
+
+	     if( step == STEP3 )
+	     {	 		
+			while( amrtransferend == 0 && times == 0 )
+			{
+				ulTaskNotifyTake( pdTRUE, 800 / portTICK_RATE_MS );
+			}
+			amrtransferend = 0;
+
+			if( amrwitchbuf == 0 )
+			{
+				p =  audiodev.i2sbuf1;
+			}
+			else 
+			{
+				p =  audiodev.i2sbuf2;
+			}
+			
+			if( times >= N_L_FRAME - 1 )
+			{
+				amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE) * times * sizeof( synth )), 
+						synth, AMR_CHANNEL_TYPE);
+				times = 0;
+			}
+			else
+			{
+				amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE)*times * sizeof( synth )), 
+						synth, AMR_CHANNEL_TYPE);
+	     		times++;		
+			}
+	     }	 
+	     else if( step == STEP0 )
+	     {
+			 p =  audiodev.i2sbuf1;
+			if( times >= N_L_FRAME - 1 )
+			{
+	     		step++;
+				amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE)*times * sizeof( synth )), 
+						synth, AMR_CHANNEL_TYPE);
+				times = 0;
+			}
+			else
+			{
+				amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE)*times * sizeof( synth )), 
+						synth, AMR_CHANNEL_TYPE);
+	     		times++;		
+			}
+		}
+		 else if( step == STEP1 )
+		 {
+		 
+			 p =  audiodev.i2sbuf2;
+			 if( times >= N_L_FRAME - 1 )
+			 {
+				 step++;
+				 //memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) );	
+				 //for mono we need to  p + (2*times * sizeof( synth ))
+				 //for Stereo we set p + (times * sizeof( synth ))
+				 amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE)*times * sizeof( synth )), 
+				 		synth, AMR_CHANNEL_TYPE);
+				 times = 0;
+				 audio_start();
+				 step++;
+			 }
+			 else
+			 {
+				 amr_fill_buffer((short *)(p + (2/AMR_CHANNEL_TYPE)*times * sizeof( synth )), 
+				 		synth, AMR_CHANNEL_TYPE);
+				 times++;		 
+			 }
+		 }		 
      }
-
-     if( step == STEP3 )
-     {	 		
-		while( amrtransferend == 0 && times == 0 )
-		{
-			ulTaskNotifyTake( pdTRUE, 800 / portTICK_RATE_MS );
-		}
-		amrtransferend = 0;
-
-		if( amrwitchbuf == 0 )
-		{
-			p =  audiodev.i2sbuf1;
-		}
-		else 
-		{
-			p =  audiodev.i2sbuf2;
-		}
-		
-		if( times >= N_L_FRAME-1 )
-		{
-			//memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) );
-			amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-			times = 0;
-		}
-		else
-		{
-			//memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) );
-			amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-     		times++;		
-		}
-     }	 
-     else if( step == STEP0 )
-     {
-		 p =  audiodev.i2sbuf1;
-		if( times >= N_L_FRAME - 1 )
-		{
-     		step++;
-			//memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) ); 
-			amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-			times = 0;
-		}
-		else
-		{
-			//memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) ); 
-			amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-     		times++;		
-		}
-	}
-	 else if( step == STEP1 )
-	 {
-	 
-		 p =  audiodev.i2sbuf2;
-		 if( times >= N_L_FRAME - 1 )
-		 {
-			 step++;
-			 //memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) );	
-			 //for mono we need to  p + (2*times * sizeof( synth ))
-			 //for Stereo we set p + (times * sizeof( synth ))
-			 amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-			 times = 0;
-			 audio_start();
-			 step++;
-		 }
-		 else
-		 {
-			 //memcpy( p + times * sizeof( synth ), synth, sizeof( synth ) );	
-			 amr_fill_buffer((short *)(p + 2*times * sizeof( synth )), synth, 1);
-			 times++;		 
-		 }
-	 }
 
      /* if not homed: check whether current frame is a homing frame */
      if (reset_flag_old == 0)
@@ -360,7 +370,6 @@ int amr_play ( char *serialFileName )
          Speech_Decode_Frame_reset(speech_decoder_state);
      }
      reset_flag_old = reset_flag;
-	 //( void ) IWDG_Feed();
 
 	while( 1 )
 	{
@@ -391,7 +400,7 @@ int amr_play ( char *serialFileName )
 		}
 	}	 
   }
-  printf("all AMR frame processed\r\n");
+  printf("AMR all frame processed.\r\n");
   
   /*-----------------------------------------------------------------------*
    * Close down speech decoder                                             *
@@ -402,12 +411,16 @@ FAIL3:
 	Speech_Decode_Frame_exit(&speech_decoder_state);
 FAIL2:
   	f_close(file_serial);
+	if( res != 0xff && uMusicPlayControl == CIRCLE )
+	{
+		vTaskDelay( 200 / portTICK_RATE_MS );
+		printf("%s: circle to play %s\r\n", __func__, serialFileName);
+		goto CIRCLEPLAY;
+	}		
 FAIL1:
-	//vPortFree( audiodev.i2sbuf1 );
-	//vPortFree( audiodev.i2sbuf2 );
-	//vPortFree( file_serial );	
-	//audiodev.i2sbuf1 = NULL;
-	//audiodev.i2sbuf2 = NULL;
-	
+	if( res == 0xff )
+	{
+		res = NEXT;
+	}
   return res;
 }
