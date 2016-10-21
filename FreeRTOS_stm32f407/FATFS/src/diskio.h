@@ -23,6 +23,9 @@ extern "C" {
 #elif(BOARD_NUM == 2)
 #define FLASH_BLOCK_SIZE   	8    
 //每个block 有8个扇区
+
+#else
+#define FLASH_BLOCK_SIZE   	2    
 #endif
 
 #define RAM_BLOCK_SIZE   	2     	

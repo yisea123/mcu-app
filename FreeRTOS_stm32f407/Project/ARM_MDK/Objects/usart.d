@@ -53,3 +53,4 @@
 .\objects\usart.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 .\objects\usart.o: ..\..\SYSTEM\usart\usart.h
 .\objects\usart.o: ..\..\FreeRTOS\Source\include\semphr.h
+.\objects\usart.o: ..\..\BSP\w25qxx.h

@@ -43,6 +43,10 @@ const char sp_dec_id[] = "@(#)$Id $" sp_dec_h;
 #include "bitno.tab"
 #endif
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Speech_Decode_FrameState mStaticSpeech;
+#endif
+
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -82,7 +86,11 @@ int Speech_Decode_Frame_init (Speech_Decode_FrameState **state,
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mStaticSpeech;
+	//memset((char *)s, 0, sizeof(Speech_Decode_FrameState));
+#else 
   /* allocate memory */
   if ((s= (Speech_Decode_FrameState *)
           pvPortMalloc(sizeof(Speech_Decode_FrameState))) == NULL) {
@@ -90,6 +98,8 @@ int Speech_Decode_Frame_init (Speech_Decode_FrameState **state,
               "structure\n");
       return -1;
   }
+#endif
+  
   s->decoder_amrState = NULL;
   s->post_state = NULL;
   s->postHP_state = NULL;
@@ -156,9 +166,13 @@ void Speech_Decode_Frame_exit (Speech_Decode_FrameState **state)
   setCounter((*state)->complexityCounter);
   WMOPS_output(0);
   setCounter(0); /* set counter to global counter */
+
  
+#if(STATIC_MEMORY_ALLOCK == 1)
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;
@@ -251,10 +265,15 @@ enum RXFrameType UnpackBits (
 	temp = *pack_ptr;
 	pack_ptr++;
 
+/*
+static Word16 unpacked_size[16] = {95, 103, 118, 134, 148, 159, 204, 244,
+                                   35,   0,   0,   0,   0,   0,   0,   0};
+
+*/
 	for (i = 1; i < unpacked_size[ft] + 1; i++)
 	{
-		if (temp & 0x80)	bits[sort_ptr[ft][i-1]] = BIT_1;
-		else				bits[sort_ptr[ft][i-1]] = BIT_0;
+		if (temp & 0x80)	bits[sort_ptr[ft][i-1]] = BIT_1; 			 // sort_ptr in bitno.tab
+		else				bits[sort_ptr[ft][i-1]] = BIT_0;			 // sort_ptr in bitno.tab
 
 		if (i % 8)
 		{
@@ -292,7 +311,7 @@ enum RXFrameType UnpackBits (
 		*mode = (enum Mode)ft;
 
 		if (q)	return RX_SPEECH_GOOD;
-		else	return RX_SPEECH_BAD;
+		else	return RX_SPEECH_BAD;    //»µÖ¡
 	}
 }
 

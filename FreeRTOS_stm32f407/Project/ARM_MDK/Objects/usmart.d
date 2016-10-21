@@ -63,3 +63,4 @@
 .\objects\usmart.o: ..\..\FreeRTOS\Source\include\semphr.h
 .\objects\usmart.o: ..\..\USER\wavplay.h
 .\objects\usmart.o: ..\..\Helix\pub\mp3dec.h
+.\objects\usmart.o: ..\..\USER\md5.h

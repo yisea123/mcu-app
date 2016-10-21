@@ -32,7 +32,10 @@ const char agc_id[] = "@(#)$Id $" agc_h;
 #include "count.h"
 #include "cnst.h"
 #include "inv_sqrt.h"
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+agcState mAgcState;
+#endif
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -119,12 +122,16 @@ int agc_init (agcState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+  s  = &mAgcState;
+#else
   /* allocate memory */
   if ((s= (agcState *) pvPortMalloc(sizeof(agcState))) == NULL){
       printf("agc_init: can not malloc state structure\n");
       return -1;
   }
+#endif 
   
   agc_reset(s);
   *state = s;
@@ -164,9 +171,13 @@ void agc_exit (agcState **state)
 {
   if (state == NULL || *state == NULL)
       return;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

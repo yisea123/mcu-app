@@ -60,6 +60,11 @@ const char dec_amr_id[] = "@(#)$Id $" dec_amr_h;
 #include "bitno.tab"
 #include "b_cn_cod.h"
 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Decoder_amrState mDecoder_amrState;
+#endif
+
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -103,13 +108,16 @@ int Decoder_amr_init (Decoder_amrState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mDecoder_amrState;
+#else 
   /* allocate memory */
   if ((s= (Decoder_amrState *) pvPortMalloc(sizeof(Decoder_amrState))) == NULL){
       printf("Decoder_amr_init: can not malloc state structure\n");
       return -1;
   }
-  
+#endif   
   s->T0_lagBuff = 40;
   s->inBackgroundNoise = 0;
   s->voicedHangover = 0;
@@ -235,9 +243,13 @@ void Decoder_amr_exit (Decoder_amrState **state)
   Cb_gain_average_exit(&(*state)->Cb_gain_averState);
   lsp_avg_exit(&(*state)->lsp_avg_st);
   dtx_dec_exit(&(*state)->dtxDecoderState);
-  
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else   
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

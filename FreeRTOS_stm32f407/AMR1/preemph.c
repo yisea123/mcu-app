@@ -34,6 +34,10 @@ const char preemph_id[] = "@(#)$Id $" preemph_h;
 #include "basic_op.h"
 #include "count.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	preemphasisState mPreemphasisState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -62,13 +66,16 @@ int preemphasis_init (preemphasisState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mPreemphasisState;
+#else 
   /* allocate memory */
   if ((s= (preemphasisState *) pvPortMalloc(sizeof(preemphasisState))) == NULL){
       printf( "preemphasis_init: can not malloc state structure\n");
       return -1;
   }
-  
+#endif  
   preemphasis_reset(s);
   *state = s;
   
@@ -105,9 +112,13 @@ void preemphasis_exit (preemphasisState **state)
 {
   if (state == NULL || *state == NULL)
       return;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else 
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

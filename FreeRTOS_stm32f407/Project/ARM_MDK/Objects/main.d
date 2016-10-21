@@ -77,4 +77,5 @@
 .\objects\main.o: ..\..\USER\audioplay.h
 .\objects\main.o: ..\..\USER\wavplay.h
 .\objects\main.o: ..\..\Helix\pub\mp3dec.h
+.\objects\main.o: ..\..\USER\uartprotocol.h
 .\objects\main.o: ..\..\FATFS\src\diskio.h

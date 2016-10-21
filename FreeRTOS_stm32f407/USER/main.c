@@ -23,6 +23,11 @@
 #include "wm8978.h"	 
 #include "audioplay.h"	
 #include "wavplay.h" 
+#include "uartprotocol.h"
+
+#if( BOARD_NUM == 3 )
+#include "gpioconfig.h"
+#endif
 
 #define BOOT_LOG   \
 printf(" \
@@ -48,7 +53,7 @@ void Music_Player(void * pvParameters);
 Ringfifo mLogFifo;
 QueueHandle_t mLogSemaphore =  NULL;
 //QueueHandle_t mDmaSemaphore =  NULL;
-unsigned char mSendBuffer[512];
+//unsigned char mSendBuffer[512];
 TimerHandle_t xTimer1 = NULL;
 TaskHandle_t pxKeyDetectTask;
 TaskHandle_t pxLogTask;
@@ -56,29 +61,31 @@ TaskHandle_t pxTimeTask;
 TaskHandle_t pxTempretureTask;
 TaskHandle_t pxUsmartTask;
 TaskHandle_t pxMusicPlayer;
-
+TaskHandle_t pxDownStreamTask;
+TaskHandle_t pxUpStreamTask;
 
 int main(void)
 {
 	FIL file;
 	( void ) Software_Hardware_Init();
-	if( f_open( &file, (const TCHAR*)"1:/log.txt", FA_WRITE|FA_OPEN_EXISTING) == FR_OK )
-	{
-		f_printf( &file ,"%s: task running...\r\n", __func__);
-		f_close( &file );
-	}	
-	vSemaphoreCreateBinary( mLogSemaphore );
+	//vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 
-	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*8, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
+	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 7, &pxUpStreamTask );
+	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 7, &pxDownStreamTask );
+#if( BOARD_NUM != 3)	
+	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
+#endif
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
 	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
-	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );	
+	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, configMAX_PRIORITIES - 1 , NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
 	xTaskCreate( RTC_read_Task, (const char *)"RTC", configMINIMAL_STACK_SIZE*1+20, NULL, tskIDLE_PRIORITY + 4, &pxTimeTask );
 	//xTaskCreate( Temprate_Task, (const char *)"Temprature", configMINIMAL_STACK_SIZE*1+30, NULL, tskIDLE_PRIORITY + 5, &pxTempretureTask );		
+#if( BOARD_NUM != 3)	
 	xTaskCreate( Key_Detect_Task, (const char *)"Key", configMINIMAL_STACK_SIZE*1, NULL, configKDETECT_TASK_PRIORITY, &pxKeyDetectTask );
+#endif
 	//xTaskCreate( Printf_Log_Task, (const char *)"Log", configMINIMAL_STACK_SIZE*3, NULL, configLOG_TASK_PRIORITY, &pxLogTask );	
 
 	vTaskStartScheduler();
@@ -89,19 +96,37 @@ int main(void)
 * function: Software_Hardware_Init.
 **/
 #include "diskio.h"		/* FatFs lower layer API */
-extern unsigned char xMusicVolume;
+extern  signed char xMusicVolume;
+extern  signed char xSpeakerVolume;
 void Software_Hardware_Init( void )
 {
 	unsigned char res, i;
 	rfifo_init( &mLogFifo );
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_2 );
-	(void) uart_init( 115200 ); BOOT_LOG
+	//(void) uart4_init( 115200 );	
+
+#if( BOARD_NUM != 3 )
+	(void) uart_init( 460800 );// PA9 PA10 
+		   BOOT_LOG
+	(void) uart3_init( 460800 );// PD9 PD8    
+#else
+	(void) uart6_init( 503000 );// pc6 pc7
+	(void) uart4_init( 115200 );// pc10 pc11	  
+	BOOT_LOG
+#endif
+	
 	(void) RTC_INIT();
+
+#if( BOARD_NUM != 3 )		
 	(void) LED_Init();
 	(void) EXTIX_Init();
-	(void) IWDG_Init( 4, 2000 ); 
 	//与分频数为64,重载值为1000,溢出时间为2s	
-	(void) Adc_Init(); 
+	(void) Adc_Init(); 	
+#endif	
+	(void) IWDG_Init( 4, 2000 ); 
+
+
+#if( BOARD_NUM != 3)	
 	(void) W25QXX_Init();	
 	while( W25QXX_ReadID() != ( BOARD_NUM == 1 ? W25Q16 : W25Q128 ))
 	{
@@ -111,6 +136,7 @@ void Software_Hardware_Init( void )
 		delay_ms(5000);
 		LED0=!LED0;
 	}	
+#endif	
 	while( RNG_Init() )
 	{
 		printf("  RNG Error! RNG Trying...\r\n");	 
@@ -118,9 +144,10 @@ void Software_Hardware_Init( void )
 
 	/*add fatfs file system support*/
 	exfuns_init();
-	
+
+#if( BOARD_NUM != 3)		
  	for( i = 0; i< 3; i++ )
-	{
+	{	// PC8,9,10,11,12  PD2
 		if( SD_Init() == 0 )
 		{
 			printf("SD Card Init Scueess!\r\n");
@@ -155,7 +182,8 @@ void Software_Hardware_Init( void )
 			printf("Flash Disk Format Error\r\n");
 		}
 	}
-	
+#endif
+
  	res = f_mount( fs[2], "2:", 1 );
 	if( res == 0X0D )
 	{
@@ -184,10 +212,15 @@ void Software_Hardware_Init( void )
 	//mf_chdrive( "1:" );
 	mf_chdrive( "2:" );	
 	mf_getcwd();
-	
-	WM8978_Init();				//初始化WM8978
-	WM8978_HPvol_Set(xMusicVolume, xMusicVolume);	//耳机音量设置
-	WM8978_SPKvol_Set(50);		//喇叭音量设置	
+
+#if( BOARD_NUM != 3)			
+	WM8978_Init();				
+	WM8978_HPvol_Set( xMusicVolume, xMusicVolume );	
+	WM8978_SPKvol_Set( xSpeakerVolume );
+#else
+	( void ) gpio_initialize();
+	( void ) android_power_init();
+#endif
 }
 
 void Music_Player(void * pvParameters)
@@ -200,7 +233,7 @@ void Music_Player(void * pvParameters)
 	printf("%s ...\r\n", __func__);
 	vTaskPrioritySet( NULL, pre );
 	vSetTaskLogLevel(NULL, eLogLevel_2);
-	while (1)
+	while ( 1 )
 	{
 		audio_play();
 	}
@@ -307,6 +340,10 @@ void Feed_Wdg_Task( void * pvParameters )
 	printf("%s ...\r\n", __func__);
 	vTaskPrioritySet( NULL, pre );
 	
+#if( BOARD_NUM == 3)		
+	( void )android_power_reset();
+#endif
+	
 	pxPreviousWakeTime = xTaskGetTickCount();
 	
 	while( 1 )
@@ -380,7 +417,7 @@ void Printf_Log_Task(void * pvParameters)
 		
 		while( ( len = rfifo_len( &mLogFifo ) ) > 0 ) 
 		{
-			rfifo_get( &mLogFifo, mSendBuffer, len );
+			//rfifo_get( &mLogFifo, mSendBuffer, len );
 			isDma = 1;
 			USART_DMACmd( USART1, USART_DMAReq_Tx, ENABLE );  
 			MYDMA_Enable( DMA2_Stream7, len );
@@ -414,8 +451,9 @@ void Key_Detect_Task(void * pvParameters)
 	while (1)
 	{
 		//xSemaphoreTake( xKeySemaphore, portMAX_DELAY );
+		
 		/*pdTRUE make ulTaskNotifyTake Binary
-			pdFALSE make ulTaskNotifyTake Counting*/
+		    pdFALSE make ulTaskNotifyTake Counting*/
 		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		vTaskDelay(10 / portTICK_RATE_MS);
 		
@@ -427,12 +465,13 @@ void Key_Detect_Task(void * pvParameters)
 		}		 		
 		if( count > 200)
 		{
+			uMusicPlayControl = CIRCLE;
 			printf("%s PA0 long press!\r\n", __func__);
 		}
 		else if( count > 0 )
 		{
 			printf("%s PA0 press!\r\n", __func__);
-			uMusicPlayControl = 4;
+			uMusicPlayControl = STOPRESUME;
 		}
 		
 		count = 0;
@@ -446,13 +485,16 @@ void Key_Detect_Task(void * pvParameters)
 			LED1=!LED1;
 			printf("%s PE3 long press!\r\n", __func__);
 			xMusicVolume -= 5;
-			WM8978_HPvol_Set(xMusicVolume, xMusicVolume);			
+			WM8978_HPvol_Set(xMusicVolume, xMusicVolume);
+
+			xSpeakerVolume -= 2;
+			WM8978_SPKvol_Set( xSpeakerVolume );
 		}
 		else if( count > 0 )
 		{
 			LED1=!LED1;
 			printf("%s PE3 press!\r\n", __func__);
-			uMusicPlayControl = 1;
+			uMusicPlayControl = NEXT;
 		}
 
 		count = 0;
@@ -467,14 +509,17 @@ void Key_Detect_Task(void * pvParameters)
 			LED1=!LED1;	
 			printf("%s PE4 long press!\r\n", __func__);
 			xMusicVolume += 5;
-			WM8978_HPvol_Set(xMusicVolume, xMusicVolume);			
+			WM8978_HPvol_Set(xMusicVolume, xMusicVolume);
+			
+			xSpeakerVolume += 2;
+			WM8978_SPKvol_Set( xSpeakerVolume );			
 		}
 		else if( count > 0 )
 		{
 			LED0=!LED0;	
 			LED1=!LED1;	
 			printf("%s PE4 press!\r\n", __func__);
-			uMusicPlayControl = 3;
+			uMusicPlayControl = PREVIOUS;
 		}		
 		
 		random = RNG_Get_RandomNum();	

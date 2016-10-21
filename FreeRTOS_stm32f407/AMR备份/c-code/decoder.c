@@ -181,9 +181,9 @@ int main (int argc, char *argv[])
   while (fread (&toc, sizeof(UWord8), 1, file_serial) == 1)
   {
 	  /* read rest of the frame based on ToC byte */
-	  q  = (toc >> 2) & 0x01;
-	  ft = (toc >> 3) & 0x0F;
-	  fread (packed_bits, sizeof(UWord8), packed_size[ft], file_serial);
+	  q  = (toc >> 2) & 0x01;// 1
+	  ft = (toc >> 3) & 0x0F;//5
+	  fread (packed_bits, sizeof(UWord8), packed_size[ft]/*20*/, file_serial);
 
 	  rx_type = UnpackBits(q, ft, packed_bits, &mode, &serial[1]);
 

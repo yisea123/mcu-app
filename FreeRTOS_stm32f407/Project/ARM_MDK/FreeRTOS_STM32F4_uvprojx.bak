@@ -223,7 +223,7 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <RoSelD>3</RoSelD>
@@ -556,6 +556,26 @@
               <FileName>audioplay.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\USER\audioplay.c</FilePath>
+            </File>
+            <File>
+              <FileName>md5.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\md5.c</FilePath>
+            </File>
+            <File>
+              <FileName>uartprotocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\uartprotocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>amrfile.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\amrfile.c</FilePath>
+            </File>
+            <File>
+              <FileName>ymodem.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\ymodem.c</FilePath>
             </File>
           </Files>
         </Group>

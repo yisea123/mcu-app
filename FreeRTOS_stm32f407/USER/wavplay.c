@@ -93,7 +93,7 @@ u8 wav_decode_init(u8* fname,__wavctrl* wavx, void *mFile)
 	return 0;
 }
 
-u32 wav_buffill( u8 *buf, u16 size, u8 bits )
+u32 wav_buffill_buffer( u8 *buf, u16 size, u8 bits )
 {
 	u16 readlen=0;
 	u32 bread;
@@ -206,7 +206,8 @@ void wav_get_curtime(FIL*fx,__wavctrl *wavx)
 } 
 
 unsigned char uMusicPlayControl = 0;
-unsigned char xMusicVolume = 20;
+signed char xMusicVolume = 20;
+signed char xSpeakerVolume = 50;
 
 u8 wav_play_song( u8* fname )
 {
@@ -217,6 +218,7 @@ u8 wav_play_song( u8* fname )
 
 	audiodev.file = &mFilewav;	
 	uMusicPlayControl = 0;
+	
 CIRCLEPLAY:		
 	audiodev.status = 0;
 	res = wav_decode_init( fname, &wavctrl, &mFilewav );
@@ -226,11 +228,14 @@ CIRCLEPLAY:
 		if( wavctrl.bps == 16 )
 		{
 			WM8978_I2S_Cfg( 2,0 ); 
-			I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_16bextended);		//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
+			I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_16bextended);		
+			//飞利浦标准,主机发送,时钟低电平有效,16位扩展帧长度
 		}else if( wavctrl.bps == 24 )
 		{
+			printf("%s: 24bit wav music!!!\r\n", __func__ );
 			WM8978_I2S_Cfg(2, 2); 
-			I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_24b);		//飞利浦标准,主机发送,时钟低电平有效,24位扩展帧长度
+			I2S2_Init( I2S_Standard_Phillips, I2S_Mode_MasterTx,I2S_CPOL_Low,I2S_DataFormat_24b);		
+			//飞利浦标准,主机发送,时钟低电平有效,24位扩展帧长度
 		}
 		I2S2_SampleRate_Set( wavctrl.samplerate );
 		I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,
@@ -240,17 +245,18 @@ CIRCLEPLAY:
 		res = f_open( audiodev.file, (TCHAR*)fname, FA_READ );
 		if( res == 0 )
 		{
-			f_lseek( audiodev.file, wavctrl.datastart );// jump to data
-			fillnum = wav_buffill( audiodev.i2sbuf1,
+			f_lseek( audiodev.file, wavctrl.datastart );
+			fillnum = wav_buffill_buffer( audiodev.i2sbuf1,
 						WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels), wavctrl.bps );
-			fillnum = wav_buffill( audiodev.i2sbuf2,
+			fillnum = wav_buffill_buffer( audiodev.i2sbuf2,
 						WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels), wavctrl.bps );
 			audio_start();  
 			while( res == 0 )
 			{ 
 				ulTaskNotifyTake( pdTRUE, 1000 / portTICK_RATE_MS );
 				
-				if( fillnum != WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels) )//go to end of file
+				if( fillnum != WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels) )
+					//go to end of file
 				{
 					printf("%s: read end of file!\r\n", __func__);
 					res = KEY0_PRES;
@@ -258,13 +264,13 @@ CIRCLEPLAY:
 				} 
 				if( wavwitchbuf )
 				{
-					fillnum = wav_buffill(audiodev.i2sbuf2,
-								WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels),wavctrl.bps);//填充buf2
+					fillnum = wav_buffill_buffer(audiodev.i2sbuf2,
+								WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels),wavctrl.bps);
 				}
 				else 
 				{
-					fillnum = wav_buffill(audiodev.i2sbuf1,
-								WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels),wavctrl.bps);//填充buf1
+					fillnum = wav_buffill_buffer(audiodev.i2sbuf1,
+								WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels),wavctrl.bps);
 				}
 				while( 1 )
 				{
@@ -332,6 +338,8 @@ CIRCLEPLAY:
 
 	return res;
 } 
+
+#if 1
 
 #include "mp3dec.h"
 #include "mp3common.h"
@@ -868,17 +876,50 @@ CIRCLEPLAY:
 	MP3FreeDecoder( mp3decoder );
 	return res;
 }
+#endif
 
 void MusicAddVolume( void )
 {
 	xMusicVolume += 5;
+	if( xMusicVolume > 63 )
+	{
+		xMusicVolume -= 5;
+		return;
+	}		
 	WM8978_HPvol_Set(xMusicVolume, xMusicVolume);	
 }
 
 void MusicDelVolume( void )
 {
 	xMusicVolume -= 5;
+	if( xMusicVolume < 0 )
+	{
+		xMusicVolume += 5;
+		return;
+	}	
 	WM8978_HPvol_Set(xMusicVolume, xMusicVolume);	
+}
+
+void SpeakerAddVolume( void )
+{
+	xSpeakerVolume += 2;
+	if( xSpeakerVolume > 63 )
+	{
+		xSpeakerVolume -= 2;
+		return;
+	}	
+	WM8978_SPKvol_Set(xSpeakerVolume);	
+}
+
+void SpeakerDelVolume( void )
+{
+	xSpeakerVolume -= 2;
+	if( xSpeakerVolume < 0 )
+	{
+		xSpeakerVolume += 2;
+		return;
+	}
+	WM8978_SPKvol_Set(xSpeakerVolume);	
 }
 
 void MusicNext( void )

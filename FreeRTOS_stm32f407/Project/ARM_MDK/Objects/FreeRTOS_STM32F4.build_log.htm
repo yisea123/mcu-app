@@ -4,13 +4,12 @@
 <h1>µVision Build Log</h1>
 <h2>Project:</h2>
 C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\FreeRTOS_STM32F4.uvprojx
-Project File Date:  10/17/2016
+Project File Date:  10/21/2016
 
 <h2>Output:</h2>
 Build target 'FreeRTOS_STM32F4'
-compiling wavplay.c...
 linking...
-Program Size: Code=131998 RO-data=58166 RW-data=25448 ZI-data=105080  
+Program Size: Code=136138 RO-data=58478 RW-data=25568 ZI-data=102816  
 FromELF: creating hex file...
 ".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 0 Warning(s).
 Load "C:\\mcu\\mcu-app\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
@@ -36,7 +35,7 @@ ROMTableAddr = 0xE00FF003
 Target info:
 ------------
 Device: STM32F407VE
-VTarget = 3.371V
+VTarget = 3.364V
 State of Pins: 
 TCK: 0, TDI: 1, TDO: 1, TMS: 1, TRES: 1, TRST: 1
 Hardware-Breakpoints: 6
@@ -48,7 +47,50 @@ Erase Done.
 Programming Done.
 Verify OK.
 Application running ...
-eakpoints: 6
+</pre>
+</body>
+</html>
+odem.c(286): warning:  #177-D: variable "pbuf" was declared but never referenced
+        unsigned char *pbuf, *pfile, pfsize[ FILE_SIZE_LENGTH ];        
+..\..\USER\ymodem.c(646): warning:  #940-D: missing return statement at end of non-void function "handle_ymodem_command"
+  }
+..\..\USER\ymodem.c(82): warning:  #177-D: variable "key" was declared but never referenced
+  static unsigned char *key = NULL;
+..\..\USER\ymodem.c(84): warning:  #177-D: variable "aes_key" was declared but never referenced
+  static unsigned char aes_key[ 32 ];
+..\..\USER\ymodem.c: 10 warnings, 0 errors
+compiling uartprotocol.c...
+linking...
+Program Size: Code=136178 RO-data=58478 RW-data=25568 ZI-data=102816  
+FromELF: creating hex file...
+".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 11 Warning(s).
+Load "C:\\mcu\\mcu-app\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
+Set JLink Project File to "C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\JLinkSettings.ini"
+* JLink Info: Device "STM32F407VE" selected (512 KB flash, 128 KB RAM).
+ 
+JLink info:
+------------
+DLL: V4.80g, compiled Feb 13 2014 20:50:02
+Firmware: J-Link ARM V8 compiled Nov 25 2013 19:20:08
+Hardware: V8.00
+S/N : 308622870 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+ 
+* JLink Info: Found SWD-DP with ID 0x2BA01477
+* JLink Info: Found SWD-DP with ID 0x2BA01477
+* JLink Info: Found Cortex-M4 r0p1, Little endian.
+* JLink Info: FPUnit: 6 code (BP) slots and 2 literal slots
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+ROMTableAddr = 0xE00FF003
+ 
+Target info:
+------------
+Device: STM32F407VE
+VTarget = 3.364V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 1, TRES: 1, TRST: 1
+Hardware-Breakpoints: 6
 Software-Breakpoints: 8192
 Watchpoints:          4
 JTAG speed: 50 kHz
@@ -57,33 +99,105 @@ Erase Done.
 Programming Done.
 Verify OK.
 Application running ...
-No space in execution regions with .ANY selector matching wavplay.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching adc.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching basicop2.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching amrplay.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching usart.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching w25qxx.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching diskio.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching port.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching i2s.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching ff.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching audioplay.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching cc936.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching startup_stm32f40_41xxx.o(HEAP).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6407E: Sections of aggregate size 0x1fc bytes could not fit into .ANY selector(s).
+D: function "SAR64" declared implicitly
+        *(pcm + 0) = ClipToShort((int)SAR64(sum1L, (32-CSHIFT)), DEF_NFRACBITS);
+..\..\Helix\real\polyphase.c(143): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(0)
+..\..\Helix\real\polyphase.c(144): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(1)
+..\..\Helix\real\polyphase.c(145): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(2)
+..\..\Helix\real\polyphase.c(146): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(3)
+..\..\Helix\real\polyphase.c(147): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(4)
+..\..\Helix\real\polyphase.c(148): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(5)
+..\..\Helix\real\polyphase.c(149): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(6)
+..\..\Helix\real\polyphase.c(150): warning:  #223-D: function "MADD64" declared implicitly
+        MC1M(7)
+..\..\Helix\real\polyphase.c(163): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(0)
+..\..\Helix\real\polyphase.c(164): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(1)
+..\..\Helix\real\polyphase.c(165): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(2)
+..\..\Helix\real\polyphase.c(166): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(3)
+..\..\Helix\real\polyphase.c(167): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(4)
+..\..\Helix\real\polyphase.c(168): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(5)
+..\..\Helix\real\polyphase.c(169): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(6)
+..\..\Helix\real\polyphase.c(170): warning:  #223-D: function "MADD64" declared implicitly
+                MC2M(7)
+..\..\Helix\real\polyphase.c(240): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(0)
+..\..\Helix\real\polyphase.c(241): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(1)
+..\..\Helix\real\polyphase.c(242): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(2)
+..\..\Helix\real\polyphase.c(243): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(3)
+..\..\Helix\real\polyphase.c(244): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(4)
+..\..\Helix\real\polyphase.c(245): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(5)
+..\..\Helix\real\polyphase.c(246): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(6)
+..\..\Helix\real\polyphase.c(247): warning:  #223-D: function "MADD64" declared implicitly
+        MC0S(7)
+..\..\Helix\real\polyphase.c(249): warning:  #223-D: function "SAR64" declared implicitly
+        *(pcm + 0) = ClipToShort((int)SAR64(sum1L, (32-CSHIFT)), DEF_NFRACBITS);
+..\..\Helix\real\polyphase.c(257): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(0)
+..\..\Helix\real\polyphase.c(258): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(1)
+..\..\Helix\real\polyphase.c(259): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(2)
+..\..\Helix\real\polyphase.c(260): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(3)
+..\..\Helix\real\polyphase.c(261): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(4)
+..\..\Helix\real\polyphase.c(262): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(5)
+..\..\Helix\real\polyphase.c(263): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(6)
+..\..\Helix\real\polyphase.c(264): warning:  #223-D: function "MADD64" declared implicitly
+        MC1S(7)
+..\..\Helix\real\polyphase.c(279): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(0)
+..\..\Helix\real\polyphase.c(280): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(1)
+..\..\Helix\real\polyphase.c(281): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(2)
+..\..\Helix\real\polyphase.c(282): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(3)
+..\..\Helix\real\polyphase.c(283): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(4)
+..\..\Helix\real\polyphase.c(284): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(5)
+..\..\Helix\real\polyphase.c(285): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(6)
+..\..\Helix\real\polyphase.c(286): warning:  #223-D: function "MADD64" declared implicitly
+                MC2S(7)
+..\..\Helix\real\polyphase.c(112): warning:  #177-D: function "xmp3_PolyphaseMono" was declared but never referenced
+  static void PolyphaseMono(short *pcm, int *vbuf, const int *coefBase)
+..\..\Helix\real\polyphase.c(225): warning:  #177-D: function "xmp3_PolyphaseStereo" was declared but never referenced
+  static void PolyphaseStereo(short *pcm, int *vbuf, const int *coefBase)
+..\..\Helix\real\polyphase.c: 52 warnings, 0 errors
+compiling scalfact.c...
+compiling stproc.c...
+compiling subband.c...
+compiling trigtabs.c...
+assembling asmpoly_thumb2.S...
+assembling asmmisc.S...
+linking...
+.\Objects\FreeRTOS_STM32F4.axf: Error: L6200E: Symbol uart6fifo multiply defined (by usmart.o and uartprotocol.o).
 Not enough information to list image symbols.
 Not enough information to list the image map.
-Finished: 2 information, 0 warning and 25 error messages.
-".\Objects\FreeRTOS_STM32F4.axf" - 25 Error(s), 0 Warning(s).
-Target not created
-.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching ff.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching audioplay.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching cc936.o(.data).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6406E: No space in execution regions with .ANY selector matching startup_stm32f40_41xxx.o(HEAP).
-.\Objects\FreeRTOS_STM32F4.axf: Error: L6407E: Sections of aggregate size 0xc5c bytes could not fit into .ANY selector(s).
-Not enough information to list image symbols.
-Not enough information to list the image map.
-Finished: 2 information, 0 warning and 32 error messages.
-".\Objects\FreeRTOS_STM32F4.axf" - 32 Error(s), 0 Warning(s).
+Finished: 2 information, 0 warning and 1 error messages.
+".\Objects\FreeRTOS_STM32F4.axf" - 1 Error(s), 63 Warning(s).
 Target not created

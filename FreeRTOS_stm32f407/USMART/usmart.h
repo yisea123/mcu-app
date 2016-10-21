@@ -2,7 +2,7 @@
 #define __USMART_H	  		  
 #include "usmart_str.h"
 
-#define USART_REC_LEN  			512  	//定义最大接收字节数 512
+#define USART_REC_LEN  			100  	//定义最大接收字节数 512
 extern u8 USART_RX_BUF[USART_REC_LEN];     //接收缓冲,最大USART_REC_LEN个字节.
 
 extern u16 USART_RX_STA;       //接收状态标记	 

@@ -11,6 +11,8 @@
 #error This file is not needed in current configuration. Remove from the project.
 #endif
 
+#define MY_FF_CONVERT		1
+
 #define NEED_TO_BURN_DATA	0  //1  0
 
 #if( NEED_TO_BURN_DATA == 1 )								
@@ -11084,6 +11086,8 @@ unsigned short getCc936StaticShort( unsigned int addr, int index )
 
 #endif
 
+#ifndef 	MY_FF_CONVERT
+
 WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	WCHAR	chr,	/* Character code to be converted */
 	UINT	dir		/* 0: Unicode to OEMCP, 1: OEMCP to Unicode */
@@ -11114,6 +11118,7 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 		if( 0 != Flash_Check_Cc936() )
 		{
 			printf("%s: Flash data error!!!! need to burn CC936 Data!!!!\r\n", __func__);
+			while(1);
 		}
 		else
 		{
@@ -11164,7 +11169,7 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	return c;
 }
 
-
+#endif
 
 WCHAR ff_wtoupper (	/* Upper converted character */
 	WCHAR chr		/* Input character */
@@ -11197,7 +11202,7 @@ WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	u16 n;			 
 	u32 gbk2uni_offset=0;		  
 #endif				  
-	if (src < 0x80)c = src;//ASCII,直接不用转换.
+	if (src < 0x80) c = src;//ASCII,直接不用转换.
 	
 #if 0
 	else 

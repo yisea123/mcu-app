@@ -1,18 +1,6 @@
 #include "wm8978.h"
 #include "miic.h"
 #include "delay.h"
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F407开发板
-//WM8978 驱动代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/5/24
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved									  
-////////////////////////////////////////////////////////////////////////////////// 	
 
 //WM8978寄存器值缓存区(总共58个寄存器,0~57),占用116字节内存
 //因为WM8978的IIC操作不支持读操作,所以在本地保存所有寄存器值
@@ -29,6 +17,7 @@ static u16 WM8978_REGVAL_TBL[58]=
 	0X0100,0X0002,0X0001,0X0001,0X0039,0X0039,0X0039,0X0039,
 	0X0001,0X0001
 }; 
+
 //WM8978初始化
 //返回值:0,初始化正常
 //    其他,错误代码
@@ -62,7 +51,7 @@ u8 WM8978_Init(void)
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource2,GPIO_AF6_SPI2);	//PC2 ,AF6  I2S_ADCDATA  I2S2ext_SD是AF6!!!
 	
 
-	
+	// PB9 PB8
 	IIC_Init();//初始化IIC接口
 	res=WM8978_Write_Reg(0,0);	//软复位WM8978
 	if(res)return 1;			//发送指令失败,WM8978异常
@@ -79,6 +68,7 @@ u8 WM8978_Init(void)
 	WM8978_Write_Reg(14,1<<3);	//R14,ADC 128x采样率
 	return 0;
 } 
+
 //WM8978写寄存器
 //reg:寄存器地址
 //val:要写入寄存器的值 
@@ -97,6 +87,7 @@ u8 WM8978_Write_Reg(u8 reg,u16 val)
 	WM8978_REGVAL_TBL[reg]=val;	//保存寄存器值到本地
 	return 0;	
 }  
+
 //WM8978读寄存器
 //就是读取本地寄存器值缓冲区内的对应值
 //reg:寄存器地址 
@@ -105,6 +96,7 @@ u16 WM8978_Read_Reg(u8 reg)
 {  
 	return WM8978_REGVAL_TBL[reg];	
 } 
+
 //WM8978 DAC/ADC配置
 //adcen:adc使能(1)/关闭(0)
 //dacen:dac使能(1)/关闭(0)
@@ -120,6 +112,7 @@ void WM8978_ADDA_Cfg(u8 dacen,u8 adcen)
 	else regval&=~(3<<0);		//R2最低2个位清零,关闭ADCR&ADCL.
 	WM8978_Write_Reg(2,regval);	//设置R2	
 }
+
 //WM8978 输入通道配置 
 //micen:MIC开启(1)/关闭(0)
 //lineinen:Line In开启(1)/关闭(0)
@@ -142,6 +135,7 @@ void WM8978_Input_Cfg(u8 micen,u8 lineinen,u8 auxen)
 	if(auxen)WM8978_AUX_Gain(7);//AUX 6dB增益
 	else WM8978_AUX_Gain(0);	//关闭AUX输入  
 }
+
 //WM8978 输出配置 
 //dacen:DAC输出(放音)开启(1)/关闭(0)
 //bpsen:Bypass输出(录音,包括MIC,LINE IN,AUX等)开启(1)/关闭(0) 
@@ -157,6 +151,7 @@ void WM8978_Output_Cfg(u8 dacen,u8 bpsen)
 	WM8978_Write_Reg(50,regval);//R50设置
 	WM8978_Write_Reg(51,regval);//R51设置 
 }
+
 //WM8978 MIC增益设置(不包括BOOST的20dB,MIC-->ADC输入部分的增益)
 //gain:0~63,对应-12dB~35.25dB,0.75dB/Step
 void WM8978_MIC_Gain(u8 gain)
@@ -165,6 +160,7 @@ void WM8978_MIC_Gain(u8 gain)
 	WM8978_Write_Reg(45,gain);		//R45,左通道PGA设置 
 	WM8978_Write_Reg(46,gain|1<<8);	//R46,右通道PGA设置
 }
+
 //WM8978 L2/R2(也就是Line In)增益设置(L2/R2-->ADC输入部分的增益)
 //gain:0~7,0表示通道禁止,1~7,对应-12dB~6dB,3dB/Step
 void WM8978_LINEIN_Gain(u8 gain)
@@ -178,6 +174,7 @@ void WM8978_LINEIN_Gain(u8 gain)
 	regval&=~(7<<4);			//清除原来的设置 
  	WM8978_Write_Reg(48,regval|gain<<4);//设置R48
 } 
+
 //WM8978 AUXR,AUXL(PWM音频部分)增益设置(AUXR/L-->ADC输入部分的增益)
 //gain:0~7,0表示通道禁止,1~7,对应-12dB~6dB,3dB/Step
 void WM8978_AUX_Gain(u8 gain)
@@ -191,6 +188,7 @@ void WM8978_AUX_Gain(u8 gain)
 	regval&=~(7<<0);			//清除原来的设置 
  	WM8978_Write_Reg(48,regval|gain<<0);//设置R48
 }  
+
 //设置I2S工作模式
 //fmt:0,LSB(右对齐);1,MSB(左对齐);2,飞利浦标准I2S;3,PCM/DSP;
 //len:0,16位;1,20位;2,24位;3,32位;  
@@ -213,6 +211,7 @@ void WM8978_HPvol_Set(u8 voll,u8 volr)
 	WM8978_Write_Reg(52,voll);			//R52,耳机左声道音量设置
 	WM8978_Write_Reg(53,volr|(1<<8));	//R53,耳机右声道音量设置,同步更新(HPVU=1)
 }
+
 //设置喇叭音量
 //voll:左声道音量(0~63) 
 void WM8978_SPKvol_Set(u8 volx)
@@ -222,6 +221,7 @@ void WM8978_SPKvol_Set(u8 volx)
  	WM8978_Write_Reg(54,volx);			//R54,喇叭左声道音量设置
 	WM8978_Write_Reg(55,volx|(1<<8));	//R55,喇叭右声道音量设置,同步更新(SPKVU=1)	
 }
+
 //设置3D环绕声
 //depth:0~15(3D强度,0最弱,15最强)
 void WM8978_3D_Set(u8 depth)
@@ -229,6 +229,7 @@ void WM8978_3D_Set(u8 depth)
 	depth&=0XF;//限定范围 
  	WM8978_Write_Reg(41,depth);	//R41,3D环绕设置 	
 }
+
 //设置EQ/3D作用方向
 //dir:0,在ADC起作用
 //    1,在DAC起作用(默认)
@@ -256,6 +257,7 @@ void WM8978_EQ1_Set(u8 cfreq,u8 gain)
 	regval|=gain;		//设置增益	
  	WM8978_Write_Reg(18,regval);//R18,EQ1设置 	
 }
+
 //设置EQ2
 //cfreq:中心频率,0~3,分别对应:230/300/385/500Hz
 //gain:增益,0~24,对应-12~+12dB
@@ -269,6 +271,7 @@ void WM8978_EQ2_Set(u8 cfreq,u8 gain)
 	regval|=gain;		//设置增益	
  	WM8978_Write_Reg(19,regval);//R19,EQ2设置 	
 }
+
 //设置EQ3
 //cfreq:中心频率,0~3,分别对应:650/850/1100/1400Hz
 //gain:增益,0~24,对应-12~+12dB
@@ -282,6 +285,7 @@ void WM8978_EQ3_Set(u8 cfreq,u8 gain)
 	regval|=gain;		//设置增益	
  	WM8978_Write_Reg(20,regval);//R20,EQ3设置 	
 }
+
 //设置EQ4
 //cfreq:中心频率,0~3,分别对应:1800/2400/3200/4100Hz
 //gain:增益,0~24,对应-12~+12dB
@@ -295,6 +299,7 @@ void WM8978_EQ4_Set(u8 cfreq,u8 gain)
 	regval|=gain;		//设置增益	
  	WM8978_Write_Reg(21,regval);//R21,EQ4设置 	
 }
+
 //设置EQ5
 //cfreq:中心频率,0~3,分别对应:5300/6900/9000/11700Hz
 //gain:增益,0~24,对应-12~+12dB

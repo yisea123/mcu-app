@@ -36,6 +36,11 @@ const char gc_pred_id[] = "@(#)$Id $" gc_pred_h;
 #include "log2.h"
 #include "copy.h"
 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	gc_predState mGc_predState;
+#endif
+
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -79,11 +84,15 @@ int gc_pred_init (gc_predState **state)
   }
   *state = NULL;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	  s = &mGc_predState;
+#else
   /* allocate memory */
   if ((s= (gc_predState *) pvPortMalloc(sizeof(gc_predState))) == NULL){
       printf("gc_pred_init: can not malloc state structure\n");
       return -1;
   }
+#endif  
   gc_pred_reset(s);
   *state = s;
 
@@ -125,8 +134,12 @@ void gc_pred_exit (gc_predState **state)
   if (state == NULL || *state == NULL)
       return;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
 
   return;

@@ -37,7 +37,11 @@ const char post_pro_id[] = "@(#)$Id $" post_pro_h;
 #include "basic_op.h"
 #include "oper_32b.h"
 #include "count.h"
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Post_ProcessState mPost_ProcessState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -68,13 +72,16 @@ int Post_Process_init (Post_ProcessState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mPost_ProcessState;
+#else 
   /* allocate memory */
   if ((s= (Post_ProcessState *) pvPortMalloc(sizeof(Post_ProcessState))) == NULL){
       printf("Post_Process_init: can not malloc state structure\n");
       return -1;
   }
-  
+#endif  
   Post_Process_reset(s);
   *state = s;
   
@@ -116,9 +123,13 @@ void Post_Process_exit (Post_ProcessState **state)
 {
   if (state == NULL || *state == NULL)
       return;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else 
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

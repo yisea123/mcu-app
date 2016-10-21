@@ -3,7 +3,7 @@
 #include "sys.h"  
 
 #define BOARD_NUM	2		
-// 1:W25Q16    2:W25Q128
+// 1:W25Q16    		2:W25Q128  		3: have no sd card, and w25qxx
 	
 extern unsigned int FLASH_SIZE;
 //= 2*1024*1024;
@@ -30,6 +30,9 @@ extern u16 W25QXX_TYPE;
 //W25QXX的片选信号  PB0
 #elif(BOARD_NUM == 2)
 //W25QXX的片选信号  PB14
+#define	W25QXX_CS 		PBout(14) 
+
+#else
 #define	W25QXX_CS 		PBout(14) 
 #endif
 

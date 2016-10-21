@@ -17,7 +17,9 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+
 #define MMS_IO
+#define STATIC_MEMORY_ALLOCK	1
 //#define _MSC_VER
 //#define __unix__
 #undef ORIGINAL_TYPEDEF_H /* define to get "original" ETSI version

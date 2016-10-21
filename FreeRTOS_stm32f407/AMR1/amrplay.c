@@ -150,15 +150,16 @@ void amr_fill_buffer( short *p, Word16 *synth, int channel )
 /*
 	AMR都是8000HZ, 单声道，16位采样精度?
 */ 
-int amr_play ( char *serialFileName )
+unsigned char amr_play_song ( unsigned char *serialFileName )
 {
-  int res = NEXT, times;
+  unsigned char res = NEXT;
+	unsigned int	times;
   unsigned char *p = NULL;
   INITSTEP step;
   unsigned int br;
   Speech_Decode_FrameState *speech_decoder_state;
-  Word16 serial[SERIAL_FRAMESIZE];   /* coded bits                    */
-  Word16 synth[L_FRAME];             /* Synthesis                     */
+  Word16 serial[SERIAL_FRAMESIZE];   /* coded bits                    300 */
+  Word16 synth[L_FRAME];             /* Synthesis                     160*/
   FIL *file_serial = NULL, mFileAmr;
   enum Mode mode = (enum Mode)0;
   enum RXFrameType rx_type = (enum RXFrameType)0;
@@ -167,7 +168,7 @@ int amr_play ( char *serialFileName )
   Word16 i;
   UWord8 toc, q, ft;
   Word8 magic[8];
-  UWord8 packed_bits[MAX_PACKED_SIZE];
+  UWord8 packed_bits[MAX_PACKED_SIZE];	//   244/8 + 2 = 32
   Word16 packed_size[16] = {12, 13, 15, 17, 19, 20, 26, 31, 5, 0, 0, 0, 0, 0, 0, 0};
 
   file_serial = &mFileAmr;
@@ -231,7 +232,8 @@ CIRCLEPLAY:
   I2S2_TX_DMA_Init( audiodev.i2sbuf1, audiodev.i2sbuf2,  
   				L_FRAME * N_L_FRAME * ( 2 / AMR_CHANNEL_TYPE ) );
   //	L_FRAME * N_L_FRAME * 2 for mono
-  //	L_FRAME * N_L_FRAME  for stero
+  //	L_FRAME * N_L_FRAME  for stero 
+  //	must be least than WAV_I2S_TX_DMA_BUFSIZE/2
   i2s_tx_callback = amr_i2s_dma_tx_callback;
   audio_stop();
   
@@ -247,9 +249,24 @@ CIRCLEPLAY:
 	  	break;
   	  }
 	  /* read rest of the frame based on ToC byte */
-	  q  = (toc >> 2) & 0x01;
-	  ft = (toc >> 3) & 0x0F;
-	  if( f_read (file_serial, packed_bits, packed_size[ft], &br) != FR_OK )
+	  q  = (toc >> 2) & 0x01;  // 1
+	  ft = (toc >> 3) & 0x0F;  // 5
+	  /*
+	  0x0000  MR475   4.75 kbit/s
+	  0x0001  MR515   5.15 kbit/s
+	  0x0002  MR59	  5.90 kbit/s
+	  0x0003  MR67	  6.70 kbit/s
+
+	  0x0004  MR74	  7.40 kbit/s
+
+	  0x0005  MR795   7.95 kbit/s
+	  0x0006  MR102  10.20 kbit/s
+	  0x0007  MR122  12.20 kbit/s
+
+	  */
+	  
+	  /*read packed_size[ft] length data*/
+	  if( f_read (file_serial, packed_bits, packed_size[ft]/*20*/, &br) != FR_OK )
 	  {
 	  	printf("%s: f_read error!\r\n", __func__);
 		res = NEXT;
@@ -283,7 +300,7 @@ CIRCLEPLAY:
      {     
          /* decode frame */
          Speech_Decode_Frame(speech_decoder_state, mode, &serial[1],
-                             rx_type, synth);
+                             rx_type, synth/*L_FRAME*2 = 320*/);
 
 	     if( step == STEP3 )
 	     {	 		
@@ -400,6 +417,7 @@ CIRCLEPLAY:
 		}
 	}	 
   }
+  
   printf("AMR all frame processed.\r\n");
   
   /*-----------------------------------------------------------------------*

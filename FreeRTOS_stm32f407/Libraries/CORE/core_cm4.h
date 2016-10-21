@@ -1099,7 +1099,7 @@ typedef struct
  */
 typedef struct
 {
-  __I  uint32_t TYPE;                    /*!< Offset: 0x000 (R/ )  MPU Type Register                              */
+  __I uint32_t TYPE;                    /*!< Offset: 0x000 (R/ )  MPU Type Register                              */
   __IO uint32_t CTRL;                    /*!< Offset: 0x004 (R/W)  MPU Control Register                           */
   __IO uint32_t RNR;                     /*!< Offset: 0x008 (R/W)  MPU Region RNRber Register                     */
   __IO uint32_t RBAR;                    /*!< Offset: 0x00C (R/W)  MPU Region Base Address Register               */

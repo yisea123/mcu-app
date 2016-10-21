@@ -10,19 +10,22 @@
 #include "fattester.h"	 
 #include "ff.h"
 #include "string.h"
-#include "wavplay.h" 
+#include "wavplay.h"
+#include "md5.h"
 
-extern Ringfifo mLogFifo;
+extern FATFS *		fs[_VOLUMES];
+extern Ringfifo 	mLogFifo;
 extern TaskHandle_t pxTimeTask;
 extern TaskHandle_t pxTempretureTask;
-extern FATFS *fs[_VOLUMES];
-
+extern Ringfifo 	uart6fifo;
 extern void Printf_Application_Version( void );
 extern void vPrintRamdDisk( unsigned int sector );
 extern void vPrintFlashDisk( unsigned int sector );
 extern void vPrintSdDisk( unsigned int sector );
 extern void MusicCircle( void );
 extern void amr_set_sample_rate( unsigned int rate );
+extern void SpeakerAddVolume( void );
+extern void SpeakerDelVolume( void );
 
 typedef enum
 {
@@ -47,12 +50,71 @@ typedef struct commandRecord
 
 static List_t xCommandRecordList;
 vUserType xUserID = ROOT;
-static char xUserName[36] = { 'r', 'o', 'o', 't', '\0' };
-static char pBuf[512];
+static char xUserName[ 36 ] = { 'r', 'o', 'o', 't', '\0' };
+static char pBuf[ 512 ];
 Ringfifo uart1fifo;
-u8 USART_RX_BUF[USART_REC_LEN];
-char buff[128];
+//Ringfifo uart6fifo;
+unsigned char USART_RX_BUF[ USART_REC_LEN ];
+char fpath[ 128 ];
 static unsigned int destination = ADDR_FLASH_SECTOR_7;
+
+void Caulate_File_Md5( char *str )
+{
+	FILINFO fno;
+	unsigned char ret;
+
+	while( *str == ' ')
+		str++;
+
+	memset( fpath, '\0', sizeof( fpath ));
+	
+	if( strncmp( str, "1:/", strlen("1:/") ) == 0 ||
+			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
+			strncmp( str, "2:/", strlen("2:/") ) == 0 )
+	{
+		if( strlen(str) > strlen("1:/") )
+		{	
+			memcpy( fpath, str, strlen(str) );			
+		}
+		else
+		{
+			printf("file name error!\r\n");
+		}
+	}
+	else
+	{
+		mf_getcwd_( fpath, sizeof(fpath) );
+		if( fpath[strlen(fpath) - 1] == '/' )
+		{
+			sprintf( fpath + strlen(fpath), "%s", str );
+		}
+		else
+		{
+			sprintf( fpath + strlen(fpath), "/%s", str );	
+		}
+	}	
+
+	if( strlen( fpath ) > 0 )
+	{
+		ret = mf_stat_( (unsigned char*)fpath , &fno );
+		if(  ret == FR_OK )
+		{
+			if( fno.fsize > 0 )
+			{
+				caculate_file_md5( (const char*)fpath, (unsigned char*) pBuf );		
+			}
+			else
+			{
+				printf("%s: file size = %d\r\n", __func__, fno.fsize);
+			}
+		}
+		else
+		{
+			printf("%s: file name = %s error!!!\r\n", __func__, fpath);
+		}
+	}
+
+}
 
 void Amr_Set_Samplerate( char *str )
 {
@@ -91,28 +153,28 @@ void Fatfs_Copy_File( char *str )
 		str++;
 	
 	printf("1 str(%s)\r\n", str);
-	memset(buff, 0, sizeof(buff) );
+	memset(fpath, 0, sizeof(fpath) );
 	while( *str != ' ' )
 	{
 
-		if( i >= sizeof(buff) )
+		if( i >= sizeof(fpath) )
 		{
 			printf("file path is too long.\r\n");
 			return;
 		}
-		buff[i] = *str;
+		fpath[i] = *str;
 		str++;
 		i++;
 	}
 
-	if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+	if( mf_stat_( (unsigned char*)fpath , &fno) == FR_OK )
 	{				
 		if( ( fno.fattrib >> 5 & 0x01 ) == 1 && 
-			f_open( &sfile, (const TCHAR*) buff, FA_READ ) 
+			f_open( &sfile, (const TCHAR*) fpath, FA_READ ) 
 			== FR_OK)
 		{
 			memcpy( name, fno.fname , strlen( fno.fname ) );
-			printf("file path (%s) open scuess!\r\n", buff);
+			printf("file path (%s) open scuess!\r\n", fpath);
 		}
 		else
 		{
@@ -131,35 +193,35 @@ void Fatfs_Copy_File( char *str )
 
 	i = 0;
 	printf("2 str(%s)\r\n", str);
-	memset( buff, 0, sizeof( buff ) );
+	memset( fpath, 0, sizeof( fpath ) );
 	while( *str != ' ' && *str != '\0' )
 	{
 
-		if( i >= sizeof( buff ) )
+		if( i >= sizeof( fpath ) )
 		{
 			printf("##file path is too long.\r\n");
 			f_close(&sfile);
 			return;
 		}
-		buff[i] = *str;
+		fpath[i] = *str;
 		str++;
 		i++;
 	}
-	if( buff[ i - 1] == '/' )
+	if( fpath[ i - 1] == '/' )
 	{
-		sprintf( buff + strlen( buff ), "%s", name );
+		sprintf( fpath + strlen( fpath ), "%s", name );
 	}
-	printf("destination path(%s)", buff);
+	printf("destination path(%s)", fpath);
 
-	if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+	if( mf_stat_( (unsigned char*)fpath , &fno) == FR_OK )
 	{	
-		printf("#file path(%s) exzit.\r\n", buff );
+		printf("#file path(%s) exzit.\r\n", fpath );
 		f_close(&sfile);
 		return;
 	}
 	else
 	{
-		if( f_open( &dfile, (const TCHAR*) buff, FA_WRITE | FA_CREATE_NEW ) == FR_OK)
+		if( f_open( &dfile, (const TCHAR*) fpath, FA_WRITE | FA_CREATE_NEW ) == FR_OK)
 		{
 			while( FR_OK == f_read(&sfile, pBuf, sizeof(pBuf)/2, &br) )
 			{
@@ -186,7 +248,7 @@ void Fatfs_Copy_File( char *str )
 		}
 		else
 		{
-			printf("open path(%s) fail.\r\n", buff );
+			printf("open path(%s) fail.\r\n", fpath );
 			f_close(&sfile);				
 		}
 	}
@@ -329,10 +391,10 @@ void Fatfs_Get_Dir_More_Ll( char *str )
 	while( *str == ' ')
 		str++;
 
-	memset(buff, '\0', sizeof(buff));
+	memset(fpath, '\0', sizeof(fpath));
 	if( strlen(str) == 0 )
 	{
-		mf_getcwd_( buff, sizeof(buff) );	
+		mf_getcwd_( fpath, sizeof(fpath) );	
 	}
 	else
 	{
@@ -340,18 +402,18 @@ void Fatfs_Get_Dir_More_Ll( char *str )
 			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
 			strncmp( str, "2:/", strlen("2:/") ) == 0 )
 		{
-			memcpy( buff, str, strlen(str) );
+			memcpy( fpath, str, strlen(str) );
 		}
 		else
 		{
-			mf_getcwd_( buff, sizeof(buff) );
-			sprintf( buff + strlen(buff), "%s%s", "./", str );
+			mf_getcwd_( fpath, sizeof(fpath) );
+			sprintf( fpath + strlen(fpath), "%s%s", "./", str );
 		}	
 	}
-	if( strlen(buff) > 0 )
+	if( strlen(fpath) > 0 )
 	{
-		//printf("%s: dir = %s\r\n", __func__, buff);
-		mf_scan_files_( buff, pBuf, sizeof( pBuf ) );
+		//printf("%s: dir = %s\r\n", __func__, fpath);
+		mf_scan_files_( fpath, pBuf, sizeof( pBuf ) );
 	}
 }
 
@@ -360,11 +422,11 @@ void Fatfs_Get_Dir_More_Ls( char *str )
 	while( *str == ' ')
 		str++;
 
-	memset(buff, '\0', sizeof(buff));
+	memset(fpath, '\0', sizeof(fpath));
 
 	if( strlen(str) == 0 )
 	{
-		mf_getcwd_( buff, sizeof(buff) );	
+		mf_getcwd_( fpath, sizeof(fpath) );	
 	}
 	else 
 	{
@@ -372,25 +434,25 @@ void Fatfs_Get_Dir_More_Ls( char *str )
 			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
 			strncmp( str, "2:/", strlen("2:/") ) == 0  )
 		{
-			memcpy( buff, str, strlen(str) );
+			memcpy( fpath, str, strlen(str) );
 		}
 		else
 		{
-			mf_getcwd_( buff, sizeof(buff) );
-			if( buff[strlen(buff) - 1] == '/' )
+			mf_getcwd_( fpath, sizeof(fpath) );
+			if( fpath[strlen(fpath) - 1] == '/' )
 			{
-				sprintf( buff + strlen(buff), "%s", str );
+				sprintf( fpath + strlen(fpath), "%s", str );
 			}
 			else
 			{
-				sprintf( buff + strlen(buff), "/%s", str );	
+				sprintf( fpath + strlen(fpath), "/%s", str );	
 			}
 		}	
 	}
-	if( strlen( buff ) > 0 )
+	if( strlen( fpath ) > 0 )
 	{
-		//printf("%s: dir = %s\r\n", __func__, buff);
-		mf_scan_files( (unsigned char *)buff );
+		//printf("%s: dir = %s\r\n", __func__, fpath);
+		mf_scan_files( (unsigned char *)fpath );
 	}
 }
 
@@ -454,7 +516,7 @@ void Fatfs_Echo_To_File( char *str )
 	while( *str == ' ')
 		str++;
 	
-	memset(buff, '\0', sizeof(buff));
+	memset(fpath, '\0', sizeof(fpath));
 	memset(pBuf, '\0', sizeof(pBuf));
 	while( *str != ' ')
 	{
@@ -478,7 +540,7 @@ void Fatfs_Echo_To_File( char *str )
 		{
 			if( strlen(str) > strlen("1:/") )
 			{	
-				memcpy( buff, str, strlen(str) );			
+				memcpy( fpath, str, strlen(str) );			
 			}
 			else
 			{
@@ -487,24 +549,24 @@ void Fatfs_Echo_To_File( char *str )
 		}
 		else
 		{
-			mf_getcwd_( buff, sizeof(buff) );
-			if( buff[strlen(buff) - 1] == '/' )
+			mf_getcwd_( fpath, sizeof(fpath) );
+			if( fpath[strlen(fpath) - 1] == '/' )
 			{
-				sprintf( buff + strlen(buff), "%s", str );
+				sprintf( fpath + strlen(fpath), "%s", str );
 			}
 			else
 			{
-				sprintf( buff + strlen(buff), "/%s", str ); 
+				sprintf( fpath + strlen(fpath), "/%s", str ); 
 			}
 		}			
-		//printf("echo file name = %s\r\n", buff);
+		//printf("echo file name = %s\r\n", fpath);
 
-		if( mf_stat_( (unsigned char*)buff , &fno) == FR_OK )
+		if( mf_stat_( (unsigned char*)fpath , &fno) == FR_OK )
 		{			
 			//printf("file or dir %s exist, fno.fattrib=%d\r\n", 
-			//	buff, fno.fattrib);		
+			//	fpath, fno.fattrib);		
 			if( fno.fattrib == 32 && 
-				f_open(&file,(const TCHAR*) buff, FA_WRITE) 
+				f_open(&file,(const TCHAR*) fpath, FA_WRITE) 
 				== FR_OK)
 			{
 				//printf("file %s open sucess!\r\n", str);
@@ -519,7 +581,7 @@ void Fatfs_Echo_To_File( char *str )
 		}
 		else
 		{
-			printf("file %s not exist\r\n", buff);
+			printf("file %s not exist\r\n", fpath);
 		}		
 	}
 	else
@@ -541,7 +603,7 @@ void Fatfs_Touch_File( char *str )
 
 	pre = uxTaskPriorityGet( NULL );
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );	
-	memset(buff, '\0', sizeof(buff));
+	memset(fpath, '\0', sizeof(fpath));
 
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
 			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
@@ -570,25 +632,25 @@ void Fatfs_Touch_File( char *str )
 	}
 	else
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		if( buff[strlen(buff) - 1] == '/' )
+		mf_getcwd_( fpath, sizeof(fpath) );
+		if( fpath[strlen(fpath) - 1] == '/' )
 		{
-			sprintf( buff + strlen(buff), "%s", str );
+			sprintf( fpath + strlen(fpath), "%s", str );
 		}
 		else
 		{
-			sprintf( buff + strlen(buff), "/%s", str );	
+			sprintf( fpath + strlen(fpath), "/%s", str );	
 		}
-		if( f_stat( (const TCHAR*) buff , &fno) == FR_OK )
+		if( f_stat( (const TCHAR*) fpath , &fno) == FR_OK )
 		{			
-			printf("file %s exist\r\n", buff);
+			printf("file %s exist\r\n", fpath);
 		}
 		else
 		{
-			if( f_open(&file,(const TCHAR*) buff, 
+			if( f_open(&file,(const TCHAR*) fpath, 
 				FA_CREATE_ALWAYS | FA_WRITE) == FR_OK)
 			{
-				printf("file %s create sucess!\r\n", buff);
+				printf("file %s create sucess!\r\n", fpath);
 				f_close(&file);
 			}
 		}
@@ -604,16 +666,11 @@ void Fatfs_Cat_File( char *str )
 	FIL file;
 	FILINFO fno;
 	UINT br;
-	//UBaseType_t pre;
 
 	while( *str == ' ')
 		str++;
-	
-	//printf("%s: str = %s!\r\n", __func__, str);
 
-	//pre = uxTaskPriorityGet( NULL );
-	//vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );
-	memset(buff, '\0', sizeof(buff));
+	memset(fpath, '\0', sizeof(fpath));
 	
 	if( strncmp( str, "1:/", strlen("1:/") ) == 0 ||
 			strncmp( str, "0:/", strlen("0:/") ) == 0  ||
@@ -621,7 +678,7 @@ void Fatfs_Cat_File( char *str )
 	{
 		if( strlen(str) > strlen("1:/") )
 		{	
-			memcpy( buff, str, strlen(str) );			
+			memcpy( fpath, str, strlen(str) );			
 		}
 		else
 		{
@@ -630,28 +687,23 @@ void Fatfs_Cat_File( char *str )
 	}
 	else
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		if( buff[strlen(buff) - 1] == '/' )
+		mf_getcwd_( fpath, sizeof(fpath) );
+		if( fpath[strlen(fpath) - 1] == '/' )
 		{
-			sprintf( buff + strlen(buff), "%s", str );
+			sprintf( fpath + strlen(fpath), "%s", str );
 		}
 		else
 		{
-			sprintf( buff + strlen(buff), "/%s", str );	
+			sprintf( fpath + strlen(fpath), "/%s", str );	
 		}
 	}	
 
-	if( strlen(buff) > 0 )
+	if( strlen(fpath) > 0 )
 	{
-		//printf("%s: buff = %s\r\n", __func__, buff);
-		//mf_stat((unsigned char*)buff);
-		ret = mf_stat_( (unsigned char*)buff , &fno );
-		//ret  = f_stat ((const TCHAR*)buff, &fno);
-		//printf("f_stat out..\r\n");
+		ret = mf_stat_( (unsigned char*)fpath , &fno );
 		if(  ret == FR_OK )
 		{
-			//printf("%s: fno.fsize = %d\r\n", __func__, fno.fsize);
-			if( fno.fsize > 0 && f_open( &file, (const TCHAR*)buff, FA_READ) == FR_OK )
+			if( fno.fsize > 0 && f_open( &file, (const TCHAR*)fpath, FA_READ) == FR_OK )
 			{
 				while( 1 )
 				{
@@ -682,7 +734,7 @@ void Fatfs_Cat_File( char *str )
 		}
 		else
 		{
-			printf("%s: file name = %s error!!!\r\n", __func__, buff);
+			printf("%s: file name = %s error!!!\r\n", __func__, fpath);
 		}
 	}
 	//vTaskPrioritySet( NULL, pre );
@@ -714,18 +766,18 @@ void Fatfs_Rm_Dir( char *str )
 	}
 	else
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		if( buff[strlen(buff) - 1] == '/' )
+		mf_getcwd_( fpath, sizeof(fpath) );
+		if( fpath[strlen(fpath) - 1] == '/' )
 		{
-			sprintf( buff + strlen(buff), "%s", str );
+			sprintf( fpath + strlen(fpath), "%s", str );
 		}
 		else
 		{
-			sprintf( buff + strlen(buff), "/%s", str );	
+			sprintf( fpath + strlen(fpath), "/%s", str );	
 		}		
-		//memcpy( buff+strlen(buff), str, strlen(str) );
-		mf_unlink( (unsigned char*)buff );
-		//printf("rm direct %s\r\n", buff);
+		//memcpy( fpath+strlen(fpath), str, strlen(str) );
+		mf_unlink( (unsigned char*)fpath );
+		//printf("rm direct %s\r\n", fpath);
 	}
 
 	vTaskPrioritySet( NULL, pre );	
@@ -749,11 +801,11 @@ void Fatfs_Make_Dir( char *str )
 	}
 	else
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		sprintf( buff+strlen(buff), "%s%s", "./", str );
-		//memcpy( buff+strlen(buff), str, strlen(str) );
-		mf_mkdir( (unsigned char*)buff );
-		//printf("make direct %s\r\n", buff);
+		mf_getcwd_( fpath, sizeof(fpath) );
+		sprintf( fpath+strlen(fpath), "%s%s", "./", str );
+		//memcpy( fpath+strlen(fpath), str, strlen(str) );
+		mf_mkdir( (unsigned char*)fpath );
+		//printf("make direct %s\r\n", fpath);
 	}
 
 	vTaskPrioritySet( NULL, pre );		
@@ -770,15 +822,15 @@ void Fatfs_Change_Dir( char *str )
 	vTaskPrioritySet( NULL, configMAX_PRIORITIES - 1 );		
 	if( strncmp( str, "..", strlen(str) ) == 0 )
 	{
-		mf_getcwd_( buff, sizeof(buff) );	
-		if( strncmp(buff, "1:/", strlen(buff) ) == 0 )
+		mf_getcwd_( fpath, sizeof(fpath) );	
+		if( strncmp(fpath, "1:/", strlen(fpath) ) == 0 )
 		{
 			printf("Warnning: in root dir!\r\n");
 			return;
 		}
-		sprintf( buff+strlen(buff), "%s%s", "/", str );
-		//printf("buff = %s\r\n", buff);
-		mf_chdir( ( unsigned char * )buff );
+		sprintf( fpath+strlen(fpath), "%s%s", "/", str );
+		//printf("fpath = %s\r\n", fpath);
+		mf_chdir( ( unsigned char * )fpath );
 	}
 	else if( strncmp( str, "1:/", strlen("1:/") ) == 0  ||
 		strncmp( str, "0:/", strlen("0:/") ) == 0  ||
@@ -789,17 +841,17 @@ void Fatfs_Change_Dir( char *str )
 	}
 	else if( strncmp( str, "./", strlen("./") )  == 0 )
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		memcpy( buff+strlen(buff), str, strlen(str) );
-		//printf("change to %s\r\n", buff);
-		mf_chdir( ( unsigned char * )buff );
+		mf_getcwd_( fpath, sizeof(fpath) );
+		memcpy( fpath+strlen(fpath), str, strlen(str) );
+		//printf("change to %s\r\n", fpath);
+		mf_chdir( ( unsigned char * )fpath );
 	}
 	else
 	{
-		mf_getcwd_( buff, sizeof(buff) );
-		sprintf( buff+strlen(buff), "%s%s", "./", str );
-		//printf("change to %s\r\n", buff);
-		mf_chdir( ( unsigned char * )buff );
+		mf_getcwd_( fpath, sizeof(fpath) );
+		sprintf( fpath+strlen(fpath), "%s%s", "./", str );
+		//printf("change to %s\r\n", fpath);
+		mf_chdir( ( unsigned char * )fpath );
 	}			
 
 	vTaskPrioritySet( NULL, pre );		
@@ -1119,6 +1171,9 @@ void List_Struct_Information( void )
 		printf("*********struct********\r\n");
 		printf("uart1fifo: lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
 						uart1fifo.lostBytes, uart1fifo.in, uart1fifo.out, uart1fifo.size);								
+		printf("uart6fifo:  lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
+						uart6fifo.lostBytes, uart6fifo.in, uart6fifo.out, uart6fifo.size);	
+		
 		printf("mLogFifo:  lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
 						mLogFifo.lostBytes, mLogFifo.in, mLogFifo.out, mLogFifo.size);	
 		printf("*********struct********\r\n");	
@@ -1245,6 +1300,9 @@ u8 *sys_cmd_tab[]=
 	"continue",
 	"circle",
 	"amrrate",
+	"adds",
+	"dels",
+	"md5",
 };	    
 
 /*
@@ -1283,11 +1341,12 @@ UBaseType_t pre;
 			printf("\r\n");			
 			printf("?:    print help information.\r\n");
 			printf("help: print help information.\r\n");
+			printf("md5:	calculate file md5, use md5 + filename.\r\n");			
 			printf("list: print available Function name list.\r\n");
 			printf("id:   print available Function ID list.\r\n");
 			printf("hex:  binary exchange, etc hex + 0x10.\r\n");
 			printf("dec:  binary exchange, etc dec + 10.\r\n");
-			printf("runtime: 1,open calculate func cost times; 0,colse calculate;\r\n");
+			printf("runtime: 1,open calculate func cost times; 0,colse calculate;\r\n");			
 			printf("please input the Function and params just like you coding.\r\n"); 
 		
 			printf("\r\n----------------FreeRTOS---------------\r\n");
@@ -1326,15 +1385,18 @@ UBaseType_t pre;
 			printf("cp: 	copy file to dir, use cp file_path + dir_path.\r\n");
 
 			printf("----------------Fatfs---------------\r\n");		
-			vTaskDelay( 10 / portTICK_RATE_MS );
+			vTaskDelay( 15 / portTICK_RATE_MS );
  			printf("\r\n----------------Player---------------\r\n");	
-			printf("add:	add sound for DAC codec.\r\n");
-			printf("del:	del sound for DAC codec.\r\n");
+			printf("add:	add sound for headphone.\r\n");
+			printf("del:	del sound for headphone.\r\n");
 			printf("next:	play next music.\r\n");
 			printf("pre:	play previous music.\r\n");
 			printf("stop:	stop to play current music.\r\n");
 			printf("continue:	continue to play the sotp music.\r\n");
 			printf("circle:	circle to play current music.\r\n");
+			printf("amrrate: set sample rate for AMR music.\r\n");
+			printf("adds:	add sound for speaker.\r\n");
+			printf("dels:	del sound for speaker..\r\n");
 			printf("----------------Player---------------\r\n");				
 			//printf("--------------------------------------------- \r\n");
 			vTaskPrioritySet( NULL, pre );				
@@ -1577,6 +1639,15 @@ UBaseType_t pre;
 		case 46:
 			Amr_Set_Samplerate( (char *) str );
 			break;
+		case 47:
+			SpeakerAddVolume( );
+			break;
+		case 48:
+			SpeakerDelVolume( );
+			break;			
+		case 49:
+			Caulate_File_Md5( (char *) str );
+			break;			
 		/*Add For FreeRTOS*/
 		default://∑«∑®÷∏¡Ó
 			return USMART_FUNCERR;

@@ -37,6 +37,11 @@ const char ec_gains_id[] = "@(#)$Id $" ec_gains_h;
 #include "gmed_n.h"
 #include "gc_pred.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	ec_gain_codeState mEc_gain_codeState;
+	ec_gain_pitchState mEc_gain_pitchState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -66,13 +71,16 @@ int ec_gain_code_init (ec_gain_codeState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	  s = &mEc_gain_codeState;
+#else
   /* allocate memory */
   if ((s= (ec_gain_codeState *) pvPortMalloc(sizeof(ec_gain_codeState))) == NULL){
       printf("ec_gain_code_init: can not malloc state structure\n");
       return -1;
   }
-
+#endif
   ec_gain_code_reset(s);
   *state = s;
   
@@ -117,8 +125,12 @@ void ec_gain_code_exit (ec_gain_codeState **state)
   if (state == NULL || *state == NULL)
       return;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;
@@ -236,13 +248,16 @@ int ec_gain_pitch_init (ec_gain_pitchState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mEc_gain_pitchState;
+#else
   /* allocate memory */
   if ((s= (ec_gain_pitchState *) pvPortMalloc(sizeof(ec_gain_pitchState))) == NULL){
       printf("ec_gain_pitch_init: can not malloc state structure\n");
       return -1;
   }
-  
+#endif  
   ec_gain_pitch_reset(s);
   *state = s;
   
@@ -285,9 +300,13 @@ void ec_gain_pitch_exit (ec_gain_pitchState **state)
 {
   if (state == NULL || *state == NULL)
       return;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else 
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

@@ -31,6 +31,10 @@ const char bgnscd_id[] = "@(#)$Id $" bgnscd_h;
 #include "gmed_n.h"
 #include "sqrt_l.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Bgn_scdState mBgn_scdState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -65,13 +69,16 @@ Word16 Bgn_scd_init (Bgn_scdState **state)
       return -1;
    }
    *state = NULL;
-   
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mBgn_scdState;
+#else   
    /* allocate memory */
    if ((s= (Bgn_scdState *) pvPortMalloc(sizeof(Bgn_scdState))) == NULL){
      printf("Bgn_scd_init: can not malloc state structure\n");
      return -1;
    }
-   
+#endif   
    Bgn_scd_reset(s);
    *state = s;
    
@@ -115,8 +122,12 @@ void Bgn_scd_exit (Bgn_scdState **state)
    if (state == NULL || *state == NULL)
       return;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
    /* deallocate memory */
    vPortFree(*state);
+#endif
    *state = NULL;
    
    return;

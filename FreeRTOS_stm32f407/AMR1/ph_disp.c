@@ -34,6 +34,10 @@ const char ph_disp_id[] = "@(#)$Id $" ph_disp_h;
 #include "cnst.h"
 #include "copy.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	ph_dispState mPh_dispState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -63,11 +67,16 @@ int ph_disp_init (ph_dispState **state)
   }
   *state = NULL;
 
+  
+#if(STATIC_MEMORY_ALLOCK == 1)
+	  s = &mPh_dispState;
+#else
   /* allocate memory */
   if ((s= (ph_dispState *) pvPortMalloc(sizeof(ph_dispState))) == NULL){
       printf("ph_disp_init: can not malloc state structure\n");
       return -1;
   }
+#endif  
   ph_disp_reset(s);
   *state = s;
 
@@ -111,9 +120,13 @@ void ph_disp_exit (ph_dispState **state)
 {
   if ((state == NULL) || (*state == NULL))
       return;
-  
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

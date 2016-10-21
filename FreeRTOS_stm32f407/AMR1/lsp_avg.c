@@ -35,6 +35,10 @@ const char lsp_avg_id[] = "@(#)$Id $" lsp_avg_h;
 #include "q_plsf_5.tab"
 #include "copy.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	lsp_avgState mLsp_avgState;
+#endif
+
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -62,13 +66,16 @@ int lsp_avg_init (lsp_avgState **state)
       return -1;
   }
   *state = NULL;
- 
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mLsp_avgState;
+#else
   /* allocate memory */
   if ((s = (lsp_avgState *) pvPortMalloc(sizeof(lsp_avgState))) == NULL){
       printf("lsp_avg_init: can not malloc state structure\n");
       return -1;
   }
-
+#endif
   lsp_avg_reset(s);
   *state = s;
   
@@ -108,8 +115,12 @@ void lsp_avg_exit (lsp_avgState **state)
   if (state == NULL || *state == NULL)
       return;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

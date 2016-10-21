@@ -29,6 +29,10 @@ const char c_g_aver_id[] = "@(#)$Id $" c_g_aver_h;
 #include "cnst.h"
 #include "set_zero.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Cb_gain_averageState mCb_gain_averageState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -63,12 +67,16 @@ Word16 Cb_gain_average_init (Cb_gain_averageState **state)
       return -1;
    }
    *state = NULL;
-   
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mCb_gain_averageState;
+#else
    /* allocate memory */
    if ((s= (Cb_gain_averageState *) pvPortMalloc(sizeof(Cb_gain_averageState))) == NULL){
      printf("Cb_gain_average_init: can not malloc state structure\n");
      return -1;
    }
+#endif   
    
    Cb_gain_average_reset(s);
    *state = s;
@@ -114,8 +122,12 @@ void Cb_gain_average_exit (Cb_gain_averageState **state)
    if (state == NULL || *state == NULL)
       return;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else
    /* deallocate memory */
    vPortFree(*state);
+#endif
    *state = NULL;
    
    return;

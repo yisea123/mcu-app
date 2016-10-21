@@ -1,23 +1,6 @@
 #ifndef __WAVPLAY_H
 #define __WAVPLAY_H
 #include "sys.h" 
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//ALIENTEK STM32F407开发板
-//WAV 解码代码	   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//创建日期:2014/6/29
-//版本：V1.0
-//版权所有，盗版必究。
-//Copyright(C) 广州市星翼电子科技有限公司 2014-2024
-//All rights reserved				
-//********************************************************************************
-//V1.0 说明
-//1,支持16位/24位WAV文件播放
-//2,最高可以支持到192K/24bit的WAV格式. 
-////////////////////////////////////////////////////////////////////////////////// 	
-
 
 #define WAV_I2S_TX_DMA_BUFSIZE    8192		//定义WAV TX DMA 数组大小(播放192Kbps@24bit的时候,需要设置8192大才不会卡)
  
@@ -28,6 +11,7 @@ typedef __packed struct
     u32 ChunkSize ;		   	//集合大小;文件总大小-8
     u32 Format;	   			//格式;WAVE,即0X45564157
 }ChunkRIFF ;
+
 //fmt块
 typedef __packed struct
 {
@@ -40,7 +24,8 @@ typedef __packed struct
 	u16 BlockAlign;			//块对齐(字节); 
 	u16 BitsPerSample;		//单个采样数据大小;4位ADPCM,设置为4
 //	u16 ByteExtraData;		//附加的数据字节;2个; 线性PCM,没有这个参数
-}ChunkFMT;	   
+}ChunkFMT;	 
+
 //fact块 
 typedef __packed struct 
 {
@@ -48,6 +33,7 @@ typedef __packed struct
     u32 ChunkSize ;		   	//子集合大小(不包括ID和Size);这里为:4.
     u32 NumOfSamples;	  	//采样的数量; 
 }ChunkFACT;
+
 //LIST块 
 typedef __packed struct 
 {
@@ -89,25 +75,17 @@ typedef __packed struct
 	u32 datastart;				//数据帧开始的位置(在文件里面的偏移)
 }__wavctrl; 
 
-
-u8 wav_decode_init(u8* fname, __wavctrl* wavx, void *mFile);
-u32 wav_buffill(u8 *buf,u16 size,u8 bits);
-void wav_i2s_dma_tx_callback(void); 
-u8 wav_play_song(u8* fname);
-u8 mp3_play_song(u8* fname);
-
+u8 wav_decode_init( u8* fname, __wavctrl* wavx, void *mFile );
+u32 wav_buffill_buffer( u8 *buf, u16 size, u8 bits );
+void wav_i2s_dma_tx_callback( void ); 
+u8 wav_play_song( u8* fname );
+u8 mp3_play_song( u8* fname );
 void MusicAddVolume( void );
-
 void MusicDelVolume( void );
-
 void MusicNext( void );
-
 void MusicPrevious( void );
-
 void MusicStop( void );
-
 void MusicContinue( void );
-
 
 
 #include "mp3dec.h"
@@ -128,9 +106,6 @@ typedef __packed struct
 	uint8_t comment[30];		//备注
 	uint8_t genre;			//流派 
 }ID3V1_Tag;
-
-
-
 
 //ID3V2 标签头 10个字节
 typedef __packed struct 
@@ -159,9 +134,6 @@ typedef __packed struct
     uint16_t flags;			
 	//帧标志
 }ID3V23_FrameHead;
-
-
-
 
 //MP3 Xing帧信息(没有全部列出来,仅列出有用的部分)
 typedef __packed struct 
@@ -202,12 +174,10 @@ typedef __packed struct
 	//备注
 	uint8_t genre;			
 	//流派 
-	
     uint32_t totsec ;				
 	//整首歌时长,单位:秒
     uint32_t cursec ;				
 	//当前播放时长
-	
     uint32_t bitrate;	   			
 	//比特率
 	uint32_t samplerate;				
@@ -215,11 +185,9 @@ typedef __packed struct
 	uint16_t outsamples;				
 	//PCM输出数据量大小(以16位为单位),
 	//单声道MP3,则等于实际输出*2(方便DAC输出)
-	
 	uint32_t datastart;				
 	//数据帧开始的位置(在文件里面的偏移)
 }__mp3ctrl;
-
 
 typedef enum 
 {
@@ -230,29 +198,13 @@ typedef enum
 } PlayStatus;
 
 extern __mp3ctrl * mp3ctrl;
-
-
-
-void mp3_i2s_dma_tx_callback(void) ;
+void mp3_i2s_dma_tx_callback( void );
 void mp3_fill_buffer( int step, uint16_t* buf, uint16_t size, uint8_t nch );
-uint8_t mp3_id3v1_decode(uint8_t* buf,__mp3ctrl *pctrl);
-uint8_t mp3_id3v2_decode(uint8_t* buf,uint32_t size,__mp3ctrl *pctrl);
-uint8_t mp3_get_info(uint8_t *pname,__mp3ctrl* pctrl);
-uint8_t mp3_play_song(uint8_t* fname);
-
+uint8_t mp3_id3v1_decode( uint8_t* buf, __mp3ctrl *pctrl );
+uint8_t mp3_id3v2_decode( uint8_t* buf, uint32_t size, __mp3ctrl *pctrl );
+uint8_t mp3_get_info( uint8_t *pname, __mp3ctrl* pctrl );
+uint8_t mp3_play_song( uint8_t* fname );
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

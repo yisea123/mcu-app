@@ -45,6 +45,10 @@ const char dtx_dec_id[] = "@(#)$Id $" dtx_dec_h;
 #include "q_plsf_5.tab"
 #include "lsp.tab"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	dtx_decState mdtx_decState;
+#endif
+
 /*
 *****************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -106,13 +110,16 @@ int dtx_dec_init (dtx_decState **st)
    }
    
    *st = NULL;
-   
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mdtx_decState;
+#else  
    /* allocate memory */
    if ((s= (dtx_decState *) pvPortMalloc(sizeof(dtx_decState))) == NULL){
       printf("dtx_dec_init: can not malloc state structure\n");
       return -1;
    }
-   
+#endif    
    dtx_dec_reset(s);
    *st = s;
    
@@ -192,9 +199,13 @@ void dtx_dec_exit (dtx_decState **st)
 {
    if (st == NULL || *st == NULL)
       return;
-   
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else   
    /* deallocate memory */
    vPortFree(*st);
+#endif   
    *st = NULL;
    
    return;

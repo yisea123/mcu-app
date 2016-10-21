@@ -37,6 +37,10 @@ const char d_plsf_id[] = "@(#)$Id $" d_plsf_h;
 #include "copy.h"
 #include "q_plsf_5.tab"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	D_plsfState mD_plsfState;
+#endif
+
 /*
 *--------------------------------------------------*
 * Constants (defined in cnst.h)                    *
@@ -67,13 +71,17 @@ int D_plsf_init (D_plsfState **state)
       return -1;
   }
   *state = NULL;
- 
+
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+	s = &mD_plsfState;
+#else 
   /* allocate memory */
   if ((s= (D_plsfState *) pvPortMalloc(sizeof(D_plsfState))) == NULL){
       printf("D_plsf_init: can not malloc state structure\n");
       return -1;
   }
-  
+#endif  
   D_plsf_reset(s);
   *state = s;
   
@@ -119,9 +127,14 @@ void D_plsf_exit (D_plsfState **state)
 {
   if (state == NULL || *state == NULL)
       return;
- 
+
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else 
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;

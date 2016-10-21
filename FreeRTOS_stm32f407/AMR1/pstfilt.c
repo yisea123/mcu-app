@@ -40,6 +40,10 @@ const char pstfilt_id[] = "@(#)$Id $" pstfilt_h;
 #include "count.h"
 #include "cnst.h"
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	Post_FilterState mPost_FilterState;
+#endif
+
 /*
 ********************************************************************************
 *                         LOCAL VARIABLES AND TABLES
@@ -101,11 +105,15 @@ int Post_Filter_init (Post_FilterState **state)
   }
   *state = NULL;
 
+#if(STATIC_MEMORY_ALLOCK == 1)
+	  s = &mPost_FilterState;
+#else
   /* allocate memory */
   if ((s= (Post_FilterState *) pvPortMalloc(sizeof(Post_FilterState))) == NULL){
       printf("Post_Filter_init: can not malloc state structure\n");
       return -1;
   }
+#endif  
   s->preemph_state = NULL;
   s->agc_state = NULL;
 
@@ -157,9 +165,13 @@ void Post_Filter_exit (Post_FilterState **state)
 
   agc_exit(&(*state)->agc_state);
   preemphasis_exit(&(*state)->preemph_state);
-  
+
+#if(STATIC_MEMORY_ALLOCK == 1)
+
+#else  
   /* deallocate memory */
   vPortFree(*state);
+#endif
   *state = NULL;
   
   return;
