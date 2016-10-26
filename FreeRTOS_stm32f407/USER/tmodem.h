@@ -22,7 +22,7 @@
 
 #define MCU_NUM									(5)
 #define SCU_NUM									(6)
-#define BOOTLOADER_NUM					(109)
+#define BOOTLOADER_NUM							(109)
 
 #define NOMAL										(0)
 

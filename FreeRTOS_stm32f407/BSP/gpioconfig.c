@@ -328,6 +328,8 @@ void android_power_init( void )
 void android_power_reset( void )
 {
 	printf("%s \r\n", __func__);
+	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );
+	vTaskDelay( 500 / portTICK_RATE_MS );	
 	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 1 );
 	vTaskDelay( 500 / portTICK_RATE_MS );
 	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );

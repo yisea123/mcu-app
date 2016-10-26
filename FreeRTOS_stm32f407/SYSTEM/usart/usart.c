@@ -312,7 +312,7 @@ void uart4_init(u32 bound)
 	//Usart1 NVIC 配置
     NVIC_InitStructure.NVIC_IRQChannel = UART4_IRQn;//串口1中断通道
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=3;//抢占优先级3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =2;		//子优先级3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//子优先级3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQ通道使能
 	NVIC_Init(&NVIC_InitStructure);	//根据指定的参数初始化VIC寄存器、
 	
@@ -331,7 +331,7 @@ void uart6_init(u32 bound)
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource6,GPIO_AF_USART6); //GPIOA9?′ó??aUSART6
 	GPIO_PinAFConfig(GPIOC,GPIO_PinSource7,GPIO_AF_USART6); //GPIOA14?′ó??aUSART6		
 	
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7; //GPIOA9ó?GPIOA10
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7; //GPIOA9ó?GPIOA10
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;//?′ó?1|?ü
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	//?ù?è50MHz
 	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP; //í?íì?′ó?ê?3?
@@ -344,7 +344,7 @@ void uart6_init(u32 bound)
 	USART_InitStructure.USART_Parity = USART_Parity_No;//?T????D￡?é??
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;//?Tó2?têy?Yá÷????
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;	//ê?·￠?￡ê?
-  USART_Init(USART6, &USART_InitStructure); //3?ê??ˉ′??ú6
+    USART_Init(USART6, &USART_InitStructure); //3?ê??ˉ′??ú6
 	
 	USART_Cmd(USART6, ENABLE);  //ê1?ü′??ú6 
 	USART_ClearFlag(USART6, USART_FLAG_TC);		
@@ -353,8 +353,12 @@ void uart6_init(u32 bound)
 
 	//Usart1 NVIC ????
   NVIC_InitStructure.NVIC_IRQChannel = USART6_IRQn;//′??ú1?D??í¨μà
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=0;//?à??ó??è??3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =3;		//×óó??è??3
+
+/*0，3  的中断优先级导致pxDownStreamTask任务没有被唤醒
+改成2， 2
+*/  
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=2;//?à??ó??è??3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =2;		//×óó??è??3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQí¨μàê1?ü
 	NVIC_Init(&NVIC_InitStructure);	//?ù?Y???¨μ?2?êy3?ê??ˉVIC??′??÷?￠
 }
@@ -367,25 +371,22 @@ extern TaskHandle_t pxDownStreamTask;
 void USART3_IRQHandler( void )
 {
 	u8 Res;
+	(void) vPortEnterCritical();		
 
 	if( USART_GetITStatus(USART3, USART_IT_RXNE ) != RESET)
 	{
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE); 	
 		
 		Res =USART_ReceiveData( USART3 );
-		//printf("(0x%02x)\r\n", Res);
-		
-		(void) vPortEnterCritical();		
 		if( rfifo_put( &uart6fifo, &Res, 1 ) != 1 ) 
 		{
 			uart6fifo.lostBytes++; 
 		} 
 
 		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-		(void) vPortExitCritical();
-		
     } 
 	
+	(void) vPortExitCritical();
 } 
 
 
@@ -393,25 +394,24 @@ void UART4_IRQHandler(void)
 {
 	u8 Res;
 	
-#if( BOARD_NUM == 3)		
+#if( BOARD_NUM == 3 )		
+	(void) vPortEnterCritical();
 
 	if( USART_GetITStatus( UART4, USART_IT_RXNE ) != RESET ) 
 	{ 		
+		USART_ClearITPendingBit( UART4, USART_IT_RXNE );
+	
 		Res = USART_ReceiveData( UART4 );
 		
-		(void) vPortEnterCritical();
 		if( rfifo_put( &uart1fifo, &Res, 1 ) != 1 ) 
 		{
 				uart1fifo.lostBytes++;
 		} 
-		else 
-		{
 
-		}
 		vTaskNotifyGiveFromISR( pxUsmartTask, NULL);
-		(void) vPortExitCritical();
-		USART_ClearITPendingBit( UART4, USART_IT_RXNE );
 	} 
+
+	(void) vPortExitCritical();
 
 #else
 
@@ -419,23 +419,16 @@ void UART4_IRQHandler(void)
 	if( USART_GetITStatus( UART4, USART_IT_RXNE ) != RESET )
 	{
 		USART_ClearITPendingBit(UART4,USART_IT_RXNE);
-		//USART_ClearFlag( UART4, USART_IT_RXNE );
+
 		Res = USART_ReceiveData( UART4 );
-		printf("%s:  res(0x%02x)\r\n", __func__,Res);
 		if( rfifo_put( &uart6fifo, &Res, 1 ) != 1 ) 
 		{
 				uart6fifo.lostBytes++;
 		} 
-		else 
-		{
-			vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-		}		
-		(void) vPortExitCritical();
+
+		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
     } 
-	else 
-	{
-		(void) vPortExitCritical();
-	}	
+	(void) vPortExitCritical();
 	
 #endif
 
@@ -446,24 +439,24 @@ void USART6_IRQHandler(void)                	//′??ú1?D??·t??3ìDò
 	u8 Res;
 	unsigned int ret;
 
+	(void) vPortEnterCritical();
+
 	if(USART_GetITStatus(USART6, USART_IT_RXNE) != RESET)
 	{
-		USART_ClearITPendingBit(USART6, USART_IT_RXNE);
-		Res =USART_ReceiveData( USART6 );
-		
-		(void) vPortEnterCritical();
-		
+		//USART_ClearFlag(USART6, USART_IT_RXNE);
+		USART_ClearITPendingBit(USART6, USART_IT_RXNE);		
+		Res = USART_ReceiveData( USART6 );
 	    ret = rfifo_put( &uart6fifo, &Res, 1 );		
     	if( ret != 1 ) 
 		{
 			uart6fifo.lostBytes++;
 		}
-
-		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-		
-		(void) vPortExitCritical();	
-    } 
-
+		if( pxDownStreamTask )
+		{
+			vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );		
+		}
+	} 
+	(void) vPortExitCritical();	
 } 
 
 

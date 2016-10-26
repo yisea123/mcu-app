@@ -24,9 +24,9 @@
 //前12M字节给fatfs用,12M字节后,用于存放字库,字库占用3.09M.	
 //剩余部分,给开发者自己用	 
 #if(BOARD_NUM == 1)
-static u16 FLASH_SECTOR_COUNT = 2048 * 2;
+static u16 FLASH_SECTOR_COUNT = 2048 * 2 - 90; //  45*512   45*512
 #elif(BOARD_NUM == 2)
-static u16 FLASH_SECTOR_COUNT = 2048 * 2 * 8;
+static u16 FLASH_SECTOR_COUNT = 2048 * 2 * 8 - 90; //  45*512   45*512
 #else
 static u16 FLASH_SECTOR_COUNT = 2048 * 2;
 #endif
@@ -181,9 +181,9 @@ DSTATUS disk_initialize (
 		case EX_FLASH: 
 			W25QXX_Init();
 #if(BOARD_NUM == 1)			
-			FLASH_SECTOR_COUNT = 2048 * 2;
+			FLASH_SECTOR_COUNT = 2048 * 2 - 90;
 #elif(BOARD_NUM == 2)
-			FLASH_SECTOR_COUNT = 2048 * 2 * 8;
+			FLASH_SECTOR_COUNT = 2048 * 2 * 8 - 90;
 #endif
  			break;
 			

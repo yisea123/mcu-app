@@ -11,6 +11,8 @@
 #error This file is not needed in current configuration. Remove from the project.
 #endif
 
+/*如果要支持中文，请设备MY_FF_CONVERT 0
+NEED_TO_BURN_DATA	 1*/
 #define MY_FF_CONVERT		1
 
 #define NEED_TO_BURN_DATA	0  //1  0
@@ -11086,7 +11088,7 @@ unsigned short getCc936StaticShort( unsigned int addr, int index )
 
 #endif
 
-#ifndef 	MY_FF_CONVERT
+#if( MY_FF_CONVERT == 0)
 
 WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	WCHAR	chr,	/* Character code to be converted */
@@ -11185,7 +11187,7 @@ WCHAR ff_wtoupper (	/* Upper converted character */
 	return tbl_lower[i] ? tbl_upper[i] : chr;
 }
 
-#ifdef 	MY_FF_CONVERT
+#if( MY_FF_CONVERT == 1 )
 
 WCHAR ff_convert (	/* Converted code, 0 means conversion error */
 	WCHAR	src,	/* Character code to be converted */

@@ -306,7 +306,7 @@ CIRCLEPLAY:
 	     {	 		
 			while( amrtransferend == 0 && times == 0 )
 			{
-				ulTaskNotifyTake( pdTRUE, 800 / portTICK_RATE_MS );
+				ulTaskNotifyTake( pdFALSE, 1000 / portTICK_RATE_MS );
 			}
 			amrtransferend = 0;
 

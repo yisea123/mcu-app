@@ -76,11 +76,11 @@
             <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=C:\mcu\mcu-app\FreeRTOS_stm32f407\stm32f407.bin C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\Objects\FreeRTOS_STM32F4.axf</UserProg1Name>
             <UserProg2Name></UserProg2Name>
-            <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
+            <UserProg1Dos16Mode>1</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
@@ -582,6 +582,16 @@
               <FileType>1</FileType>
               <FilePath>..\..\USER\aes.c</FilePath>
             </File>
+            <File>
+              <FileName>romhandler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\romhandler.c</FilePath>
+            </File>
+            <File>
+              <FileName>handlers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\handlers.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -716,6 +726,16 @@
               <FileName>miic.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\miic.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpioconfig.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\gpioconfig.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\gpio.c</FilePath>
             </File>
           </Files>
         </Group>

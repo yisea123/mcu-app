@@ -207,7 +207,7 @@ void wav_get_curtime(FIL*fx,__wavctrl *wavx)
 
 unsigned char uMusicPlayControl = 0;
 signed char xMusicVolume = 20;
-signed char xSpeakerVolume = 50;
+signed char xSpeakerVolume = 32;
 
 u8 wav_play_song( u8* fname )
 {
@@ -253,7 +253,7 @@ CIRCLEPLAY:
 			audio_start();  
 			while( res == 0 )
 			{ 
-				ulTaskNotifyTake( pdTRUE, 1000 / portTICK_RATE_MS );
+				ulTaskNotifyTake( pdFALSE, 1000 / portTICK_RATE_MS );
 				
 				if( fillnum != WAV_I2S_TX_DMA_BUFSIZE/(2/wavctrl.nchannels) )
 					//go to end of file
@@ -382,7 +382,7 @@ void mp3_fill_buffer( int step, u16* buf, u16 size, u8 nch )
 	
 	while( mp3transferend == 0 && step > 1 )
 	{
-		ulTaskNotifyTake( pdTRUE, 1000 / portTICK_RATE_MS );
+		ulTaskNotifyTake( pdFALSE, 1000 / portTICK_RATE_MS );
 	}
 	mp3transferend = 0;
 	

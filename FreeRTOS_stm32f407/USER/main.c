@@ -31,7 +31,7 @@
 
 #define BOOT_LOG   \
 printf(" \
-\r\n\r\n/******       MCU   -   START        ******/ \
+\r\n\r\n/******       MCU   +   START        ******/ \
 \r\n/***** YANGJIANZHOU AT GUANGZHOU 21TH *****/ \
 \r\n/********* %s %s *********/ \
 \r\n/******************************************/ \
@@ -54,6 +54,8 @@ Ringfifo mLogFifo;
 QueueHandle_t mLogSemaphore =  NULL;
 //QueueHandle_t mDmaSemaphore =  NULL;
 //unsigned char mSendBuffer[512];
+//char *da;
+//char bb[1024*2+512];
 TimerHandle_t xTimer1 = NULL;
 TaskHandle_t pxKeyDetectTask;
 TaskHandle_t pxLogTask;
@@ -61,8 +63,16 @@ TaskHandle_t pxTimeTask;
 TaskHandle_t pxTempretureTask;
 TaskHandle_t pxUsmartTask;
 TaskHandle_t pxMusicPlayer;
-TaskHandle_t pxDownStreamTask;
+TaskHandle_t pxDownStreamTask = NULL;
 TaskHandle_t pxUpStreamTask;
+//Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=102816  
+//Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=103328   after add unsigned char mSendBuffer[512];
+//Program Size: Code=136478 RO-data=58522 RW-data=26080 ZI-data=102816   after add unsigned char mSendBuffer[512] = {9};
+//Program Size: Code=136478 RO-data=58534 RW-data=25572 ZI-data=102812   after add char *da = "123456789";
+//Program Size: Code=136478 RO-data=58534 RW-data=25572 ZI-data=102812   char *da = "1234567890";
+//Program Size: Code=136478 RO-data=58522 RW-data=25572 ZI-data=102812   char *da;
+//Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=105376   char bb[1024*2+512];
+//Program Size: Code=136478 RO-data=58534 RW-data=25568 ZI-data=102816   "1234567890"
 
 int main(void)
 {
@@ -72,12 +82,12 @@ int main(void)
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 
 	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 7, &pxUpStreamTask );
-	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 7, &pxDownStreamTask );
+	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 7, &pxDownStreamTask );
 #if( BOARD_NUM != 3)	
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 #endif
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 1, &pxUsmartTask );
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 8, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, configMAX_PRIORITIES - 1 , NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
@@ -98,10 +108,12 @@ int main(void)
 #include "diskio.h"		/* FatFs lower layer API */
 extern  signed char xMusicVolume;
 extern  signed char xSpeakerVolume;
+extern  Ringfifo uart6fifo;
 void Software_Hardware_Init( void )
 {
 	unsigned char res, i;
-	rfifo_init( &mLogFifo );
+	rfifo_init( &mLogFifo );	
+	rfifo_init( &uart6fifo );	
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_2 );
 	//(void) uart4_init( 115200 );	
 

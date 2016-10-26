@@ -4,6 +4,8 @@
 #include "ff.h"
 #include "uartprotocol.h"
 #include "ymodem.h"
+#include "handlers.h"
+
 //#include "rtc.h"
 //#include "stmflash.h"
 //#include "stm32f4xx_flash.h"
@@ -79,14 +81,10 @@ PR: pReceived & 0xff
 					
 ***********************************************************************/
 
-static unsigned char *key = NULL;
-extern char mMcuJumpAppPending;
-static unsigned char aes_key[ 32 ];
-unsigned char tmodem_md5[ LEN_MD5 ];
-unsigned int romSize = 0;
+static YmodemHandler *handler = NULL;
 char devNum, sessionBegin = 0, mTmodemTickCount=0,
 	mPacketSize = PACKET_SIZE;
-static char FileName[FILE_NAME_LENGTH], num_eot = 0, num_ca=0;
+static char num_eot = 0, num_ca=0;
 static unsigned int pReceived = 0, continuity = 0, tmp0, tmp1;	
 
 void reset_tmodem_status(void)
@@ -181,10 +179,10 @@ void report_ymodem_packet_two( char C, char C0 )
 	cmd[ 2 + N_LEN + N_MSGID + N_TYPE ] = C;
 	cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 1 ] = C0;
 
-	*( CRC_Type* )   &cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 2 ] = 
-		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + 2 );
+	*( CRC_Type* )   &cmd[ 2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] ] = 
+		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] );
 
-	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + 2 + N_CRC );
+	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] + N_CRC );
 }
 
 //AA BB 1	   msgid(0x8007)  type EOT  CRC1 CRC2   
@@ -194,16 +192,16 @@ void report_ymodem_packet_one( char C )
 	cmd[0] = 0xaa;
 	cmd[1] = 0xbb;
 	
-	*( LEN_Type* )&cmd[ 2 ] = 2;
+	*( LEN_Type* )&cmd[ 2 ] = 1;
 	*( MSGID_Type* )&cmd[ 2 + N_LEN ] = 0x8007;
 	*( TYPE_Type* )&cmd[ 2 + N_LEN + N_MSGID ] = TYPE_CMD;
 
 	cmd[ 2 + N_LEN + N_MSGID + N_TYPE ] = C;
 
-	*( CRC_Type* )&cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 1 ] = 
-		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + 1 );
+	*( CRC_Type* )&cmd[ 2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] ] = 
+		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] );
 	
-	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + 1 + N_CRC );
+	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] + N_CRC );
 }
 
 //AA BB 131    0x05 01 FE Data[128] CRC1 CRC2 
@@ -281,222 +279,116 @@ static int parse_packet ( const char *rpacket, int len, int *plen )
 int parse_ymodem_command(const char* rpacket, int len)
 {
 	static unsigned int mRecvBytes=0;
-	int i, sessionDone = 0, plen;
-	unsigned int size = 0, ramsource = 0, preFlashdestination;
-	unsigned char *pbuf, *pfile, pfsize[ FILE_SIZE_LENGTH ];	
+	int i, sessionDone = 0, plen, ret;
 
 	switch ( parse_packet( rpacket, len, &plen ) )	
 	{
-	case 0:
-	 	
-	  switch ( plen )
-	  {
-		case -1:
-			cac_ca_num( &num_ca );
-			if(( num_ca ) == 2 || ( num_ca == 0 ))
-				reset_tmodem_status(); 
-			return UDS;
-			
-		case 0:	
-			return cac_eot_num( &num_eot );
-			
-		default:				
-			if ( ( rpacket[ SEQNO_INDEX ] & 0xff ) != ( pReceived & 0xff ) ) 
-			{
-				printf("%s: (%02x)!=(%02x) error!\r\n", __func__, 
-						( rpacket[ SEQNO_INDEX ] & 0xff ), ( pReceived & 0xff ) );
+		case 0:
+		 	
+		  switch ( plen )
+		  {
+			case -1:
+				cac_ca_num( &num_ca );
+				if(( num_ca ) == 2 || ( num_ca == 0 ))
+					reset_tmodem_status(); 
+				return UDS;
 				
-				if( ( pReceived & 0xff ) - 
-						( rpacket[ SEQNO_INDEX ] & 0xff ) == 1 ) 
-				{
-					return E3;
-				} 
-				else 
-				{
-					return E6;
-				}
-			} 
-			else 
-			{	 	
-				if ( pReceived == 0 )
-				{
-					if ( rpacket[ PACKET_HEADER ] != 0 ) 
-					{
-						if( ( rpacket[ SEQNO_INDEX ] & 0xff ) != 0 ) 
-						{
-							return E6;
-						}
-
-						/* Filename packet has valid data */
-						pfile = ( unsigned char * )( rpacket + PACKET_HEADER );
-						for ( i = 0; ( *pfile != 0 ) && ( i < FILE_NAME_LENGTH ); ) 
-						{
-							FileName[ i++ ] = *pfile++; 
-						}
-						
-						FileName[i++] = '\0';
-						
-						for ( i = 0, pfile++; ( *pfile != '\0' ) && ( i < FILE_SIZE_LENGTH ); ) 
-						{
-							pfsize[ i++ ] = *pfile++;
-						}
-						pfsize[ i++ ] = '\0';
-						//Str2Int( pfsize, &size );
-						size = atoi( pfsize );
-						//size = size - LEN_MD5;
-						mRecvBytes = 0;
-						printf("%s: FileName(%s) size(%d)\r\n", __func__, FileName, size );
-
-						/*
-						printf("%s: file size = %d, USE_FLASH_SIZE=%d\r\n",
-									__func__, size, USER_FLASH_SIZE);
-						if ( size > ( USER_FLASH_SIZE ) ) 
-						{
-							printf("%s: file size > flash size\r\n", __func__);
-							return E4;
-						}
-						
-						printf("aes_key:\r\n[");
-						
-						for (i = 0, pfile++; i < sizeof( aes_key )/sizeof( aes_key[ 0 ] ); i++) 
-						{
-							aes_key[ i ] = *pfile++;
-							printf("%02x,", aes_key[ i ] );
-						}								
-						printf("]\r\n");
-						
-						if( key ) 
-						{ 
-							aes_destory_key( key ); 
-							key = NULL;
-						}
-						key = aes_create_key( aes_key, sizeof( aes_key )/sizeof( aes_key[0] ));
-						
-						if( !key ) 
-							return E2;
-						*/
-						mTmodemTickCount = 0;
-						romSize = size;
-						sessionBegin = 1;
-						pReceived ++;
-
-						/*
-						if( 0X1234 != RTC_ReadBackupRegister( RTC_BKP_DR3 ) && 
-								( devNum == MCU_NUM || devNum == SCU_NUM ) ) 
-						{
-							printf("%s: start Erase Sector!\r\n", __func__);
-							FLASH_If_Erase_Sector( flashdestination );							
-						}
-						
-						if( devNum == BOOTLOADER_NUM )
-						{
-							printf("%s: start Erase Sector\r\n", __func__);
-							FLASH_If_Erase_Sector( flashdestination ); 
-						}
-						else 
-						{
-							printf("%s: reset RTC_BKP_DR3 = 0!\r\n", __func__);
-							RTC_WriteBackupRegister( RTC_BKP_DR3, 0x0000 );
-						}
-						
-						targetSector = GetSector( flashdestination );
-						
-						if( timer == NULL )
-						{
-							//timer = register_timer2("tmodem_timer", TIMER2SECOND, tmodem_timer, REPEAT, &sessionBegin);
-						}
-						*/
-						return UD1;
-					}     
+			case 0:	
+				return cac_eot_num( &num_eot );
 				
-					else if( sessionBegin )
+			default:				
+				if ( ( rpacket[ SEQNO_INDEX ] & 0xff ) != ( pReceived & 0xff ) ) 
+				{
+					printf("%s: (%02x)!=(%02x) error!\r\n", __func__, 
+							( rpacket[ SEQNO_INDEX ] & 0xff ), ( pReceived & 0xff ) );
+					
+					if( ( pReceived & 0xff ) - 
+							( rpacket[ SEQNO_INDEX ] & 0xff ) == 1 ) 
 					{
-						sessionDone = 1;
-						mTmodemTickCount = 0;
-						break;
+						return E3;
 					} 
 					else 
 					{
-						return E2;
+						return E6;
 					}
-				}
-			
-				/* Data packet */
-				else if( sessionBegin ) 
-				{
-					if( pReceived == 1 ) 
+				} 
+				else 
+				{	 	
+					if ( pReceived == 0 )
 					{
-						//printf("%s: flash save addr:%x\r\n", __func__, flashdestination);
-					}
-					/*
-					for( i=0; i< plen/ AES_DECODE_LEN; i++ ) 
-					{
-						pbuf = aes_decode_packet( key, 
-							( unsigned char* )( rpacket + PACKET_HEADER + AES_DECODE_LEN * i ), 
-							AES_DECODE_LEN );
-						
-						ramsource = ( unsigned int ) pbuf;				
-						preFlashdestination = flashdestination;	
-						flashdestination = STMFLASH_Write( flashdestination, 
-							(unsigned int *) ramsource, AES_DECODE_LEN / 4 );
-						 
-						if( flashdestination == preFlashdestination + AES_DECODE_LEN ) 
+						if ( rpacket[ PACKET_HEADER ] != 0 ) 
 						{
-							if( targetSector != GetSector( flashdestination ) )
+							if( ( rpacket[ SEQNO_INDEX ] & 0xff ) != 0 ) 
 							{
-								printf("%s: rom is too big! Erase one more sector!\r\n", __func__);
-								targetSector = GetSector( flashdestination );
-								FLASH_If_Erase_Sector( flashdestination ); 
+								return E6;
 							}
-							mTmodemTickCount = 0;				
+
+							ret = handler->packet_handler( devNum, pReceived, rpacket, plen );
+							if( ret < 0)
+							{
+								return ret;
+							}
+							mTmodemTickCount = 0;
+							sessionBegin = 1;
+							pReceived ++;
+							return UD1;
+						}     
+					
+						else if( sessionBegin )
+						{
+							sessionDone = 1;
+							mTmodemTickCount = 0;
+							break;
 						} 
 						else 
 						{
-							printf("%s: STMFLASH_Write error\r\n", __func__);
-							printf("%s: des=0x%x, preDes=0x%x, packet_length=%d\r\n", 
-								__func__, flashdestination,
-										preFlashdestination, plen);
-							return E5;
+							return E2;
 						}
-					} 
-					*/
-					mRecvBytes += plen;
-					pReceived++;
-					return UD2;
-				}
+					}
+					else if( sessionBegin ) 
+					{
+						ret = handler->packet_handler( devNum, pReceived, rpacket, plen);
+						if( ret < 0)
+						{
+							return ret;
+						}						
+						mTmodemTickCount = 0;
+						mRecvBytes += plen;
+						pReceived++;
+						return UD2;
+					}
+					else 
+					{
+						printf("sessionBegin = 0, but android send rom data...\r\n");
+						return E2;
+					}
+			 }
+			}
+			break;
+
+		case 2:
+				devNum = rpacket[ 1 ];
+				printf("%s: want to update dev num = %d\r\n", __func__, devNum );
+				
+				handler = get_ymodem_handlers(devNum);
+				if( handler ) 
+				{
+					return UD0;
+				} 
 				else 
 				{
-					printf("sessionBegin = 0, but android send rom data...\r\n");
-					return E2;
+					return E7; 
 				}
-		 }
-		}
-		break;
-
-	case 2:
-			devNum = rpacket[ 1 ];
-			printf("%s: want to update dev num = %d\r\n", __func__, devNum );
-		
-			if( 1/*devNum == MCU_NUM || devNum == SCU_NUM*/ ) 
-			{
-				return UD0;
-			} 
-			else 
-			{
-				return E7; 
-			}
-	case -1:
-			printf("%s: ERROR E0\r\n", __func__);
-			return E0;
-			
-	default:
-		break;
+		case -1:
+				printf("%s: ERROR E0\r\n", __func__);
+				return E0;
+				
+		default:
+			break;
 	}
 
 	if ( sessionDone != 0 )
-	{
-		unsigned int src;
-		
+	{		
 		if( 0/*timer*/ )
 		{
 				if( 1/*unregister_timer2( timer ) == 0*/ )
@@ -508,31 +400,8 @@ int parse_ymodem_command(const char* rpacket, int len)
 					printf("%s: fail to delete timer\r\n", __func__);
 				}
 		}
-		
-		//read_md5_from_flash( devNum, romSize, tmodem_md5 );
-		
-		if( 1/*( devNum==MCU_NUM ) || ( devNum==SCU_NUM )*/) 
-		{
-			//src = APPLICATION_ADDRESS;
-		}
-		else
-		{
-			//src = BOOTLOADER_ADDRESS;
-		}
-		
-		printf("%s: Download Finish.\r\n", __func__);
 		reset_tmodem_status();
-		
-		if( 1/*compare_flashdata_md5( src, romSize, tmodem_md5 ) == 0*/ )
-		{
-			printf("%s: Check MD5 Ok!\r\n", __func__);
-			return UD5;
-		}
-		else
-		{
-			printf("%s: Check MD5 Fail!\r\n", __func__);
-			return E5;
-		}
+		return handler->finish_handler( devNum );
 	}
 
 	return E3;
@@ -577,24 +446,7 @@ static void process_ymodem_result( int result )
 			report_ymodem_packet_one( LAST_ACK ); 
 			report_ymodem_packet_one( UPDATE_DONE ); 
 			printf("%s: UD5 devNum=%d\r\n", __func__, devNum);
-/*		
-			if( MCU_NUM == devNum ) 
-			{
-				//mAndroidShutDownPending = 1;
-				//mMcuJumpAppPending = 1; 
-				printf("jump mcu update..\r\n");
-			} 
-			else if( SCU_NUM == devNum ) 
-			{
-			 	//handle_scu_rom_update();
-			 	printf("jump scu update..\r\n");
-			} 
-			else if( BOOTLOADER_NUM == devNum ) 
-			{
-			 	//handle_booloader_rom_update();
-			 	printf("jump booloader update..\r\n");
-			}
-*/
+			printf("Ymodem done!!!!!!\r\n");
 		break;
 		
 		case  E0:  
@@ -603,36 +455,56 @@ static void process_ymodem_result( int result )
 			printf("E1\r\n");
 		case  E3:  
 			report_ymodem_packet_one(ACK); printf("E3\r\n");					 
-			//if( key ) { aes_destory_key( key ); key = NULL; }
+			if( handler )
+			{
+				handler->error_handler( devNum, E3 );
+			}
 			break;
 		case  E2:  
 			report_ymodem_packet_one( ERR_TRANSMISS_START ); printf("E2\r\n"); 
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+			if( handler )
+			{
+				handler->error_handler( devNum, E2 );
+			}
 			break;
 			
 		case  E4:  
 			report_ymodem_packet_one(ERR_SIZE_EXT); printf("E4\r\n");
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+			if( handler )
+			{
+				handler->error_handler( devNum, E4 );
+			}
 			break;
 			
 		case  E5:  
 			report_ymodem_packet_one(ERR_FLASH_RW); printf("E5\r\n"); 
-			//check_if_need_to_erase(); 
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+			if( handler )
+			{
+				handler->error_handler( devNum, E5 );
+			}
 			break;
 			
 		case  E6:  
 			report_ymodem_packet_one(ERR_PACKET_INDEX); printf("E6\r\n"); 
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+			if( handler )
+			{
+				handler->error_handler( devNum, E6 );
+			}
 			break;
 			
 		case  E7:  
 			report_ymodem_packet_one(ERR_UPDATE_REQUEST); printf("E7\r\n"); 
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+			if( handler )
+			{
+				handler->error_handler( devNum, E7 );
+			}
 			break;
 		
-		default:   
-			//if( key ) {aes_destory_key( key ); key = NULL;} 
+		default: 
+			if( handler )
+			{
+				handler->error_handler( devNum, 0 );
+			}
 			break;	
 	}
 }
@@ -644,5 +516,6 @@ int handle_ymodem_command( char* rpacket, int len )
 	result = parse_ymodem_command( rpacket, len );
 	process_ymodem_result( result );
 }
+
 
 

@@ -8,16 +8,17 @@
 #include "usart.h"
 #include "amrfile.h"
 #include "ff.h"
+#include "sys.h"
+#include "romhandler.h"	
 //#include "ymodem.h"
 
 extern TaskHandle_t pxUpStreamTask;
 
-xSemaphoreHandle xWaitAckSemaphore = NULL ;
 Ringfifo 	   uart6fifo;
 Ringfifo 	   upStreamFifo;
 WaitAckInfo    waitAckInfo;
-QueueHandle_t  mUartSendMutex;
-QueueHandle_t  mPutBuffMutex;
+xSemaphoreHandle xWaitAckSemaphore = NULL ;
+xSemaphoreHandle mUartSendMutex = NULL;
 
 #if( VERSION == 2 )
 static const unsigned short crctable[256] =
@@ -89,7 +90,7 @@ CRC_Type CheckSum( unsigned char *buf, int packLen )
 * author: 	yangjianzhou
 * function: 	fill ackBuff by using msg_id and crc.
 */
-static void fill_ack_buffer( char *ackBuff, unsigned short msg_id, CRC_Type crc )
+static void fill_ack_buffer( char *ackBuff, MSGID_Type msg_id, CRC_Type crc )
 {
 	*( ackBuff ) = 0xaa;
 	*( ackBuff + 1 ) = 0xbb;
@@ -118,19 +119,19 @@ static void format_protocol_data(  ProtocolData * rData, char *buff, int len )
 */
 static void send_data_lock( const char* data, int len )
 {
-	int i;
-	
+	int i = 0;
+
 	xSemaphoreTake( mUartSendMutex, portMAX_DELAY );
-	for( i = 0 ; i < len; i++ ) 
+	for( i = 0 ; i < len ; i++ ) 
 	{
-#if( BOARD_NUM != 3 )	
+#if( BOARD_NUM == 3 )	
+		USART_ClearFlag( USART6, USART_FLAG_TC ); 
+		USART_SendData( USART6, data[i] );
+		while(USART_GetFlagStatus( USART6, USART_FLAG_TC ) != SET );
+#else
 		USART_ClearFlag( USART3, USART_FLAG_TC ); 
 		USART_SendData( USART3, data[i] );
 		while(USART_GetFlagStatus( USART3, USART_FLAG_TC) != SET );
-#else
-		USART_ClearFlag( USART6, USART_FLAG_TC ); 
-		USART_SendData( USART6, data[i] );
-		while(USART_GetFlagStatus( USART6, USART_FLAG_TC) != SET );
 #endif
 	}	
 	xSemaphoreGive( mUartSendMutex );
@@ -138,181 +139,173 @@ static void send_data_lock( const char* data, int len )
 
 static void send_command_ack( const char* data, int len )
 {
-	send_data_lock( data, len );
+	//printf("%s:1\r\n", __func__);
+	send_data_lock( data, len );	
 	//put_buffer_to_stream( data, len )
-	printf("%s:\r\n", __func__);
 }
-
-/*			
-			tag = 0;
-			for( ; i < data_len; i++ ) 
-			{
-				ret = rfifo_get( mfifo, &data, 1 );
-				if( ret == 1 )
-				{
-					*( buff + N_LEN + N_MSGID + N_TYPE + i ) = data;
-				} 
-				else					
-				{
-					tag = 1;
-					break;
-				}
-			}
-			if( tag ) 
-			{
-				break;
-			}
-*/			
+	
 
 /*****************************************
 1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
 2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 *****************************************/
+
+/*
+*( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) = crc;
+for( i = 0; i < ( N_LEN + N_MSGID + N_TYPE + N_CRC + data_len ); i++ ) 
+{
+	printf("0X%02X ", *( buff + i ) );
+}				
+printf("\r\n");
+*/
+
 static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 {
-	//int 			 i;
 	char 			 data;
 	MSGID_Type    	 msgid;
 	CRC_Type		 crc;
 	CRC_Type   		 calcrc;
 	static TYPE_Type type;
 	static LEN_Type  datalen;	
-	static int 		 state = UHEAD1;
+	static int		 state = UHEAD1;	
 	struct rfifo*    mfifo = ( struct rfifo * ) fifo;
-	
-LOOP:	
-	switch( state ) 
+
+	while( 1 )
 	{
-		case UHEAD1:			
-			if( rfifo_len( mfifo ) < 1 )
-			{
-				break;
-			}			
-			rfifo_get( mfifo, &data, 1 );
-			if( data == 0xaa ) 
-			{
-				state++;
-			} 
-			else
-			{
-				goto LOOP;
-			} 
-			
-		case UHEAD2:
-			if( rfifo_len( mfifo ) < 1 )
-			{
-				break;
-			}				
-			rfifo_get( mfifo, &data, 1 );
-			if( data == 0xbb ) 
-			{	
-				state++;
-			} 
-			else 
-			{
-				state = UHEAD1;
-				goto LOOP;
-			}
-			
-		case ULEN:
-			if( rfifo_len( mfifo ) < N_LEN )
-			{
-				break;
-			}
-			rfifo_get( mfifo, &datalen, N_LEN );
-			if( datalen > ( 512 - N_PROTOCOL_TOTAL ) )
-			{
-				printf("%s: len go to MAX\r\n", __func__);
-				state = UHEAD1;
-				goto LOOP;
-			}
-			else
-			{
-				*( LEN_Type* ) buff = datalen;	
-				state++;	
-			}
-			
-		case UMSGID:
-			if( rfifo_len( mfifo ) < N_MSGID )
-			{
-				break;
-			}			
-			rfifo_get( mfifo, &msgid, N_MSGID );
-			*( MSGID_Type* )( buff + N_LEN ) = msgid;
-			state++;
-			
-		case UTYPE:
-			if( rfifo_len( mfifo ) < N_TYPE )
-			{
-				break;
-			}			
-			rfifo_get( mfifo, &type, N_TYPE );
-			if( type != TYPE_ACK && type != TYPE_CMD )
-			{
-				state = UHEAD1;
-				goto LOOP;
-			}
-			else
-			{
-				state++;
-				*( TYPE_Type* )( buff + N_LEN + N_MSGID ) = type;
-			}
-			
-		case UDATA:
-			if( rfifo_len( mfifo ) < datalen )
-			{
-				break;
-			}		
-			rfifo_get( mfifo,  buff + N_LEN + N_MSGID + N_TYPE, datalen );
-			state++;
-			
-		case UCRC:
-			if( rfifo_len( mfifo ) < N_CRC )
-			{
-				break;
-			}		
-			state = UHEAD1;
-			rfifo_get( mfifo, &crc, N_CRC );
-			calcrc = CheckSum( (unsigned char *) buff, N_LEN + N_MSGID + N_TYPE + datalen );
-			if( calcrc == crc )
-			{
-				if( type == TYPE_ACK )
+		switch( state ) 
+		{
+			case UHEAD1:			
+				if( rfifo_len( mfifo ) < 1 )
 				{
-					*bufflen = N_LEN + N_MSGID + N_TYPE + N_CRC;
-					return UART_ACK;	
-				}
-				else if( type == TYPE_CMD )
+					break;
+				}			
+				rfifo_get( mfifo, &data, 1 );
+				if( data == 0xaa ) 
 				{
-					*( ( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) ) = crc;
-					*bufflen = N_LEN + N_MSGID + N_TYPE + N_CRC + datalen;
-					return UART_CMD;
-				}
+					state++;
+				} 
+				else
+				{
+					printf("1*\r\n");
+					continue;
+				} 
+				
+			case UHEAD2:
+				if( rfifo_len( mfifo ) < 1 )
+				{
+					break;
+				}				
+				rfifo_get( mfifo, &data, 1 );
+				if( data == 0xbb ) 
+				{	
+					state++;
+				} 
 				else 
 				{
-					goto LOOP;
-				}					
-			}
-			else 
-			{	
-				printf("%s: CheckSum Error! type(%d), cal crc(%04x), recv crc(%04x)\r\n", 
-					__func__, type, calcrc, crc );	
-				*( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) = crc;
-				/*
-				for( i = 0; i < ( N_LEN + N_MSGID + N_TYPE + N_CRC + data_len ); i++ ) 
+					state = UHEAD1;
+					printf("2*\r\n");
+					continue;
+				}
+				
+			case ULEN:
+				if( rfifo_len( mfifo ) < N_LEN )
 				{
-					printf("0X%02X ", *( buff + i ) );
-				}				
-				printf("\r\n");
-				*/
-				goto LOOP;
-			}
+					break;
+				}
+				rfifo_get( mfifo, &datalen, N_LEN );
+				if( datalen >= ( 512 - N_COMMAND_TOTAL ) )
+				{
+					printf("%s: len go to MAX\r\n", __func__);
+					state = UHEAD1;
+					printf("3*\r\n");
+					continue;
+				}
+				else
+				{
+					*( LEN_Type* ) buff = datalen;	
+					state++;	
+				}
+				
+			case UMSGID:
+				if( rfifo_len( mfifo ) < N_MSGID )
+				{
+					break;
+				}			
+				rfifo_get( mfifo, &msgid, N_MSGID );
+				*( MSGID_Type* )( buff + N_LEN ) = msgid;
+				state++;
+				
+			case UTYPE:
+				if( rfifo_len( mfifo ) < N_TYPE )
+				{
+					break;
+				}			
+				rfifo_get( mfifo, &type, N_TYPE );
+				if( type != TYPE_ACK && type != TYPE_CMD )
+				{
+					state = UHEAD1;
+					printf("4*\r\n");
+					continue;
+				}
+				else
+				{
+					state++;
+					*( TYPE_Type* )( buff + N_LEN + N_MSGID ) = type;
+				}
+				
+			case UDATA:
+				if( rfifo_len( mfifo ) < datalen )
+				{
+					break;
+				}		
+				rfifo_get( mfifo,  buff + N_LEN + N_MSGID + N_TYPE, datalen );
+				state++;
+				
+			case UCRC:
+				if( rfifo_len( mfifo ) < N_CRC )
+				{
+					break;
+				}		
+				state = UHEAD1;
+				rfifo_get( mfifo, &crc, N_CRC );
+				calcrc = CheckSum( (unsigned char *) buff, N_LEN + N_MSGID + N_TYPE + datalen );
+				if( calcrc == crc )
+				{
+					if( type == TYPE_ACK )
+					{
+						*bufflen = N_LEN + N_MSGID + N_TYPE + N_CRC;
+						return UART_ACK;	
+					}
+					else if( type == TYPE_CMD )
+					{
+						*( ( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) ) = crc;
+						*bufflen = N_LEN + N_MSGID + N_TYPE + N_CRC + datalen;
+						return UART_CMD;
+					}
+					else 
+					{
+						printf("5*\r\n");
+						continue;
+					}					
+				}
+				else 
+				{	
+					printf("%s: CheckSum Error! type(0x%02x), cal crc(0x%04x),"
+						" recv crc(0x%04x)\r\n", __func__, type, calcrc, crc );	
+					printf("6*\r\n");
 
-			
-		default:
-			state = UHEAD1;			
-			goto LOOP;
+					continue;
+				}
+
+			default:
+				state = UHEAD1;	
+				printf("7*\r\n");
+				continue;
+		}
+		
+		break;
 	}
-
+	
 	return UART_WAIT;
 }
 
@@ -336,7 +329,7 @@ static void handle_ack_command( ProtocolAck *rAck )
 				&& waitAckInfo.recvRespond == 0 )
 		{
 			waitAckInfo.recvRespond = 1;
-			xSemaphoreGiveFromISR( xWaitAckSemaphore, NULL );
+			xSemaphoreGive( xWaitAckSemaphore );
 		}
 		else
 		{
@@ -345,49 +338,61 @@ static void handle_ack_command( ProtocolAck *rAck )
 	}
 }
 
-static int handle_remote_command( ProtocolData *rData )
-{
-	int 	i;
-	int 	ret = HANDLE_NULL;
-	
-	printf("msgid(0x%04x)\r\n", rData->head->msgid);
-	printf("len(%d)\r\n",  rData->head->len);
-	printf("%s: crc (0x%04x), and data:\r\n", __func__, rData->crc);
+	//printf("%s: crc (0x%04x), and data:\r\n", __func__, rData->crc);
 /*	for( i = 0; i < rData->head->len; i++)
 	{
 		printf("0X%02X ", *( rData->data+ i ) );
 	}				
 	printf("\r\n"); 
 */
+static int handle_remote_command( ProtocolData *rData )
+{
+	int 	i;
+	int 	ret = HANDLE_NULL;
+	
+	printf("msgid(0x%04x),len(%d)\r\n", rData->head->msgid, rData->head->len);
+
 	switch( rData->head->msgid )
 	{
 		case MSG_ANDOIRD_CAN:
+			printf("%s: MSG_ANDOIRD_CAN.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_SET_RTC:
+			printf("%s: MSG_ANDOIRD_SET_RTC.\r\n", __func__);
 			break;
 		case MSG_ANDOIRD_GET_RTC:
+			printf("%s: MSG_ANDOIRD_GET_RTC.\r\n", __func__);
 			break;
 		case MSG_ANDOIRD_SET_ALRAM:
+			printf("%s: MSG_ANDOIRD_SET_ALRAM.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_PWR_REQUEST:
+			printf("%s: MSG_ANDOIRD_PWR_REQUEST.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_DEBUG_REQUEST:
+			printf("%s: MSG_ANDOIRD_DEBUG_REQUEST.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_CHARGE:
+			printf("%s: MSG_ANDOIRD_CHARGE.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_PM_STATUS:
+			printf("%s: MSG_ANDOIRD_PM_STATUS.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_AWAKE:
+			printf("%s: MSG_ANDOIRD_AWAKE.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_VEHICLE_ID:
+			printf("%s: MSG_ANDOIRD_VEHICLE_ID.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_OTA:
-			//handle_ymodem_command( rData->data, rData->head->len );
+			printf("%s: MSG_ANDOIRD_OTA.\r\n", __func__);
+			handle_ymodem_command( rData->data, rData->head->len );
 			break;	
 		case MSG_ANDOIRD_GET_MCU_VER:
+			printf("%s: MSG_ANDOIRD_GET_MCU_VER.\r\n", __func__);
 			break;					
 		default:
-			printf("%s: error command id.\r\n", __func__);
+			printf("%s: Error msg id.\r\n", __func__);
 			break;
 	}
 	
@@ -396,42 +401,37 @@ static int handle_remote_command( ProtocolData *rData )
 
 void HandleDownStreamTask( void * pvParameters )
 {
-	char 	buff[ 512 ];
-	char 	ackBuff[ 2 + N_LEN + N_MSGID + N_TYPE + 2*N_CRC ];
+	char 	cmdbuff[ 512 ];
+	char 	ackbuff[ N_ACK_TOTAL ];
 	int 	result = 0;
 	int		bufflen;
-	//int 	i;
-	//int 	ret;
 	ProtocolData rData;
 	ProtocolAck  *rAck;
-	//TickType_t waitTime = portMAX_DELAY;
-	mUartSendMutex = xSemaphoreCreateMutex();
-	rfifo_init( &uart6fifo );	
-	vSetTaskLogLevel(NULL, eLogLevel_3);
+	mUartSendMutex = xSemaphoreCreateMutex();		
+	vSetTaskLogLevel(NULL, eLogLevel_0);
 	printf("%s: start...\r\n", __func__);
-	
+	register_rom_handlers();
 	while( 1 )
 	{
 		/*use ulTaskNotifyTake count function by pass pdFALSE*/
 		ulTaskNotifyTake( pdFALSE, portMAX_DELAY );
-		/*1000 / portTICK_RATE_MS*/
 
 		while( rfifo_len( &uart6fifo ) > 0 ) 
 		{
-			result = catch_data_frame( &uart6fifo, buff, &bufflen );
+			result = catch_data_frame( &uart6fifo, cmdbuff, &bufflen );
 			if( result == UART_CMD ) 
 			{
-				format_protocol_data( &rData , buff, bufflen );
-				fill_ack_buffer( ackBuff, rData.head->msgid, rData.crc );
-				send_command_ack( ackBuff,  2 + N_LEN + N_MSGID + N_TYPE + 2 * N_CRC );
+				format_protocol_data( &rData , cmdbuff, bufflen );
+				fill_ack_buffer( ackbuff, rData.head->msgid, rData.crc );
+				send_command_ack( ackbuff,  N_ACK_TOTAL );
 				handle_remote_command( &rData );
 			} 
 			else if( result == UART_ACK ) 
 			{
-				rAck = ( ProtocolAck * ) buff;
+				rAck = ( ProtocolAck * ) cmdbuff;
 				handle_ack_command( rAck );
 			}
-			else if( result == UART_WAIT )
+			else
 			{
 				break;
 			}
@@ -441,25 +441,34 @@ void HandleDownStreamTask( void * pvParameters )
 
 int put_buffer_to_stream( char *buff, short len )
 {
+	static QueueHandle_t  mPutBuffMutex = NULL;
+	Ringfifo* streamfifo = &upStreamFifo;
+
+	if( !mPutBuffMutex )
+	{
+		mPutBuffMutex = xSemaphoreCreateMutex();
+	}
+	
 	/*check upStreamFifo the max size*/
-	if( len > upStreamFifo.size )
+	if( len > streamfifo->size )
 	{
 		printf("%s: len(%d) error!!\r\n", __func__, len );
 		return -1;
 	}
 
-	xSemaphoreTake( mUartSendMutex, portMAX_DELAY );
-	while( upStreamFifo.size - rfifo_len( &upStreamFifo ) < 
+	xSemaphoreTake( mPutBuffMutex, portMAX_DELAY );
+	while( streamfifo->size - rfifo_len( streamfifo ) < 
 		len + sizeof( short ) )
 	{
 		vTaskDelay( 1 / portTICK_RATE_MS );
 	}
-	rfifo_put( &upStreamFifo, &len, sizeof( short ) );
-	rfifo_put( &upStreamFifo, buff, ( unsigned int )len );
-	xSemaphoreGive( mUartSendMutex );
+	rfifo_put( streamfifo, &len, sizeof( short ) );
+	rfifo_put( streamfifo, buff, ( unsigned int )len );
+	xSemaphoreGive( mPutBuffMutex );
 
 	/*notify the up stream task*/
 	xTaskNotifyGive( pxUpStreamTask );
+	
 	return 0;
 }
 
@@ -473,8 +482,7 @@ void HandleUpstreamTask( void * pvParameters )
 	vSetTaskLogLevel( NULL, eLogLevel_3 );	
 	vSemaphoreCreateBinary( xWaitAckSemaphore ); 	
 	xSemaphoreTake( xWaitAckSemaphore, 0 );
-	mPutBuffMutex = xSemaphoreCreateMutex();
-	
+
 	waitAckInfo.recvRespond = 1;
 	waitAckInfo.crc = 255;
 	

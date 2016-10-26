@@ -205,12 +205,26 @@ unsigned int FLASH_If_Erase_Sector( unsigned int StartSector )
 
 #define ADDR_FLASH_SECTOR_5     ((u32)0x08020000) 	//扇区5起始地址, 128 Kbytes  
 
+
+
+
+
+
+
+只要代码不超过256KB,也就是编译后的bin文件不超过256KB, 应该就不会擦写 sector6 and sector7,
+因为这sector6 sector7 用来存储cc936.c的数组数据。
+
 #define ADDR_FLASH_SECTOR_6     ((u32)0x08040000) 	//扇区6起始地址, 128 Kbytes   
 ------->存放mcu的rom包， android有更新rom请求时，把
 rom copy到 sector9, 更新完成后，修改rom更新标志， 然后调用软reset->SCU_RESET_Force();
 
 #define ADDR_FLASH_SECTOR_7     ((u32)0x08060000) 	//扇区7起始地址, 128 Kbytes  
 									STM32F407VET6 END ADDR_FLASH_SECTOR_7!!!!
+
+
+
+
+
 
 #define ADDR_FLASH_SECTOR_8     ((u32)0x08080000) 	//扇区8起始地址, 128 Kbytes  
 #define ADDR_FLASH_SECTOR_9     ((u32)0x080A0000) 	//扇区9起始地址, 128 Kbytes   

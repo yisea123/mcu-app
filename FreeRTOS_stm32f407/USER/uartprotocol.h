@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define	VERSION			1
+#define	VERSION			2
 // 	1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
 //   2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 
@@ -69,7 +69,8 @@ typedef  unsigned short CRC_Type;
 #define N_TYPE		( sizeof( TYPE_Type ) )
 #define N_CRC		( sizeof( CRC_Type ) )
 
-#define N_PROTOCOL_TOTAL		( 2 + N_LEN + N_MSGID + N_TYPE + N_CRC )
+#define N_COMMAND_TOTAL			( 2 + N_LEN + N_MSGID + N_TYPE + N_CRC )
+#define N_ACK_TOTAL 			( 2 + N_LEN + N_MSGID + N_TYPE + 2 * N_CRC )
 
 typedef __packed struct 
 {

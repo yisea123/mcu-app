@@ -3,6 +3,7 @@
 #include "delay.h"	   
 #include "usart.h"	
 
+
 #if(BOARD_NUM == 1)	
 unsigned int FLASH_SIZE = 2 * 1024 * 1024;
 #elif(BOARD_NUM == 2)
