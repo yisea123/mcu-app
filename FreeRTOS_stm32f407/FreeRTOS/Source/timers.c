@@ -109,6 +109,7 @@ typedef struct tmrTimerControl
 	TickType_t				xTimerPeriodInTicks;/*<< How quickly and often the timer expires. */
 	UBaseType_t				uxAutoReload;		/*<< Set to pdTRUE if the timer should be automatically restarted once expired.  Set to pdFALSE if the timer is, in effect, a one-shot timer. */
 	void 					*pvTimerID;			/*<< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
+	void 					*pvPivate;			/* add by yangjianzhou.*/
 	TimerCallbackFunction_t	pxCallbackFunction;	/*<< The function that will be called when the timer expires. */
 	#if( configUSE_TRACE_FACILITY == 1 )
 		UBaseType_t			uxTimerNumber;		/*<< An ID assigned by trace tools such as FreeRTOS+Trace */
@@ -1119,6 +1120,37 @@ Timer_t * const pxTimer = ( Timer_t * ) xTimer;
 	}
 	taskEXIT_CRITICAL();
 }
+
+void *pvTimerGetPrivate( const TimerHandle_t xTimer )
+{
+Timer_t * const pxTimer = ( Timer_t * ) xTimer;
+void *pvReturn;
+
+	configASSERT( xTimer );
+
+	taskENTER_CRITICAL();
+	{
+		pvReturn = pxTimer->pvPivate;
+	}
+	taskEXIT_CRITICAL();
+
+	return pvReturn;
+}
+/*-----------------------------------------------------------*/
+
+void vTimerSetPrivate( TimerHandle_t xTimer, void *pvNewPrivate )
+{
+Timer_t * const pxTimer = ( Timer_t * ) xTimer;
+
+	configASSERT( xTimer );
+
+	taskENTER_CRITICAL();
+	{
+		pxTimer->pvPivate = pvNewPrivate;
+	}
+	taskEXIT_CRITICAL();
+}
+
 /*-----------------------------------------------------------*/
 
 #if( INCLUDE_xTimerPendFunctionCall == 1 )

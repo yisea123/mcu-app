@@ -11,74 +11,95 @@
 //#include "stm32f4xx_flash.h"
 
 /**********************************************************************
-		0xaa 0xbb len mCmd d0 d1 d2 d3... check01 check02
-本协议由Ymodem修改而来，适配我们android与MCU通讯时的协议，
-所以命名为Tmodem, 可先了解Ymodem再看此协议。
 
-经过测试，此Tmodem协议传输文件的稳定性很高，目前还没有发现哪种情况会导致                 
-文件丢失而误以为传输成功，要么传输成功，要么传输失败。                                   
+#define SOH                     (0x01) 
+#define STX                     (0x02)
+#define EOT                     (0x04)  
+#define ACK                     (0x06) 
+#define UPDATE                  (0x08) 
+#define UPDATE_DONE             (0x09) 
+#define NAK                     (0x15)  
+#define CA                      (0x18)  
 
+#define LAST_ACK				(0x16)
+#define EOT_ACK					(0x17)
+
+#define ERR_PACKET_INDEX        (0x20)
+#define ERR_SIZE_EXT            (0x21)
+#define ERR_FLASH_RW            (0x22)
+#define ERR_TRANSMISS_START     (0x23)
+#define ERR_UPDATE_REQUEST      (0x24)
+#define CRC16                   (0x43) 
+
+
+串口协议:   aa bb len(1) msgid(2) type(1) d0~dn crc(2)
+
+本协议由Ymodem修改而来，适配我们android与MCU通讯时的协议，                     
 PS: mPacketSize
 PR: pReceived & 0xff
+ack: 为串口通讯协议层的ack
+UPDATE,PS:表示mcu发送的数据有两个AA BB 0X02 07 80 01 UPDATE PS CRC1 CRC2
+C :表示mcu发送的数据有一个AA BB 0X01 07 80 01 C CRC1 CRC2,   C就是CRC16(0X43)
+
 
 1、	android 下发更新rom请求： 更新由android系统触发                                      
-	  AA BB 3  0x05 UPDATE  devNum CRC1 CRC2	
+AA BB 2  0x0B 0x00 0x01 UPDATE  devNum CRC1 CRC2	
 	  
 	  				ack                                    
-					UPDATE PS
-					ACK PR  pReceived=0 packetNum = 1 
+					UPDATE,PS
+					ACK,PR  							pReceived=0 packetNum = 1 
 					2、 mcu上报C命令                       
 					C     
 					
 3、 anroid 下发rom的文件名，以及文件大小                              
-		AA BB 131  0x05 00 FF foo.c 102400 CRC1 CRC2
+AA BB 130  0x0B 0x00 0x01 00 FF [foo.c/size/aeskey....] = 128 CRC1 CRC2
 		
 					ack                 
-					ACK PR  pReceived=1  packetNum = 2
+					ACK,PR  							pReceived=1  packetNum = 2
 					4、 mcu上报C命令                       
 					C             
 					
 5、 android 连续下发rom文件数据，最后一包不足128bytes时填充0          
-		AA BB 131  0x05 01 FE Data[128] CRC1 CRC2     
+AA BB 130  0x0B 0x00 0x01 01 FE Data[128] CRC1 CRC2     
 		
 					ack
-					ACK PR   pReceived=2  packetNum = 3
+					ACK,PR   						pReceived=2  packetNum = 3
 					
-		AA BB 131  0x05 02 FD Data[128] CRC1 CRC2		
+AA BB 130  0x0B 0x00 0x01 02 FD Data[128] CRC1 CRC2		
 		
 					ack
-					ACK PR   pReceived=3  packetNum = 4
+					ACK,PR   						pReceived=3  packetNum = 4
 					
 		.....                                                                                
 					ack
-                                  ACK PR   pReceived=4  packetNum = 5
+                                  ACK,PR  							 pReceived=4  packetNum = 5
 		.....                                                                                
 					ack
-					ACK PR   pReceived=5  packetNum = 6
+					ACK,PR   						pReceived=5  packetNum = 6
 																									                                       
 6、 android 连续 下发两条end of transmission（EOT）包									                   
-		AA BB 2  0x05 EOT CRC1 CRC2     
+AA BB 1  0x0B 0x00 0x01 EOT CRC1 CRC2     
 		
 					ack                                    
-					EOT_ACK    packetNum = 7               
+					EOT_ACK    						packetNum = 7               
 					7、 MCU收到第一条EOT包回复NAK命令包		 
-					NAK                          packetTotal = 4           
+					NAK                         				 packetTotal = 4           
 					
 8、 android下发第二条EOT包																						                   
-		AA BB 2  0x05 EOT CRC1 CRC2    
+AA BB 1  0x0B 0x00 0x01  EOT CRC1 CRC2    
 		
 					ack                                    
-					EOT_ACK    packetNum = 8               
+					EOT_ACK    						packetNum = 8               
 					9、 MCU回复C命令包										 
 					C                                      
 					
 10、android下发rom更新结束包，MCU收到 后更新成功！										                   
-		AA BB 131  cmd 00 FF NULL[128] CRC1 CRC2            
+AA BB 130  0x0B 0x00 0x01 00 FF NULL[128] CRC1 CRC2            
 		
 					ack		
-					LAST_ACK    packetNum = 9              
+					LAST_ACK    						packetNum = 9              
 					UPDATE_DONE                            
-					
+
 ***********************************************************************/
 
 static YmodemHandler *handler = NULL;
@@ -168,40 +189,26 @@ static int cac_eot_num(char *num_eot)
 //AA BB 2	   msgid(0x8007)  type EOT EOT CRC1 CRC2   
 void report_ymodem_packet_two( char C, char C0 )
 {
-	char cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 2 + N_CRC ];
-	cmd[0] = 0xaa;
-	cmd[1] = 0xbb;
+	int len;
+	char data[2];
+	char command[ 2 + N_LEN + N_MSGID + N_TYPE + 2 + N_CRC ];
 	
-	*( LEN_Type* )  &cmd[ 2 ] = 2;
-	*( MSGID_Type* )&cmd[ 2 + N_LEN ] = 0x8007;
-	*( TYPE_Type* ) &cmd[ 2 + N_LEN + N_MSGID ] = TYPE_CMD;
-
-	cmd[ 2 + N_LEN + N_MSGID + N_TYPE ] = C;
-	cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 1 ] = C0;
-
-	*( CRC_Type* )   &cmd[ 2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] ] = 
-		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] );
-
-	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] + N_CRC );
+	data[0] = C;
+	data[1] = C0;	
+	len = compose_protocol_command( 2, 0x8007, data, command );
+	add_command_to_stream( command, len, WAIT_BLOCK );
 }
 
 //AA BB 1	   msgid(0x8007)  type EOT  CRC1 CRC2   
 void report_ymodem_packet_one( char C )
 {
-	char cmd[ 2 + N_LEN + N_MSGID + N_TYPE + 1 + N_CRC ];
-	cmd[0] = 0xaa;
-	cmd[1] = 0xbb;
+	int  len;
+	char data[1];	
+	char command[ 2 + N_LEN + N_MSGID + N_TYPE + 1 + N_CRC ];	
 	
-	*( LEN_Type* )&cmd[ 2 ] = 1;
-	*( MSGID_Type* )&cmd[ 2 + N_LEN ] = 0x8007;
-	*( TYPE_Type* )&cmd[ 2 + N_LEN + N_MSGID ] = TYPE_CMD;
-
-	cmd[ 2 + N_LEN + N_MSGID + N_TYPE ] = C;
-
-	*( CRC_Type* )&cmd[ 2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] ] = 
-		CheckSum( &cmd[2], N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] );
-	
-	put_buffer_to_stream( cmd,  2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&cmd[ 2 ] + N_CRC );
+	data[0] = C;
+	len = compose_protocol_command( 1, 0x8007, data, command );
+	add_command_to_stream( command, len, WAIT_BLOCK );
 }
 
 //AA BB 131    0x05 01 FE Data[128] CRC1 CRC2 
@@ -279,7 +286,7 @@ static int parse_packet ( const char *rpacket, int len, int *plen )
 int parse_ymodem_command(const char* rpacket, int len)
 {
 	static unsigned int mRecvBytes=0;
-	int i, sessionDone = 0, plen, ret;
+	int sessionDone = 0, plen, ret;
 
 	switch ( parse_packet( rpacket, len, &plen ) )	
 	{
@@ -515,6 +522,7 @@ int handle_ymodem_command( char* rpacket, int len )
 	
 	result = parse_ymodem_command( rpacket, len );
 	process_ymodem_result( result );
+	return 0;
 }
 
 

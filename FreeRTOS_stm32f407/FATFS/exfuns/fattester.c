@@ -185,7 +185,7 @@ u8 mf_stat_( u8* path , FILINFO *fno )
 	ret  = f_stat ((const TCHAR*)path, fno);
 	vTaskPrioritySet( NULL, pre );
 	
-	printf("\r\n");
+	//printf("\r\n");
 	if( ret == FR_OK )
 	{
 		//printf("File Name is:%s\r\n",fno->fname);

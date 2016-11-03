@@ -8,7 +8,7 @@
 	d0:index = 02...ff, d1~dn: music data
 	d0:index = 00->end of file, d1~dn: music data.
 */
-static  unsigned int k = 0;
+//static  unsigned int k = 0;
 static  FIL	 mfile;
 static	int  fileSize;
 static	char fileMd5[ 16 ];

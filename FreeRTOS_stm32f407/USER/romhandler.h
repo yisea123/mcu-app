@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define AMR_NUM									(1)
 #define MCU_NUM									(5)
 #define SCU_NUM									(6)
 #define BOOTLOADER_NUM							(109)
@@ -41,6 +42,7 @@
 	index is the packet number in order,  first packet index is zero
 	int type as return, 0 is handle pack scuess, none-zero is error happended!
 */
+
 extern int rom_packet_handler(	int devNum, unsigned int index, const char *packet, int plen  );
 extern int rom_error_handler( int devNum, int error );
 extern int rom_finish_handler( int devNum );
@@ -48,6 +50,7 @@ extern int rom_finish_handler( int devNum );
 extern int amr_packet_handler(	int devNum, unsigned int index, const char *packet, int plen  );
 extern int amr_error_handler( int devNum, int error );
 extern int amr_finish_handler( int devNum );
+
 
 extern void register_rom_handlers( void );
 

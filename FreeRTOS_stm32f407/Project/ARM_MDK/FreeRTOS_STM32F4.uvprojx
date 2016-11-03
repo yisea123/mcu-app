@@ -512,6 +512,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_sdio.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4xx_can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\Libraries\FWLIB\src\stm32f4xx_can.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -591,6 +596,16 @@
               <FileName>handlers.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\USER\handlers.c</FilePath>
+            </File>
+            <File>
+              <FileName>cmdhandler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\cmdhandler.c</FilePath>
+            </File>
+            <File>
+              <FileName>transport.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\transport.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -736,6 +751,11 @@
               <FileName>gpio.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\BSP\gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\can.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -448,6 +448,17 @@ void *pvTimerGetTimerID( const TimerHandle_t xTimer ) PRIVILEGED_FUNCTION;
  */
 void vTimerSetTimerID( TimerHandle_t xTimer, void *pvNewID ) PRIVILEGED_FUNCTION;
 
+/** 
+ * void vTimerSetPrivate( TimerHandle_t xTimer, void *pvNewID );
+ * void *pvTimerGetPrivate( const TimerHandle_t xTimer );
+ * add by yangjianzhou.
+ */
+
+void *pvTimerGetPrivate( const TimerHandle_t xTimer ) PRIVILEGED_FUNCTION; 
+
+void vTimerSetPrivate( TimerHandle_t xTimer, void *pvNewPrivate ) PRIVILEGED_FUNCTION;
+
+
 /**
  * BaseType_t xTimerIsTimerActive( TimerHandle_t xTimer );
  *

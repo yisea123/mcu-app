@@ -32,7 +32,12 @@ static u16 FLASH_SECTOR_COUNT = 2048 * 2;
 #endif
 static char xcInit = 0;
 static u16	RAM_DISK_SECTOR_COUNT = 60;
-static char pcRamdisk[ 10 * 1024 ];
+
+#if( BOARD_NUM == 3 )
+static char pcRamdisk[ 40 * 1024 ];
+#else
+static char pcRamdisk[ 12 * 1024 ];
+#endif
 
 void vPrintSdDisk( unsigned int sector )
 {
@@ -190,6 +195,7 @@ DSTATUS disk_initialize (
 		case DEV_RAM:
 			if( xcInit == 0 )
 			{
+				/*
 				char q[5], *p;
 				p = q;
 				memcpy(p, "12345", 5);
@@ -216,7 +222,8 @@ DSTATUS disk_initialize (
 				printf("4 TEST: %02x %02x %02x %02x %02x\r\n", p[0], p[1], p[2]
 					, p[3], p[4]);		
 				printf("5 TEST: %p, %p, %p, %p, %p\r\n", &p[0], &p[1], &p[2]
-					, &p[3], &p[4]);					
+					, &p[3], &p[4]);		
+				*/
 				xcInit = 1;
 				memset( pcRamdisk, 0, sizeof( pcRamdisk ) );
 				printf("%s: clean ram disk!!!!\r\n", __func__);

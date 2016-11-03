@@ -10,17 +10,30 @@
 #include "ff.h"
 #include "sys.h"
 #include "romhandler.h"	
-//#include "ymodem.h"
+#include "cmdhandler.h"
+#include "ymodem.h"
+#include "transport.h"
+#include "dma.h"
+#include "can.h"
 
-extern TaskHandle_t pxUpStreamTask;
+#define 	MSG_STATUS_WAITING				0
+#define 	MSG_STATUS_ACK					1
 
-Ringfifo 	   uart6fifo;
-Ringfifo 	   upStreamFifo;
-WaitAckInfo    waitAckInfo;
-xSemaphoreHandle xWaitAckSemaphore = NULL ;
-xSemaphoreHandle mUartSendMutex = NULL;
+extern TaskHandle_t 	pxCanTask;
+extern TaskHandle_t     pxUpStreamTask;
+Ringfifo 	   	 		uart6fifo;
+Ringfifo 	    		upStreamFifo;
+Ringfifo 					canfifo;
+static WaitAckInfo      waitAckInfo;
+static xSemaphoreHandle xWaitAckSemaphore = NULL ;
+static xSemaphoreHandle mUartSendMutex = NULL;
+xSemaphoreHandle 		xDownStreamSemaphore = NULL ;
+static QueueHandle_t  	mStreamMutex = NULL;
+xSemaphoreHandle 		xSenderSemaphore = NULL ;
+static char 			mSendBuffer[300];
 
 #if( VERSION == 2 )
+
 static const unsigned short crctable[256] =
 {
 	0x0000 , 0x1021 , 0x2042 , 0x3063 , 0x4084 , 0x50a5 , 0x60c6 , 0x70e7 , 0x8108 , 0x9129 ,
@@ -50,11 +63,47 @@ static const unsigned short crctable[256] =
 	0xef1f , 0xff3e , 0xcf5d , 0xdf7c , 0xaf9b , 0xbfba , 0x8fd9 , 0x9ff8 , 0x6e17 , 0x7e36 , 
 	0x4e55 , 0x5e74 , 0x2e93 , 0x3eb2 , 0x0ed1 , 0x1ef0  
 };
+
 #endif
+
+static void block_wait_ack( void )
+{
+	xSemaphoreTake( xWaitAckSemaphore, 300 / portTICK_RATE_MS );
+}
+
+static void notify_stream_task( void )
+{
+	xSemaphoreGive( xWaitAckSemaphore );	
+}
+
+static void obtain_uart_mutex( void )
+{
+	xSemaphoreTake( mUartSendMutex, portMAX_DELAY );	
+}
+
+static void release_uart_mutex( void )
+{
+	xSemaphoreGive( mUartSendMutex );	
+}
+
+static void obtain_stream_mutex( void )
+{
+	xSemaphoreTake( mStreamMutex, portMAX_DELAY );	
+}
+
+static void release_stream_mutex( void )
+{
+	xSemaphoreGive( mStreamMutex );	
+}
+
+/*
+* author: 	yangjianzhou
+* function: 	fill ackBuff by using msg_id and crc.
+*/
 
 /*aa bb len(2) msgid(2) type(1) d0~dn = buf, crc(1).     packLen = data len*/
 /*aa bb len(1) msgid(2) type(1) d0~dn = buf, crc(2).     packLen = data len*/
-CRC_Type CheckSum( unsigned char *buf, int packLen )
+CRC_Type calculate_crc( unsigned char *buf, int packLen )
 {
 #if( VERSION == 1 )
     int i;
@@ -88,18 +137,74 @@ CRC_Type CheckSum( unsigned char *buf, int packLen )
 
 /*
 * author: 	yangjianzhou
+* function: 	compose_protocol_command len: data of len, msgid in protocol,
+			data: d0~dn,  command is the result of compose.
+*/
+int compose_protocol_command( LEN_Type len , MSGID_Type msgid,
+					char data[], char command[] )
+{
+	command[0] = 0xAA;
+	command[1] = 0xBB;
+	*( LEN_Type* )  &command[ 2 ] = len;
+	*( MSGID_Type* )&command[ 2 + N_LEN ] = msgid;
+	*( TYPE_Type* ) &command[ 2 + N_LEN + N_MSGID ] = TYPE_CMD;
+	memcpy( &command[ 2 + N_LEN + N_MSGID + N_TYPE ], data, len );
+	*( CRC_Type* )  &command[ 2 + N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&command[ 2 ] ] = 
+		calculate_crc( (unsigned char *)&command[2], N_LEN + N_MSGID + N_TYPE + *( LEN_Type* )&command[ 2 ] );
+	return 2 + N_LEN + N_MSGID + N_TYPE + len + N_CRC;
+}
+
+/*
+* author:	yangjianzhou
+* function: 	add_command_to_stream  report command use this function, will send again if no ack.
+* 			flag(1) add command until stream has memory to store it.
+*			flag(0) add command if stream has memory, else return right now.
+*/
+int add_command_to_stream( char *buff, short len , char flag )
+{
+	Ringfifo* streamfifo = &upStreamFifo;
+
+	if( len > streamfifo->size )
+	{
+		printf("%s: len(%d) error!!\r\n", __func__, len );
+		return -1;
+	}
+	obtain_stream_mutex();
+	while( streamfifo->size - rfifo_len( streamfifo ) < len + sizeof( short ))
+	{
+		if( flag == WAIT_BLOCK )
+		{
+			vTaskDelay( 1 / portTICK_RATE_MS );
+		}
+		else
+		{
+			streamfifo->lostBytes += len;
+			release_stream_mutex();
+			return -1;
+		}
+	}
+	rfifo_put( streamfifo, &len, sizeof( short ) );
+	rfifo_put( streamfifo, buff, ( unsigned int )len );
+	release_stream_mutex();
+
+	xTaskNotifyGive( pxUpStreamTask );
+	return 0;
+}
+
+/*
+* author: 	yangjianzhou
 * function: 	fill ackBuff by using msg_id and crc.
 */
-static void fill_ack_buffer( char *ackBuff, MSGID_Type msg_id, CRC_Type crc )
+static void fill_ack_buffer( char *ackbuff, MSGID_Type msg_id, CRC_Type crc )
 {
-	*( ackBuff ) = 0xaa;
-	*( ackBuff + 1 ) = 0xbb;
-	*( ( LEN_Type* )( ackBuff + 2 ) ) = N_CRC;
-	*( ( MSGID_Type* )( ackBuff + 2 + N_LEN ) ) = msg_id;
-	*( ( TYPE_Type* )( ackBuff + 2 + N_LEN + N_MSGID) ) = TYPE_ACK;
-	*( ( CRC_Type* )( ackBuff + 2 + N_LEN + N_MSGID + N_TYPE ) ) = crc;
-	*( ( CRC_Type* )( ackBuff + 2 + N_LEN + N_MSGID + N_TYPE + N_CRC ) ) =
-			CheckSum( (unsigned char *) ( ackBuff + 2 ), N_LEN + N_MSGID + N_TYPE + N_CRC );
+	*( ackbuff ) = 0xaa;
+	*( ackbuff + 1 ) = 0xbb;
+	*( ( LEN_Type* )( ackbuff + 2 ) ) = N_CRC;
+	*( ( MSGID_Type* )( ackbuff + 2 + N_LEN ) ) = msg_id;
+	*( ( TYPE_Type* )( ackbuff + 2 + N_LEN + N_MSGID) ) = TYPE_ACK;
+	*( ( CRC_Type* )( ackbuff + 2 + N_LEN + N_MSGID + N_TYPE ) ) = crc;
+	*( ( CRC_Type* )( ackbuff + 2 + N_LEN + N_MSGID + N_TYPE + N_CRC ) ) =
+			calculate_crc( (unsigned char *) ( ackbuff + 2 ), N_LEN + N_MSGID + N_TYPE + N_CRC );
 }
 
 /*
@@ -117,11 +222,29 @@ static void format_protocol_data(  ProtocolData * rData, char *buff, int len )
 * author: 	yangjianzhou
 * function: 	send_data_lock use uart by take the Mutex.
 */
-static void send_data_lock( const char* data, int len )
+static void uart_send_lock( const char* data, int len )
 {
-	int i = 0;
+	//int i = 0;
+	obtain_uart_mutex();
 
-	xSemaphoreTake( mUartSendMutex, portMAX_DELAY );
+	if( len > sizeof(mSendBuffer) )
+	{
+		printf("%s: len(%d) error!\r\n", __func__, len);
+		return;
+	}
+	
+	memcpy(mSendBuffer, data, len);
+	
+#if( BOARD_NUM == 3 )		
+	USART_DMACmd( USART6, USART_DMAReq_Tx, ENABLE );  
+	MYDMA_Enable( DMA2_Stream6, len );
+#else
+	USART_DMACmd( USART3, USART_DMAReq_Tx, ENABLE );  
+	MYDMA_Enable( DMA1_Stream3, len );
+#endif
+	xSemaphoreTake( xSenderSemaphore, 300 / portTICK_PERIOD_MS );
+
+/*
 	for( i = 0 ; i < len ; i++ ) 
 	{
 #if( BOARD_NUM == 3 )	
@@ -134,31 +257,111 @@ static void send_data_lock( const char* data, int len )
 		while(USART_GetFlagStatus( USART3, USART_FLAG_TC) != SET );
 #endif
 	}	
-	xSemaphoreGive( mUartSendMutex );
+*/
+	release_uart_mutex();
 }
-
-static void send_command_ack( const char* data, int len )
-{
-	//printf("%s:1\r\n", __func__);
-	send_data_lock( data, len );	
-	//put_buffer_to_stream( data, len )
-}
-	
-
-/*****************************************
-1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
-2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
-*****************************************/
 
 /*
-*( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) = crc;
-for( i = 0; i < ( N_LEN + N_MSGID + N_TYPE + N_CRC + data_len ); i++ ) 
-{
-	printf("0X%02X ", *( buff + i ) );
-}				
-printf("\r\n");
+* author:	yangjianzhou
+* function: 	handle_ack_command handle an ack message, then notify the sender task.
 */
+static void handle_ack_command( ProtocolAck *rAck )
+{
+	//printf("%s \r\n", __func__);
+	if( rAck->len == N_CRC && rAck->type == TYPE_ACK )
+	{
+		WaitAckInfo *wait = &waitAckInfo;
+		
+		if( rAck->msgid == wait->msgid && rAck->crc == wait->crc )
+		{
+			wait->status = MSG_STATUS_ACK;
+			notify_stream_task();
+		}
+		else
+		{
+			printf("%s: error ack!\r\n", __func__);
+			printf("rAck->msgid(0x%x) rAck->crc(0x%x)!\r\n", rAck->msgid, rAck->crc);
+			printf("wait->msgid(0x%x) wait->crc(0x%x)\r\n", wait->msgid, wait->crc );
+		}
+	}
+}
 
+/*
+* author: 	yangjianzhou
+* function: 	process_ack_command send directly in recevie task or use add_ack_to_stream to 
+*			put the ack data in other task.
+*/
+static void process_ack_command( char* data, int len )
+{
+	uart_send_lock( data, len );
+}
+
+/*
+* author:	yangjianzhou
+* function: 	handle_remote_command we get an command from android.
+*/
+static int handle_remote_command( ProtocolData *rData )
+{
+	//int 	i;
+	int 	ret = HANDLE_NULL;
+	
+	//printf("msgid(0x%04x),len(%d)\r\n", rData->head->msgid, rData->head->len);
+
+	switch( rData->head->msgid )
+	{
+		case MSG_ANDOIRD_CAN:
+			//printf("%s: MSG_ANDOIRD_CAN.\r\n", __func__);
+			handle_can_command( rData->data, rData->head->len );
+			break;	
+		case MSG_ANDOIRD_SET_RTC:
+			printf("%s: MSG_ANDOIRD_SET_RTC.\r\n", __func__);
+			break;
+		case MSG_ANDOIRD_GET_RTC:
+			printf("%s: MSG_ANDOIRD_GET_RTC.\r\n", __func__);
+			break;
+		case MSG_ANDOIRD_SET_ALRAM:
+			printf("%s: MSG_ANDOIRD_SET_ALRAM.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_PWR_REQUEST:
+			//printf("%s: MSG_ANDOIRD_PWR_REQUEST.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_DEBUG_REQUEST:
+			printf("%s: MSG_ANDOIRD_DEBUG_REQUEST.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_CHARGE:
+			//printf("%s: MSG_ANDOIRD_CHARGE.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_PM_STATUS:
+			printf("%s: MSG_ANDOIRD_PM_STATUS.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_AWAKE:
+			printf("%s: MSG_ANDOIRD_AWAKE.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_VEHICLE_ID:
+			printf("%s: MSG_ANDOIRD_VEHICLE_ID.\r\n", __func__);
+			break;	
+		case MSG_ANDOIRD_OTA:
+			//printf("%s: MSG_ANDOIRD_OTA.\r\n", __func__);
+			handle_ymodem_command( rData->data, rData->head->len );
+			break;	
+		case MSG_ANDOIRD_GET_MCU_VER:
+			printf("%s: MSG_ANDOIRD_GET_MCU_VER.\r\n", __func__);
+			break;		
+		case MSG_FILE_OTA:
+			handler_file_message( rData->data );
+			break;
+		default:
+			printf("%s: Error msg id.\r\n", __func__);
+			break;
+	}
+	
+	return ret;
+}	
+
+/*
+* author:	yangjianzhou
+* function: 	catch_data_frame get a frame data.
+*/
 static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 {
 	char 			 data;
@@ -169,6 +372,9 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 	static LEN_Type  datalen;	
 	static int		 state = UHEAD1;	
 	struct rfifo*    mfifo = ( struct rfifo * ) fifo;
+
+	//1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
+	//2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 
 	while( 1 )
 	{
@@ -186,7 +392,6 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 				} 
 				else
 				{
-					printf("1*\r\n");
 					continue;
 				} 
 				
@@ -203,7 +408,6 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 				else 
 				{
 					state = UHEAD1;
-					printf("2*\r\n");
 					continue;
 				}
 				
@@ -217,7 +421,6 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 				{
 					printf("%s: len go to MAX\r\n", __func__);
 					state = UHEAD1;
-					printf("3*\r\n");
 					continue;
 				}
 				else
@@ -244,7 +447,6 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 				if( type != TYPE_ACK && type != TYPE_CMD )
 				{
 					state = UHEAD1;
-					printf("4*\r\n");
 					continue;
 				}
 				else
@@ -268,7 +470,7 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 				}		
 				state = UHEAD1;
 				rfifo_get( mfifo, &crc, N_CRC );
-				calcrc = CheckSum( (unsigned char *) buff, N_LEN + N_MSGID + N_TYPE + datalen );
+				calcrc = calculate_crc( (unsigned char *) buff, N_LEN + N_MSGID + N_TYPE + datalen );
 				if( calcrc == crc )
 				{
 					if( type == TYPE_ACK )
@@ -281,25 +483,17 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 						*( ( CRC_Type * )( buff + N_LEN + N_MSGID + N_TYPE + datalen ) ) = crc;
 						*bufflen = N_LEN + N_MSGID + N_TYPE + N_CRC + datalen;
 						return UART_CMD;
-					}
-					else 
-					{
-						printf("5*\r\n");
-						continue;
-					}					
+					}			
 				}
 				else 
 				{	
 					printf("%s: CheckSum Error! type(0x%02x), cal crc(0x%04x),"
 						" recv crc(0x%04x)\r\n", __func__, type, calcrc, crc );	
-					printf("6*\r\n");
-
 					continue;
 				}
 
 			default:
 				state = UHEAD1;	
-				printf("7*\r\n");
 				continue;
 		}
 		
@@ -309,96 +503,10 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 	return UART_WAIT;
 }
 
-/*	
-	int i;
-	char *p = (char *)rAck;	
-
-	printf("%s:\r\n", __func__);
-	for( i = 0; i < N_LEN + N_MSGID + N_TYPE + N_CRC; i++ )
-	{
-		printf("0X%02X ", *( p + i ) );
-	}				
-	printf("\r\n");
+/*
+* author:	yangjianzhou
+* function: 	HandleDownStreamTask  parse uart data form android.
 */
-static void handle_ack_command( ProtocolAck *rAck )
-{
-	printf("%s \r\n", __func__);
-	if( rAck->len == N_CRC && rAck->type == TYPE_ACK )
-	{
-		if( rAck->msgid == waitAckInfo.msgid && rAck->crc == waitAckInfo.crc 
-				&& waitAckInfo.recvRespond == 0 )
-		{
-			waitAckInfo.recvRespond = 1;
-			xSemaphoreGive( xWaitAckSemaphore );
-		}
-		else
-		{
-			printf("%s: error ack or no waitting ack!\r\n", __func__);
-		}
-	}
-}
-
-	//printf("%s: crc (0x%04x), and data:\r\n", __func__, rData->crc);
-/*	for( i = 0; i < rData->head->len; i++)
-	{
-		printf("0X%02X ", *( rData->data+ i ) );
-	}				
-	printf("\r\n"); 
-*/
-static int handle_remote_command( ProtocolData *rData )
-{
-	int 	i;
-	int 	ret = HANDLE_NULL;
-	
-	printf("msgid(0x%04x),len(%d)\r\n", rData->head->msgid, rData->head->len);
-
-	switch( rData->head->msgid )
-	{
-		case MSG_ANDOIRD_CAN:
-			printf("%s: MSG_ANDOIRD_CAN.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_SET_RTC:
-			printf("%s: MSG_ANDOIRD_SET_RTC.\r\n", __func__);
-			break;
-		case MSG_ANDOIRD_GET_RTC:
-			printf("%s: MSG_ANDOIRD_GET_RTC.\r\n", __func__);
-			break;
-		case MSG_ANDOIRD_SET_ALRAM:
-			printf("%s: MSG_ANDOIRD_SET_ALRAM.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_PWR_REQUEST:
-			printf("%s: MSG_ANDOIRD_PWR_REQUEST.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_DEBUG_REQUEST:
-			printf("%s: MSG_ANDOIRD_DEBUG_REQUEST.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_CHARGE:
-			printf("%s: MSG_ANDOIRD_CHARGE.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_PM_STATUS:
-			printf("%s: MSG_ANDOIRD_PM_STATUS.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_AWAKE:
-			printf("%s: MSG_ANDOIRD_AWAKE.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_VEHICLE_ID:
-			printf("%s: MSG_ANDOIRD_VEHICLE_ID.\r\n", __func__);
-			break;	
-		case MSG_ANDOIRD_OTA:
-			printf("%s: MSG_ANDOIRD_OTA.\r\n", __func__);
-			handle_ymodem_command( rData->data, rData->head->len );
-			break;	
-		case MSG_ANDOIRD_GET_MCU_VER:
-			printf("%s: MSG_ANDOIRD_GET_MCU_VER.\r\n", __func__);
-			break;					
-		default:
-			printf("%s: Error msg id.\r\n", __func__);
-			break;
-	}
-	
-	return ret;
-}
-
 void HandleDownStreamTask( void * pvParameters )
 {
 	char 	cmdbuff[ 512 ];
@@ -407,14 +515,18 @@ void HandleDownStreamTask( void * pvParameters )
 	int		bufflen;
 	ProtocolData rData;
 	ProtocolAck  *rAck;
-	mUartSendMutex = xSemaphoreCreateMutex();		
-	vSetTaskLogLevel(NULL, eLogLevel_0);
+	
+	register_rom_handlers();	
+	xDownStreamSemaphore 	= xSemaphoreCreateCounting( 0xffffffff, 0 );
+	mUartSendMutex 		 	= xSemaphoreCreateMutex();		
+	waitAckInfo.status 		= MSG_STATUS_ACK;
+	waitAckInfo.time 		= 0;
+	vSetTaskLogLevel( NULL, eLogLevel_3 );
 	printf("%s: start...\r\n", __func__);
-	register_rom_handlers();
+	
 	while( 1 )
 	{
-		/*use ulTaskNotifyTake count function by pass pdFALSE*/
-		ulTaskNotifyTake( pdFALSE, portMAX_DELAY );
+		xSemaphoreTake( xDownStreamSemaphore, portMAX_DELAY );
 
 		while( rfifo_len( &uart6fifo ) > 0 ) 
 		{
@@ -423,7 +535,7 @@ void HandleDownStreamTask( void * pvParameters )
 			{
 				format_protocol_data( &rData , cmdbuff, bufflen );
 				fill_ack_buffer( ackbuff, rData.head->msgid, rData.crc );
-				send_command_ack( ackbuff,  N_ACK_TOTAL );
+				process_ack_command( ackbuff,  N_ACK_TOTAL );
 				handle_remote_command( &rData );
 			} 
 			else if( result == UART_ACK ) 
@@ -439,59 +551,40 @@ void HandleDownStreamTask( void * pvParameters )
 	}
 }
 
-int put_buffer_to_stream( char *buff, short len )
-{
-	static QueueHandle_t  mPutBuffMutex = NULL;
-	Ringfifo* streamfifo = &upStreamFifo;
-
-	if( !mPutBuffMutex )
-	{
-		mPutBuffMutex = xSemaphoreCreateMutex();
-	}
-	
-	/*check upStreamFifo the max size*/
-	if( len > streamfifo->size )
-	{
-		printf("%s: len(%d) error!!\r\n", __func__, len );
-		return -1;
-	}
-
-	xSemaphoreTake( mPutBuffMutex, portMAX_DELAY );
-	while( streamfifo->size - rfifo_len( streamfifo ) < 
-		len + sizeof( short ) )
-	{
-		vTaskDelay( 1 / portTICK_RATE_MS );
-	}
-	rfifo_put( streamfifo, &len, sizeof( short ) );
-	rfifo_put( streamfifo, buff, ( unsigned int )len );
-	xSemaphoreGive( mPutBuffMutex );
-
-	/*notify the up stream task*/
-	xTaskNotifyGive( pxUpStreamTask );
-	
-	return 0;
-}
-
+/*
+* author:	yangjianzhou
+* function: 	HandleUpstreamTask  handle all command or ack which need to be sended to android.
+*/
 void HandleUpstreamTask( void * pvParameters )
 {
 	short 	  len;
-	char 	  pbuff[300];
+	char 	  buffer[300];
 	Ringfifo* streamfifo = &upStreamFifo;
-
-	rfifo_init( streamfifo );	
+	WaitAckInfo *wait 	 = &waitAckInfo;
+	wait->crc 			 = 0xFF;
+	mStreamMutex  		 = xSemaphoreCreateMutex();
 	vSetTaskLogLevel( NULL, eLogLevel_3 );	
+	rfifo_init( streamfifo, 1024 * 8 );	
 	vSemaphoreCreateBinary( xWaitAckSemaphore ); 	
 	xSemaphoreTake( xWaitAckSemaphore, 0 );
+	vSemaphoreCreateBinary( xSenderSemaphore ); 	
+	xSemaphoreTake( xSenderSemaphore, 0 );
 
-	waitAckInfo.recvRespond = 1;
-	waitAckInfo.crc = 255;
-	
-	vTaskDelay( 10 / portTICK_RATE_MS );
+#if( BOARD_NUM == 3 )	
+	MYDMA_Config( DMA2_Stream6, DMA_Channel_5, ( unsigned int )&USART6->DR,
+			( unsigned int )mSendBuffer, sizeof( mSendBuffer ) );
+#else
+	MYDMA_Config( DMA1_Stream3, DMA_Channel_4, ( unsigned int )&USART3->DR,
+			( unsigned int )mSendBuffer, sizeof( mSendBuffer ) );
+#endif	
+
+	vTaskDelay( 40 / portTICK_RATE_MS );
 	printf("%s: start...\r\n", __func__);
 	
 	while( 1 )
 	{
-		ulTaskNotifyTake( pdFALSE, portMAX_DELAY );
+		wait->status = MSG_STATUS_ACK;	
+		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 
 		while( rfifo_len( streamfifo ) > 2 ) 
 		{
@@ -500,107 +593,69 @@ void HandleUpstreamTask( void * pvParameters )
 			{
 				vTaskDelay( 1 / portTICK_RATE_MS );
 			}
-			rfifo_get( streamfifo, pbuff, len );
-			waitAckInfo.msgid = *( ( MSGID_Type * ) &pbuff[ 2 + N_LEN ] );
-			waitAckInfo.crc   = *( ( CRC_Type* ) &pbuff[ len - N_CRC ] );
-			waitAckInfo.recvRespond = 0;
-			send_data_lock( pbuff, len );
-			
-			while( 1 )
-			{
-				xSemaphoreTake( xWaitAckSemaphore, 5000 / portTICK_RATE_MS );
-				if( waitAckInfo.recvRespond == 1 )
-				{
-					break;
+			rfifo_get( streamfifo, buffer, len );
+			wait->msgid = *( ( MSGID_Type * ) &buffer[ 2 + N_LEN ] );
+			wait->crc   = *( ( CRC_Type* ) &buffer[ len - N_CRC ] );			
+			wait->status = MSG_STATUS_WAITING;			
+			do {
+				uart_send_lock( buffer, len );
+				block_wait_ack();
+				if( wait->status != MSG_STATUS_ACK ) {
+					printf("%s: send again\r\n", __func__);
 				}
-				else
-				{
-					send_data_lock( pbuff, len );
-				}
-			}
+			} while( wait->status != MSG_STATUS_ACK );
 		}
 	}
 }
 
+/*
+* author:	yangjianzhou
+* function: 	process_can_data  put can data to stream.
+*			aa bb len msgid type id(4) canx(1) d0~d8(8) crc1 crc2
+*/
+void process_can_message(unsigned int id, unsigned char buffer[])
+{	
+	int 	len;
+	char 	data[13];
+	char 	command[ 2 + N_LEN + N_MSGID + N_TYPE + 13 + N_CRC ];
 
-
-
-
-#if 0
-char transferAmr = 0;
-unsigned int transferSize = 0;
-unsigned char transferIndex = 0;
-TickType_t sendTickValue = 0;
-
-void transfer_arm( char timeOut )
-{
-	char *p;//= buff;
-	unsigned char md5[16];
+	memcpy( data, &id, sizeof( unsigned int ) );
+	*( data + sizeof( unsigned int ) ) = 0;
+	memcpy( data + sizeof( unsigned int ) + 1, buffer, 8 );
 	
-	if( transferIndex == 0 || transferIndex == 1 )
-	{
-		if( !timeOut )
-			transferIndex++;	
-		p[0] = 0xaa;
-		p[1] = 0xbb;
-		*((short *) &(p[2])) = 22;
-		*((short *) &(p[4])) = 0x8001;
-		p[6] = TYPE_CMD;
-		
-		p[7] = transferIndex;
-		memcpy( &(p[8]), "test.amr", strlen("test.amr"));
-		*((int *) &(p[19])) = 10086;
-		caculate_file_md5( "test.amr", md5);		
-		memcpy( &(p[23]), md5, 16);
-		p[39] = CheckSum( &(p[2]), 36 );
-		send_data_lock( p, 40 );
-		sendTickValue = xTaskGetTickCount();
-		//waitcrc = p[39];
-	}
-	else
-	{
-		FIL file;
-		unsigned int br;
-		
-		if( f_open( &file, (const TCHAR*)"0:/amr/test.amr", FA_READ ) == FR_OK )
-		{
-			if( !timeOut )
-			{
-				if( transferIndex == 0xff )
-				{
-					transferIndex = 2;
-				}
-				else
-				{
-					transferIndex++;
-				}
-			}
-			f_lseek( &file, transferSize );
-			p[0] = 0xaa;
-			p[1] = 0xbb;
-			*((short *) &(p[2])) = 22;
-			*((short *) &(p[4])) = 0x8001;
-			p[6] = TYPE_CMD;
-			p[7] = transferIndex;
-			f_read(&file, &(p[8]), 300, &br);
-			if( !timeOut )
-				transferSize += br;
-			if( br < 300 )
-			{
-				transferIndex = 0;				
-				p[7] = transferIndex;
-				transferSize = 0;
-			}
-			p[7+br+1] = CheckSum( &(p[2]), br + 6);
-			send_data_lock( p, br + 9 );
-			sendTickValue = xTaskGetTickCount();
-			//waitcrc = p[7+br+1];
-			f_close( &file );
-		}
-	}
+	len = compose_protocol_command( 13, 0x8001, data, command );
+	add_command_to_stream( command,  len, WAIT_NOT );	
 }
 
-#endif
+/*
+* author:	yangjianzhou
+* function: 	HandleCanTask  handle can interrupt data, push to sender task stream.
+*/
+void HandleCanTask( void * pvParameters )
+{
+	unsigned int id;
+	unsigned char message[8];
+	
+	rfifo_init( &canfifo, 1024 * 4 );	
+	CAN1_Mode_Init( CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_7tq, 6, CAN_Mode_Normal );	
+	CAN2_Mode_Init( CAN_SJW_1tq, CAN_BS2_6tq, CAN_BS1_7tq, 6, CAN_Mode_Normal );	
+	vSetTaskLogLevel( NULL, eLogLevel_3 );
+	printf("%s: start...\r\n", __func__);
+ 
+	while( 1 )
+	{
+		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+		while( rfifo_len( &canfifo ) >= sizeof(unsigned int) + sizeof(unsigned char) * 8 )
+		{
+			rfifo_get( &canfifo, &id, sizeof(unsigned int) );
+			rfifo_get( &canfifo, message, sizeof(unsigned char) * 8 );
+			process_can_message( id, message );
+		}
+	}
+
+}
+
+
 
 
 

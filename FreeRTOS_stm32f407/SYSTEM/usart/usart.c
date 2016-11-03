@@ -197,7 +197,7 @@ void uart_init(u32 bound){
 void uart_deinit( void )
 {
 	USART_ITConfig(USART1, USART_IT_RXNE, DISABLE);//开启相关中断	
-  USART_Cmd(USART1, DISABLE);  //使能串口1 
+  	USART_Cmd(USART1, DISABLE);  //使能串口1 
 	USART_DeInit(USART1);
 }
 
@@ -318,6 +318,13 @@ void uart4_init(u32 bound)
 	
 }
 
+void uart4_deinit( void )
+{
+	USART_ITConfig(UART4, USART_IT_RXNE, DISABLE);//开启相关中断	
+  	USART_Cmd(UART4, DISABLE);  //使能串口1 
+	USART_DeInit(UART4);
+}
+
 //uart6 pc6 pc7 	ó?óúó?androidí¨??
 void uart6_init(u32 bound)
 {
@@ -358,7 +365,7 @@ void uart6_init(u32 bound)
 改成2， 2
 */  
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority=2;//?à??ó??è??3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority =2;		//×óó??è??3
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority =0;		//×óó??è??3
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;			//IRQí¨μàê1?ü
 	NVIC_Init(&NVIC_InitStructure);	//?ù?Y???¨μ?2?êy3?ê??ˉVIC??′??÷?￠
 }
@@ -367,6 +374,7 @@ void uart6_init(u32 bound)
 
 extern Ringfifo uart6fifo;
 extern TaskHandle_t pxDownStreamTask;
+extern xSemaphoreHandle xDownStreamSemaphore;
 
 void USART3_IRQHandler( void )
 {
@@ -383,7 +391,9 @@ void USART3_IRQHandler( void )
 			uart6fifo.lostBytes++; 
 		} 
 
-		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
+		
     } 
 	
 	(void) vPortExitCritical();
@@ -426,7 +436,8 @@ void UART4_IRQHandler(void)
 				uart6fifo.lostBytes++;
 		} 
 
-		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
     } 
 	(void) vPortExitCritical();
 	
@@ -451,9 +462,10 @@ void USART6_IRQHandler(void)                	//′??ú1?D??·t??3ìDò
 		{
 			uart6fifo.lostBytes++;
 		}
-		if( pxDownStreamTask )
+		if( pxDownStreamTask ) 
 		{
-			vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );		
+			//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+			xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
 		}
 	} 
 	(void) vPortExitCritical();	

@@ -8,6 +8,10 @@
 // 	1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
 //   2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 
+#define WAIT_BLOCK			1
+#define WAIT_NOT			0
+
+
 #define MSGID_VOICE			0X0001
 
 #define UHEAD1				1
@@ -38,7 +42,7 @@
 #define MSG_ANDOIRD_OTA					0x000B
 #define MSG_ANDOIRD_GET_MCU_VER			0x000C
 
-
+#define MSG_FILE_OTA					0x8007
 
 #define MSG_FILE			0x8001
 #define MSG_YMODEM			0x8002
@@ -97,13 +101,20 @@ typedef struct
 {
 	MSGID_Type 		msgid;
 	CRC_Type		crc;
-	char 			recvRespond;
+	char 			status;
+	unsigned int 	time;
 } WaitAckInfo;
 
+extern void HandleCanTask( void * pvParameters );
 extern void HandleDownStreamTask( void * pvParameters );
 extern void HandleUpstreamTask( void * pvParameters );
-extern CRC_Type CheckSum( unsigned char *buf, int packLen );
-extern int put_buffer_to_stream( char *buff, short len );
+extern CRC_Type calculate_crc( unsigned char *buf, int packLen );
+extern int add_command_to_stream( char *buff, short len, char flag );
+extern int add_ack_to_stream( char *buff, short len );
+extern int compose_protocol_command( LEN_Type len , MSGID_Type msgid,
+					char data[], char result[] );
+
+
 #endif
 
 

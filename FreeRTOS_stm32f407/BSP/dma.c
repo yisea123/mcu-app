@@ -52,9 +52,9 @@ void MYDMA_Config(DMA_Stream_TypeDef *DMA_Streamx,u32 chx,u32 par,u32 mar,u16 nd
   DMA_Init(DMA_Streamx, &DMA_InitStructure);//初始化DMA Stream
 	
 	DMA_ITConfig(DMA_Streamx, DMA_IT_TC, ENABLE);
-	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream7_IRQn;  
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;  
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;  
+	NVIC_InitStructure.NVIC_IRQChannel = DMA2_Stream6_IRQn;//DMA2_Stream7_IRQn;  DMA1_Stream3_IRQn
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;  
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;  
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;  
 	NVIC_Init(&NVIC_InitStructure);  
 } 
@@ -73,9 +73,9 @@ void MYDMA_Enable(DMA_Stream_TypeDef *DMA_Streamx,u16 ndtr)
 	DMA_Cmd(DMA_Streamx, ENABLE);                      //开启DMA传输 
 }	  
 
-//extern QueueHandle_t mDmaSemaphore; 
-extern TaskHandle_t pxLogTask;
-
+//extern QueueHandle_t 			mDmaSemaphore; 
+extern TaskHandle_t 			pxLogTask;
+extern xSemaphoreHandle 		xSenderSemaphore;
 void DMA2_Stream7_IRQHandler(void)  
 {   
 	(void) vPortEnterCritical();
@@ -90,14 +90,41 @@ void DMA2_Stream7_IRQHandler(void)
 					xSemaphoreGiveFromISR( mDmaSemaphore, NULL );
 				}
 				*/
-				vTaskNotifyGiveFromISR( pxLogTask, NULL);
+				//vTaskNotifyGiveFromISR( pxLogTask, NULL);
+				xSemaphoreGiveFromISR(xSenderSemaphore, NULL);
 		}
 
 	(void) vPortExitCritical();		
 }  
 
 
+void DMA2_Stream6_IRQHandler(void)  
+{   
+	(void) vPortEnterCritical();
+	
+		if( DMA_GetITStatus( DMA2_Stream6, DMA_IT_TCIF6 ) != RESET )
+		{		
+				DMA_ClearITPendingBit(DMA2_Stream6, DMA_IT_TCIF6);
+				DMA_Cmd(DMA2_Stream6, DISABLE);
+				xSemaphoreGiveFromISR(xSenderSemaphore, NULL);
+		}
 
+	(void) vPortExitCritical();		
+}  
+
+void DMA1_Stream3_IRQHandler(void)  
+{   
+	(void) vPortEnterCritical();
+	
+		if( DMA_GetITStatus( DMA1_Stream3, DMA_IT_TCIF3 ) != RESET )
+		{		
+				DMA_ClearITPendingBit(DMA1_Stream3, DMA_IT_TCIF3);
+				DMA_Cmd(DMA1_Stream3, DISABLE);
+				xSemaphoreGiveFromISR(xSenderSemaphore, NULL);
+		}
+
+	(void) vPortExitCritical();		
+}  
 
 
 

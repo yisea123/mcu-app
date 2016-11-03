@@ -38,7 +38,9 @@ void uart_init(u32 bound);
 void uart_deinit( void );
 
 extern void uart4_init(u32 bound);
+extern void uart4_deinit( void );
 extern void uart3_init(u32 bound);
+extern void uart6_init(u32 bound);
 #endif
 
 

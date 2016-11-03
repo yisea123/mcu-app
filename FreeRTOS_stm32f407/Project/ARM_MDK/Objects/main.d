@@ -78,6 +78,9 @@
 .\objects\main.o: ..\..\USER\wavplay.h
 .\objects\main.o: ..\..\Helix\pub\mp3dec.h
 .\objects\main.o: ..\..\USER\uartprotocol.h
+.\objects\main.o: ..\..\USER\transport.h
+.\objects\main.o: ..\..\USER\cmdhandler.h
+.\objects\main.o: ..\..\BSP\can.h
 .\objects\main.o: ..\..\BSP\gpioconfig.h
 .\objects\main.o: ..\..\BSP\gpio.h
 .\objects\main.o: ..\..\FATFS\src\diskio.h

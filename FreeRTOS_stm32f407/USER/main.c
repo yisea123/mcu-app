@@ -24,6 +24,8 @@
 #include "audioplay.h"	
 #include "wavplay.h" 
 #include "uartprotocol.h"
+#include "transport.h"
+#include "cmdhandler.h"
 
 #if( BOARD_NUM == 3 )
 #include "gpioconfig.h"
@@ -65,6 +67,10 @@ TaskHandle_t pxUsmartTask;
 TaskHandle_t pxMusicPlayer;
 TaskHandle_t pxDownStreamTask = NULL;
 TaskHandle_t pxUpStreamTask;
+TaskHandle_t pxTransportTask;
+TaskHandle_t pxCanTask;
+TaskHandle_t pxCanCommandTask;
+
 //Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=102816  
 //Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=103328   after add unsigned char mSendBuffer[512];
 //Program Size: Code=136478 RO-data=58522 RW-data=26080 ZI-data=102816   after add unsigned char mSendBuffer[512] = {9};
@@ -76,18 +82,21 @@ TaskHandle_t pxUpStreamTask;
 
 int main(void)
 {
-	FIL file;
 	( void ) Software_Hardware_Init();
 	//vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
-
-	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 7, &pxUpStreamTask );
-	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 7, &pxDownStreamTask );
+#if( BOARD_NUM == 3)	
+	xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
+	xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
+#endif
+	//xTaskCreate( TransportTask, (const char *)"Transport", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 6, &pxTransportTask );
+	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 9, &pxUpStreamTask );
+	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*5, NULL, tskIDLE_PRIORITY + 8, &pxDownStreamTask );
 #if( BOARD_NUM != 3)	
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 #endif
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 8, &pxUsmartTask );
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 2, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, configMAX_PRIORITIES - 1 , NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
@@ -111,9 +120,13 @@ extern  signed char xSpeakerVolume;
 extern  Ringfifo uart6fifo;
 void Software_Hardware_Init( void )
 {
-	unsigned char res, i;
-	rfifo_init( &mLogFifo );	
-	rfifo_init( &uart6fifo );	
+	unsigned char res;
+#if( BOARD_NUM != 3 )
+	unsigned char i;
+#endif
+	
+	rfifo_init( &mLogFifo, 512 );	
+	rfifo_init( &uart6fifo , 1024*2 );	
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_2 );
 	//(void) uart4_init( 115200 );	
 
@@ -409,11 +422,11 @@ char isDma = 0;
 void Printf_Log_Task(void * pvParameters)
 {	
 	int len;
-
+	char mSendBuffer[512];
 	UBaseType_t pre;
 	
 	pre = uxTaskPriorityGet( NULL );
-	//MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
+	MYDMA_Config( DMA2_Stream7, DMA_Channel_4, (u32)&USART1->DR, (u32)mSendBuffer, 512 );
 	/*mLogSemaphore create as has value, take it.*/
 	xSemaphoreTake( mLogSemaphore, 0 );	
 	//xSemaphoreTake( mDmaSemaphore, 0 );
@@ -429,7 +442,7 @@ void Printf_Log_Task(void * pvParameters)
 		
 		while( ( len = rfifo_len( &mLogFifo ) ) > 0 ) 
 		{
-			//rfifo_get( &mLogFifo, mSendBuffer, len );
+			rfifo_get( &mLogFifo, mSendBuffer, len );
 			isDma = 1;
 			USART_DMACmd( USART1, USART_DMAReq_Tx, ENABLE );  
 			MYDMA_Enable( DMA2_Stream7, len );

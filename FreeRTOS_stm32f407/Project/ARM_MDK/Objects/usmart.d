@@ -64,3 +64,6 @@
 .\objects\usmart.o: ..\..\USER\wavplay.h
 .\objects\usmart.o: ..\..\Helix\pub\mp3dec.h
 .\objects\usmart.o: ..\..\USER\md5.h
+.\objects\usmart.o: ..\..\USER\cmdhandler.h
+.\objects\usmart.o: ..\..\FreeRTOS\Source\include\timers.h
+.\objects\usmart.o: ..\..\BSP\can.h

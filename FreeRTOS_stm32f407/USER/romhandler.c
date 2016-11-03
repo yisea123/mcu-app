@@ -13,7 +13,7 @@ static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char
 	
 	p = md5;
 	
-	if((devNum==MCU_NUM) || (devNum==SCU_NUM)) 
+	if( (devNum==MCU_NUM) || (devNum==SCU_NUM) ) 
 	{
 		src = APPLICATION_ADDRESS + romSize;
 	} 
@@ -22,9 +22,9 @@ static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char
 		src = BOOTLOADER_ADDRESS + romSize;
 	}	
 
-	printf("%s: src=%x, binSize=%d\r\n", __func__, src, romSize);
+	printf("%s: src(0x%x), binSize(%d)\r\n", __func__, src, romSize);
 	
-	while(mRead < LEN_MD5) 
+	while( mRead < LEN_MD5 ) 
 	{
 		STMFLASH_Read(src, (u32 *)data, 1);
 		src += 4;
@@ -38,26 +38,27 @@ static void read_md5_from_flash(char devNum, unsigned int romSize, unsigned char
 			md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 	
 }
 
-static char FileName[FILE_NAME_LENGTH];
-static unsigned char aes_key[ 32 ];
 static unsigned char *key = NULL;
-static unsigned int romSize = 0, flashdestination = APPLICATION_ADDRESS;
-static unsigned int targetSector = 0;	
-static unsigned char tmodem_md5[ LEN_MD5 ];
+static unsigned int romSize = 0;
 
 int rom_packet_handler(  int devNum, unsigned int index, const char *rpacket, int plen )
 {
 	static unsigned int mRecvBytes=0;
+	static unsigned int targetSector = 0;	
+	static char FileName[FILE_NAME_LENGTH];
+	static unsigned int flashdestination = APPLICATION_ADDRESS;
+
+	unsigned char aes_key[ 32 ];
 	int i, sessionDone = 0;
 	unsigned int size = 0, ramsource = 0, preFlashdestination;
 	unsigned char *pbuf, *pfile, pfsize[ FILE_SIZE_LENGTH ];	
 
-	if( devNum != 5)
+	if( devNum != MCU_NUM )
+	{
 		return -1;
-
+	}
 	if( index == 0 )
 	{
-		/* Filename packet has valid data */
 		pfile = ( unsigned char * )( rpacket + PACKET_HEADER );
 		for ( i = 0; ( *pfile != 0 ) && ( i < FILE_NAME_LENGTH ); ) 
 		{
@@ -71,20 +72,16 @@ int rom_packet_handler(  int devNum, unsigned int index, const char *rpacket, in
 			pfsize[ i++ ] = *pfile++;
 		}
 		pfsize[ i++ ] = '\0';
-		//Str2Int( pfsize, &size );
-		size = atoi( pfsize );
+		size = atoi( (const char*)pfsize );
 		size = size - LEN_MD5;
 		mRecvBytes = 0;
 		printf("%s: FileName(%s) size(%d)\r\n", __func__, FileName, size );
-
-		printf("%s: file size = %d, USE_FLASH_SIZE=%d\r\n", __func__, size, /*USER_FLASH_SIZE*/512*1024);
-		if ( size > ( /*USER_FLASH_SIZE*/512*1024 ) ) 
+		if ( size > ( USER_FLASH_SIZE ) ) 
 		{
 			printf("%s: file size > flash size\r\n", __func__);
 			return E4;
 		}
 		printf("aes_key:\r\n[");
-		
 		for (i = 0, pfile++; i < sizeof( aes_key )/sizeof( aes_key[ 0 ] ); i++) 
 		{
 			aes_key[ i ] = *pfile++;
@@ -100,10 +97,12 @@ int rom_packet_handler(  int devNum, unsigned int index, const char *rpacket, in
 		key = aes_create_key( aes_key, sizeof( aes_key )/sizeof( aes_key[0] ));
 		
 		if( !key ) 
+		{
 			return E2;
-		
+		}
 		romSize = size;
-
+		
+		flashdestination = APPLICATION_ADDRESS;
 		if( 0X1234 != RTC_ReadBackupRegister( RTC_BKP_DR3 ) && 
 				( devNum == MCU_NUM || devNum == SCU_NUM ) ) 
 		{
@@ -133,18 +132,18 @@ int rom_packet_handler(  int devNum, unsigned int index, const char *rpacket, in
 		}
 		for( i = 0; i< plen/AES_DECODE_LEN; i++ ) 
 		{
-			pbuf = aes_decode_packet(key, (unsigned char*)(rpacket+PACKET_HEADER+AES_DECODE_LEN*i), AES_DECODE_LEN);
+			pbuf = aes_decode_packet( key, (unsigned char*)(rpacket+PACKET_HEADER+AES_DECODE_LEN*i), AES_DECODE_LEN );
 			ramsource = ( unsigned int ) pbuf;				
 			preFlashdestination = flashdestination; 
-			flashdestination = STMFLASH_Write(flashdestination, (unsigned int *) ramsource, AES_DECODE_LEN/4);
+			flashdestination = STMFLASH_Write( flashdestination, (unsigned int *) ramsource, AES_DECODE_LEN/4 );
 			
-			if(flashdestination == preFlashdestination + AES_DECODE_LEN) 
+			if( flashdestination == preFlashdestination + AES_DECODE_LEN ) 
 			{
-				if(targetSector != STMFLASH_GetFlashSector(flashdestination))
+				if( targetSector != STMFLASH_GetFlashSector(flashdestination) )
 				{
 					printf("%s: rom is too big! Erase one more sector!\r\n", __func__);
-					targetSector = STMFLASH_GetFlashSector(flashdestination);
-					FLASH_If_Erase_Sector(flashdestination); 
+					targetSector = STMFLASH_GetFlashSector( flashdestination );
+					FLASH_If_Erase_Sector( flashdestination ); 
 				}
 			} 
 			else 
@@ -179,10 +178,11 @@ int rom_error_handler( int devNum, int error )
 int rom_finish_handler( int devNum )
 {
 	unsigned int src;
+	unsigned char md5[ LEN_MD5 ];
 
-	read_md5_from_flash( devNum, romSize, tmodem_md5 );
+	read_md5_from_flash( devNum, romSize, md5 );
 	
-	if( ( devNum==MCU_NUM ) || ( devNum==SCU_NUM )) 
+	if( ( devNum == MCU_NUM ) || ( devNum == SCU_NUM )) 
 	{
 		src = APPLICATION_ADDRESS;
 	}
@@ -192,7 +192,7 @@ int rom_finish_handler( int devNum )
 	}
 	
 	printf("%s: Download Finish.\r\n", __func__);
-	if( compare_flashdata_md5( src, romSize, tmodem_md5 ) == 0 )
+	if( compare_flashdata_md5( src, romSize, md5 ) == 0 )
 	{
 		printf("%s: Check MD5 Ok! start reboot...\r\n", __func__);
 /*		
@@ -224,30 +224,223 @@ int rom_finish_handler( int devNum )
 
 void register_rom_handlers( void )
 {
-	if( register_ymodem_handlers( 5, rom_packet_handler, rom_error_handler,
-					rom_finish_handler	) == 0 )
+	if( register_ymodem_handlers( MCU_NUM, rom_packet_handler, 
+			rom_error_handler, rom_finish_handler	) == 0 )
 	{
-		printf("%s: init ok!\r\n", __func__);
+		printf("%s: init rom_packet_handler ok!\r\n", __func__);
 	}
 	else
 	{
 		printf("%s: init fail!\r\n", __func__);		
 	}
+
+	if( register_ymodem_handlers( AMR_NUM, amr_packet_handler, 
+			amr_error_handler, amr_finish_handler	) == 0 )
+	{
+		printf("%s: init amr_packet_handler ok!\r\n", __func__);
+	}
+	else
+	{
+		printf("%s: init fail!\r\n", __func__);		
+	}	
 }
 
-int amr_packet_handler(  int devNum, unsigned int index, const char *packet, int plen  )
+
+#include "ff.h"
+#include "fattester.h"	 
+
+static char filename[FILE_NAME_LENGTH];
+static int read_md5_from_file(char devNum, unsigned int romSize, unsigned char md5[])
 {
+	FIL file;
+	FILINFO fno;
+	UINT br;	
+	char fpath[ 50 ];	
+	
+	sprintf(fpath, "%s%s", "2:/", filename);
+	
+	if( mf_stat_( (unsigned char*)fpath, &fno) == FR_OK )
+	{	
+		if( fno.fsize < romSize + LEN_MD5 )
+		{
+			printf("%s: file size error!\r\n", __func__);
+			return E5;
+		}
+		if( fno.fattrib == 32 && 
+			f_open(&file,(const TCHAR*) fpath, FA_READ | FA_WRITE) 
+			== FR_OK)
+		{
+			f_lseek(&file, romSize);
+			f_read(&file, md5, LEN_MD5, &br);
+			f_lseek(&file, romSize);
+			f_truncate(&file);
+			printf("%s: delete md5!\r\n", __func__);
+			f_close(&file);
+		}
+		else
+		{
+			printf("maybe is dir error!\r\n");
+		}
+	}
+	else
+	{
+		printf("file %s not exist\r\n", fpath );
+	}	
+
+	printf("%s:[%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X]\r\n", __func__,
+			md5[0], md5[1],md5[2], md5[3],md5[4], md5[5],md5[6], md5[7],md5[8], md5[9],
+			md5[10], md5[11],md5[12], md5[13],md5[14], md5[15]); 	
+
 	return 0;
+}
+
+int amr_packet_handler(  int devNum, unsigned int index, const char *rpacket, int plen  )
+{
+	//static unsigned int targetSector = 0;	
+
+	unsigned char aes_key[ 32 ];
+	int i;// sessionDone = 0;
+	unsigned int size = 0;// preFlashdestination;
+	unsigned char *pbuf, *pfile, pfsize[ FILE_SIZE_LENGTH ];	
+
+	if( devNum != AMR_NUM )
+	{
+		return -1;
+	}
+	if( index == 0 )
+	{
+		pfile = ( unsigned char * )( rpacket + PACKET_HEADER );
+		for ( i = 0; *pfile != 0  && i < FILE_NAME_LENGTH ; ) 
+		{
+			filename[ i++ ] = *pfile++; 
+		}
+		filename[ i++ ] = '\0';
+		pfile++;
+		for ( i = 0 ; *pfile != '\0'  &&  i < FILE_SIZE_LENGTH ; ) 
+		{
+			pfsize[ i++ ] = *pfile++;
+		}
+		pfsize[ i++ ] = '\0';
+		size = atoi( (const char*)pfsize );
+		size -= LEN_MD5;
+		printf("%s: file name(%s), bin size(%d)\r\n", __func__, filename, size );
+		
+		printf("aes_key:\r\n[");
+		for (i = 0, pfile++; i < sizeof( aes_key )/sizeof( aes_key[ 0 ] ); i++) 
+		{
+			aes_key[ i ] = *pfile++;
+			printf("%02x,", aes_key[ i ] );
+		}								
+		printf("]\r\n");
+		
+		if( key ) 
+		{ 
+			aes_destory_key( &key ); 
+			key = NULL;
+		}
+		key = aes_create_key( aes_key, sizeof( aes_key )/sizeof( aes_key[0] ));
+		if( !key ) 
+		{
+			return E2;
+		}
+		romSize = size;	
+	}
+	else
+	{
+		FIL file;
+		FILINFO fno;
+		UINT bw;	
+		char fpath[ 50 ];
+		sprintf(fpath, "%s%s", "2:/", filename);
+		if( index==1 )
+		{
+			if( f_open(&file,(const TCHAR*) fpath, 
+				FA_CREATE_ALWAYS | FA_WRITE) == FR_OK)
+			{
+				printf("file %s create sucess!\r\n", fpath);
+				f_close(&file);
+			}	
+			else
+			{
+				return E5;	
+			}
+		}
+		for( i = 0; i< plen/AES_DECODE_LEN; i++ ) 
+		{
+		
+			pbuf = aes_decode_packet( key, (unsigned char*)(rpacket+PACKET_HEADER+AES_DECODE_LEN*i), AES_DECODE_LEN );
+			if( mf_stat_( (unsigned char*)fpath, &fno) == FR_OK )
+			{			
+				if( fno.fattrib == 32 && f_open(&file, (const TCHAR*) fpath, FA_WRITE ) == FR_OK)
+				{
+					f_lseek(&file, fno.fsize);
+					f_write(&file, pbuf, AES_DECODE_LEN, &bw);
+					f_close(&file);
+					if( bw != AES_DECODE_LEN )
+					{
+						printf("%s: write error! bw(%d)\r\n", __func__, bw);
+						return E5;							
+					}
+				}
+				else
+				{
+					printf("maybe is dir error!\r\n");
+					return E5;	
+				}
+			}
+			else
+			{
+				printf("file %s not exist\r\n", fpath);
+				return E5;	
+			}	
+
+		} 
+	}
+	
+	return 0;
+
 }
 
 int amr_error_handler( int devNum, int error )
 {
+	printf("%s, error(%d)\r\n", __func__, error);
+	if( key ) 
+	{ 
+		aes_destory_key( &key );
+	}
+
 	return 0;
 }
 
 int amr_finish_handler( int devNum )
 {
-	return 0;
+	int i = 0, res;
+	unsigned char md5[ LEN_MD5 ];
+	unsigned char md5_[ LEN_MD5 ];
+	char fpath[ 50 ];	
+	
+	sprintf(fpath, "%s%s", "2:/", filename);
+
+	printf("%s: download finish.\r\n", __func__);
+	res = read_md5_from_file( devNum, romSize, md5 );
+	if( res < 0 )
+	{
+		return res;
+	}
+	
+	caculate_file_md5( fpath, md5_ );
+
+	for( i = 0; i < LEN_MD5; i++ )
+	{
+		if( md5[i] != md5_[i])
+		{
+			printf("%s: check md5 fail!\r\n", __func__);		
+			return E5;
+		}
+	}
+
+	printf("%s: check md5 Ok! start reboot...\r\n", __func__);	
+	return UD5;
 }
 
 

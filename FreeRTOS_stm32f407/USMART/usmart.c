@@ -12,12 +12,16 @@
 #include "string.h"
 #include "wavplay.h"
 #include "md5.h"
+#include "cmdhandler.h"
 
 extern FATFS *		fs[_VOLUMES];
 extern Ringfifo 	mLogFifo;
 extern TaskHandle_t pxTimeTask;
 extern TaskHandle_t pxTempretureTask;
 extern Ringfifo 	uart6fifo;
+extern Ringfifo 	canfifo;
+extern Ringfifo 	upStreamFifo;
+
 extern void Printf_Application_Version( void );
 extern void vPrintRamdDisk( unsigned int sector );
 extern void vPrintFlashDisk( unsigned int sector );
@@ -708,8 +712,8 @@ void Fatfs_Cat_File( char *str )
 				while( 1 )
 				{
 					u8 res = 0;
-					memset( pBuf, 0, sizeof( pBuf ) );
-					res = f_read( &file, pBuf, sizeof( pBuf ), &br );
+					//memset( pBuf, 0, sizeof( pBuf ) );
+					res = f_read( &file, pBuf, 1, &br );
 					if( res )
 					{
 						printf("Read Error:%d\r\n",res);
@@ -717,14 +721,20 @@ void Fatfs_Cat_File( char *str )
 					}
 					else
 					{
-						printf("%s", pBuf); 
-						if( br < sizeof( pBuf ) )
+						if( pBuf[0] == '\n' )
+						{
+							printf("\r\n");
+						}
+						else
+						{
+							printf("%c", pBuf[0]); 
+						}
+						if( br < 1 )
 						{
 							break;
 						}
 					}
 				}
-				printf("\r\n");
 				f_close( &file );
 			}
 			else
@@ -1060,7 +1070,7 @@ void Printf_System_Jiffies( void )
 {
 	TickType_t tick = xTaskGetTickCount();
 	printf("Sytem times from boot is %u (s), system tick = %u (ms).\r\n", 
-			tick/1000, tick);	
+			portTICK_PERIOD_MS*tick/1000, portTICK_PERIOD_MS*tick);	
 }
 
 __asm void Stm32f407_Force_Reboot( void )
@@ -1084,6 +1094,12 @@ void Reboot_System( void )
 
 void Change_Uart_Baud( unsigned char *command )
 {
+	typedef void (*deinit_uartx)(void);
+	typedef void (*init_uarts)(unsigned int);
+
+	deinit_uartx deinit;
+	init_uarts	 init;
+
 	static int xCurrentBaud = 115200;
 	int bound, i = 0;
 	char tmp[16];
@@ -1107,44 +1123,53 @@ void Change_Uart_Baud( unsigned char *command )
 		
 	/*Wait for 15ms to print the Log*/
 	vTaskDelay( 15 / portTICK_RATE_MS);
+
+#if( BOARD_NUM == 3 )
+	deinit 	= uart4_deinit;
+	init 	= uart4_init;
+#else
+	deinit 	= uart_deinit;
+	init 	= uart_init;
+#endif
+
 	switch( bound)
 	{			
 		case 2400:
-			uart_deinit();
+			deinit();
 			xCurrentBaud = bound;
 			vTaskDelay( 40 / portTICK_RATE_MS);			
-			uart_init( 2400 );				
+			init( 2400 );				
 			break;			
 		case 4800:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
 			vTaskDelay( 20 / portTICK_RATE_MS);
-			uart_init( 4800 );				
+			init( 4800 );				
 			break;			
 		case 9600:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
-			uart_init( 9600 );				
+			init( 9600 );				
 			break;	
 		case 19200:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
-			uart_init( 19200 );				
+			init( 19200 );				
 			break;		
 		case 115200:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
-			uart_init( 115200 );
+			init( 115200 );
 			break;
 		case 230400:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
-			uart_init( 230400 );
+			init( 230400 );
 			break;
 		case 460800:
-			uart_deinit();			
+			deinit();			
 			xCurrentBaud = bound;
-			uart_init( 460800 );				
+			init( 460800 );				
 			break;
 		
 		default:
@@ -1169,13 +1194,17 @@ void List_All_Task_Information( void )
 void List_Struct_Information( void )
 {
 		printf("*********struct********\r\n");
-		printf("uart1fifo: lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
+		printf("uart1fifo: 		lostBytes(%u), in(%u), out(%u), size(%u)\r\n", 
 						uart1fifo.lostBytes, uart1fifo.in, uart1fifo.out, uart1fifo.size);								
-		printf("uart6fifo:  lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
+		printf("uart6fifo: 		lostBytes(%u), in(%u), out(%u), size(%u)\r\n", 
 						uart6fifo.lostBytes, uart6fifo.in, uart6fifo.out, uart6fifo.size);	
-		
-		printf("mLogFifo:  lostBytes=%u, in=%u, out=%u, size=%u\r\n", 
-						mLogFifo.lostBytes, mLogFifo.in, mLogFifo.out, mLogFifo.size);	
+		printf("canfifo:   		lostBytes(%u), in(%u), out(%u), size(%u)\r\n", 
+						canfifo.lostBytes, canfifo.in, canfifo.out, canfifo.size);			
+		printf("upStreamFifo:   	lostBytes(%u), in(%u), out(%u), size(%u)\r\n", 
+						upStreamFifo.lostBytes, upStreamFifo.in, upStreamFifo.out, upStreamFifo.size);
+
+		//printf("mLogFifo:  		lostBytes(%u), in(%u), out(%u), size(%u)\r\n", 
+		//				mLogFifo.lostBytes, mLogFifo.in, mLogFifo.out, mLogFifo.size);	
 		printf("*********struct********\r\n");	
 }
 
@@ -1303,6 +1332,9 @@ u8 *sys_cmd_tab[]=
 	"adds",
 	"dels",
 	"md5",
+	/*timer*/
+	"tstart",
+	"tstop",
 };	    
 
 /*
@@ -1648,6 +1680,12 @@ UBaseType_t pre;
 		case 49:
 			Caulate_File_Md5( (char *) str );
 			break;			
+		case 50:
+			start_timer_work();
+			break;
+		case 51:
+			stop_timer_work();
+			break;
 		/*Add For FreeRTOS*/
 		default://非法指令
 			return USMART_FUNCERR;
@@ -1703,11 +1741,11 @@ void usamrt_debug_task(void *argc)
 	vListInitialise( &xCommandRecordList );
 	printf("%s start...\r\n", __func__);
 	usmart_dev.sptype = 0;	//0,10进制;1,16进制;
-	rfifo_init(&uart1fifo);	
+	rfifo_init( &uart1fifo, 512 );	
 	xDebugQueue = xQueueCreate( 20, sizeof(int));
 	
 	/*Run in lowest priroty, set system log level*/
-	ucOsLogLevel = eLogLevel_3;
+	ucOsLogLevel = eLogLevel_4;
 	
 	while (1) {
 		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
