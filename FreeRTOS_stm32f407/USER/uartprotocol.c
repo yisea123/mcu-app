@@ -224,16 +224,14 @@ static void format_protocol_data(  ProtocolData * rData, char *buff, int len )
 */
 static void uart_send_lock( const char* data, int len )
 {
-	//int i = 0;
-	obtain_uart_mutex();
-
-	if( len > sizeof(mSendBuffer) )
+	if( len > sizeof( mSendBuffer ) )
 	{
 		printf("%s: len(%d) error!\r\n", __func__, len);
 		return;
 	}
 	
-	memcpy(mSendBuffer, data, len);
+	obtain_uart_mutex();	
+	memcpy( mSendBuffer, data, len );
 	
 #if( BOARD_NUM == 3 )		
 	USART_DMACmd( USART6, USART_DMAReq_Tx, ENABLE );  
@@ -244,20 +242,6 @@ static void uart_send_lock( const char* data, int len )
 #endif
 	xSemaphoreTake( xSenderSemaphore, 300 / portTICK_PERIOD_MS );
 
-/*
-	for( i = 0 ; i < len ; i++ ) 
-	{
-#if( BOARD_NUM == 3 )	
-		USART_ClearFlag( USART6, USART_FLAG_TC ); 
-		USART_SendData( USART6, data[i] );
-		while(USART_GetFlagStatus( USART6, USART_FLAG_TC ) != SET );
-#else
-		USART_ClearFlag( USART3, USART_FLAG_TC ); 
-		USART_SendData( USART3, data[i] );
-		while(USART_GetFlagStatus( USART3, USART_FLAG_TC) != SET );
-#endif
-	}	
-*/
 	release_uart_mutex();
 }
 
@@ -302,15 +286,13 @@ static void process_ack_command( char* data, int len )
 */
 static int handle_remote_command( ProtocolData *rData )
 {
-	//int 	i;
-	int 	ret = HANDLE_NULL;
-	
+	int ret = HANDLE_NULL;
 	//printf("msgid(0x%04x),len(%d)\r\n", rData->head->msgid, rData->head->len);
 
 	switch( rData->head->msgid )
 	{
 		case MSG_ANDOIRD_CAN:
-			//printf("%s: MSG_ANDOIRD_CAN.\r\n", __func__);
+			printf("%s: MSG_ANDOIRD_CAN.\r\n", __func__);
 			handle_can_command( rData->data, rData->head->len );
 			break;	
 		case MSG_ANDOIRD_SET_RTC:
@@ -323,13 +305,13 @@ static int handle_remote_command( ProtocolData *rData )
 			printf("%s: MSG_ANDOIRD_SET_ALRAM.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_PWR_REQUEST:
-			//printf("%s: MSG_ANDOIRD_PWR_REQUEST.\r\n", __func__);
+			printf("%s: MSG_ANDOIRD_PWR_REQUEST.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_DEBUG_REQUEST:
 			printf("%s: MSG_ANDOIRD_DEBUG_REQUEST.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_CHARGE:
-			//printf("%s: MSG_ANDOIRD_CHARGE.\r\n", __func__);
+			printf("%s: MSG_ANDOIRD_CHARGE.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_PM_STATUS:
 			printf("%s: MSG_ANDOIRD_PM_STATUS.\r\n", __func__);
@@ -341,7 +323,7 @@ static int handle_remote_command( ProtocolData *rData )
 			printf("%s: MSG_ANDOIRD_VEHICLE_ID.\r\n", __func__);
 			break;	
 		case MSG_ANDOIRD_OTA:
-			//printf("%s: MSG_ANDOIRD_OTA.\r\n", __func__);
+			printf("%s: MSG_ANDOIRD_OTA.\r\n", __func__);
 			handle_ymodem_command( rData->data, rData->head->len );
 			break;	
 		case MSG_ANDOIRD_GET_MCU_VER:
@@ -658,4 +640,18 @@ void HandleCanTask( void * pvParameters )
 
 
 
+/*
+	for( i = 0 ; i < len ; i++ ) 
+	{
+#if( BOARD_NUM == 3 )	
+		USART_ClearFlag( USART6, USART_FLAG_TC ); 
+		USART_SendData( USART6, data[i] );
+		while(USART_GetFlagStatus( USART6, USART_FLAG_TC ) != SET );
+#else
+		USART_ClearFlag( USART3, USART_FLAG_TC ); 
+		USART_SendData( USART3, data[i] );
+		while(USART_GetFlagStatus( USART3, USART_FLAG_TC) != SET );
+#endif
+	}	
+*/
 

@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\FreeRTOS_STM32F4.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\FreeRTOS_STM32F4.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Thu Nov 03 15:05:42 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Thu Nov 03 16:52:07 2016
 <BR><P>
 <H3>Maximum Stack Usage =       1856 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -2069,7 +2069,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[127]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;DIO_Port_Set_Pin_State
 </UL>
 
-<P><STRONG><a name="[8f]"></a>HandleCanCommandTask</STRONG> (Thumb, 292 bytes, Stack size 8 bytes, cmdhandler.o(i.HandleCanCommandTask))
+<P><STRONG><a name="[8f]"></a>HandleCanCommandTask</STRONG> (Thumb, 260 bytes, Stack size 8 bytes, cmdhandler.o(i.HandleCanCommandTask))
 <BR><BR>[Stack]<UL><LI>Max Depth = 184 + Unknown Stack Size
 <LI>Call Chain = HandleCanCommandTask &rArr; xTimerCreate &rArr; prvInitialiseNewTimer &rArr; prvCheckForValidListAndQueue &rArr; xQueueGenericCreate &rArr; pvPortMalloc &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
@@ -2103,7 +2103,7 @@ Global Symbols
 <BR>[Address Reference Count : 1]<UL><LI> main.o(i.main)
 </UL>
 <P><STRONG><a name="[92]"></a>HandleDownStreamTask</STRONG> (Thumb, 162 bytes, Stack size 544 bytes, uartprotocol.o(i.HandleDownStreamTask))
-<BR><BR>[Stack]<UL><LI>Max Depth = 832 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 840 + Unknown Stack Size
 <LI>Call Chain = HandleDownStreamTask &rArr; handle_remote_command &rArr; handle_can_command &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[16a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReceive
@@ -3720,14 +3720,16 @@ Global Symbols
 <LI><a href="#[24f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;sync_fs
 </UL>
 
-<P><STRONG><a name="[8e]"></a>do_send_can_msg</STRONG> (Thumb, 106 bytes, Stack size 16 bytes, cmdhandler.o(i.do_send_can_msg))
-<BR><BR>[Stack]<UL><LI>Max Depth = 160 + Unknown Stack Size
+<P><STRONG><a name="[8e]"></a>do_send_can_msg</STRONG> (Thumb, 140 bytes, Stack size 24 bytes, cmdhandler.o(i.do_send_can_msg))
+<BR><BR>[Stack]<UL><LI>Max Depth = 168 + Unknown Stack Size
 <LI>Call Chain = do_send_can_msg &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[163]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTimerGenericCommand
+<LI><a href="#[16a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReceive
 <LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;pvTimerGetPrivate
 <LI><a href="#[20c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;cane_send_lock
 <LI><a href="#[209]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;canb_send_lock
+<LI><a href="#[172]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> cmdhandler.o(i.HandleCanCommandTask)
@@ -4309,12 +4311,14 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Software_Hardware_Init
 </UL>
 
-<P><STRONG><a name="[262]"></a>handle_can_command</STRONG> (Thumb, 276 bytes, Stack size 128 bytes, cmdhandler.o(i.handle_can_command))
-<BR><BR>[Stack]<UL><LI>Max Depth = 272 + Unknown Stack Size
+<P><STRONG><a name="[262]"></a>handle_can_command</STRONG> (Thumb, 270 bytes, Stack size 136 bytes, cmdhandler.o(i.handle_can_command))
+<BR><BR>[Stack]<UL><LI>Max Depth = 280 + Unknown Stack Size
 <LI>Call Chain = handle_can_command &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[163]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTimerGenericCommand
 <LI><a href="#[158]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
+<LI><a href="#[16a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericReceive
+<LI><a href="#[172]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xQueueGenericSend
 <LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2sprintf
 <LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__2printf
 </UL>
@@ -4919,7 +4923,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> usmart_config.o(.data)
 </UL>
-<P><STRONG><a name="[2a5]"></a>start_timer_work</STRONG> (Thumb, 90 bytes, Stack size 16 bytes, cmdhandler.o(i.start_timer_work))
+<P><STRONG><a name="[2a5]"></a>start_timer_work</STRONG> (Thumb, 80 bytes, Stack size 16 bytes, cmdhandler.o(i.start_timer_work))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160 + Unknown Stack Size
 <LI>Call Chain = start_timer_work &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
@@ -4930,7 +4934,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[2b7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;usmart_sys_cmd_exe
 </UL>
 
-<P><STRONG><a name="[2a6]"></a>stop_timer_work</STRONG> (Thumb, 70 bytes, Stack size 16 bytes, cmdhandler.o(i.stop_timer_work))
+<P><STRONG><a name="[2a6]"></a>stop_timer_work</STRONG> (Thumb, 62 bytes, Stack size 16 bytes, cmdhandler.o(i.stop_timer_work))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160 + Unknown Stack Size
 <LI>Call Chain = stop_timer_work &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
@@ -5783,7 +5787,9 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HandleUpstreamTask
 <LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HandleDownStreamTask
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_send_can_msg
 <LI><a href="#[20a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;obtain_can_mutex
+<LI><a href="#[262]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;handle_can_command
 <LI><a href="#[174]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;uart_send_lock
 <LI><a href="#[271]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;obtain_uart_mutex
 <LI><a href="#[1fe]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;obtain_stream_mutex
@@ -5821,7 +5827,9 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[163]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTimerGenericCommand
 <LI><a href="#[91]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HandleUpstreamTask
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;deliver_message
+<LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;do_send_can_msg
 <LI><a href="#[20b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;release_can_mutex
+<LI><a href="#[262]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;handle_can_command
 <LI><a href="#[2a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;release_uart_mutex
 <LI><a href="#[1ff]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;release_stream_mutex
 <LI><a href="#[261]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;notify_stream_task
@@ -6267,8 +6275,8 @@ Local Symbols
 <BR>[Called By]<UL><LI><a href="#[92]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;HandleDownStreamTask
 </UL>
 
-<P><STRONG><a name="[16f]"></a>handle_remote_command</STRONG> (Thumb, 200 bytes, Stack size 16 bytes, uartprotocol.o(i.handle_remote_command))
-<BR><BR>[Stack]<UL><LI>Max Depth = 288 + Unknown Stack Size
+<P><STRONG><a name="[16f]"></a>handle_remote_command</STRONG> (Thumb, 232 bytes, Stack size 16 bytes, uartprotocol.o(i.handle_remote_command))
+<BR><BR>[Stack]<UL><LI>Max Depth = 296 + Unknown Stack Size
 <LI>Call Chain = handle_remote_command &rArr; handle_can_command &rArr; xTimerGenericCommand &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[264]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;handler_file_message

@@ -849,7 +849,7 @@ I (..\..\USER\wavplay.h)(0x580B8D30)
 I (..\..\Helix\pub\mp3dec.h)(0x5801185E)
 I (..\..\USER\uartprotocol.h)(0x5818807F)
 I (..\..\USER\transport.h)(0x5810B05C)
-I (..\..\USER\cmdhandler.h)(0x581AE16A)
+I (..\..\USER\cmdhandler.h)(0x581AF44D)
 I (..\..\BSP\can.h)(0x58188073)
 I (..\..\BSP\gpioconfig.h)(0x5809A8B3)
 I (..\..\BSP\gpio.h)(0x57C3A27D)
@@ -1090,7 +1090,7 @@ I (..\..\USER\uartprotocol.h)(0x5818807F)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (..\..\USER\ymodem.h)(0x5808E730)
 I (..\..\USER\handlers.h)(0x580F78D0)
-F (..\..\USER\uartprotocol.c)(0x581999B5)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I..\..\Libraries -I..\..\Libraries\CORE -I..\..\Libraries\FWLIB\inc -I..\..\SYSTEM\delay -I..\..\SYSTEM\sys -I..\..\SYSTEM\usart -I..\..\FreeRTOS -I..\..\FreeRTOS\Source\include -I..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\..\BSP -I..\..\USER -I..\..\USMART -I..\..\FATFS\src -I..\..\FATFS\exfuns -I..\..\Helix\pub -I..\..\Helix\real -I..\..\AMR1-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx -DSTM32F40_41xxx-o .\objects\uartprotocol.o --omf_browse .\objects\uartprotocol.crf --depend .\objects\uartprotocol.d)
+F (..\..\USER\uartprotocol.c)(0x581AFA29)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I..\..\Libraries -I..\..\Libraries\CORE -I..\..\Libraries\FWLIB\inc -I..\..\SYSTEM\delay -I..\..\SYSTEM\sys -I..\..\SYSTEM\usart -I..\..\FreeRTOS -I..\..\FreeRTOS\Source\include -I..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\..\BSP -I..\..\USER -I..\..\USMART -I..\..\FATFS\src -I..\..\FATFS\exfuns -I..\..\Helix\pub -I..\..\Helix\real -I..\..\AMR1-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx -DSTM32F40_41xxx-o .\objects\uartprotocol.o --omf_browse .\objects\uartprotocol.crf --depend .\objects\uartprotocol.d)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
 I (..\..\USER\uartprotocol.h)(0x5818807F)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
@@ -1149,7 +1149,7 @@ I (..\..\FATFS\src\integer.h)(0x5378E62C)
 I (..\..\FATFS\src\ffconf.h)(0x57FF8C5B)
 I (..\..\FreeRTOS\Source\include\semphr.h)(0x57D2624A)
 I (..\..\USER\romhandler.h)(0x581023E3)
-I (..\..\USER\cmdhandler.h)(0x581AE16A)
+I (..\..\USER\cmdhandler.h)(0x581AF44D)
 I (..\..\FreeRTOS\Source\include\timers.h)(0x581AA921)
 I (..\..\BSP\can.h)(0x58188073)
 I (..\..\USER\ymodem.h)(0x5808E730)
@@ -1224,8 +1224,8 @@ F (..\..\USER\handlers.c)(0x580F7212)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interw
 I (..\..\USER\handlers.h)(0x580F78D0)
 I (C:\Keil_v5\ARM\ARMCC\include\stdlib.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\string.h)(0x53463A44)
-F (..\..\USER\cmdhandler.c)(0x581AE1AB)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I..\..\Libraries -I..\..\Libraries\CORE -I..\..\Libraries\FWLIB\inc -I..\..\SYSTEM\delay -I..\..\SYSTEM\sys -I..\..\SYSTEM\usart -I..\..\FreeRTOS -I..\..\FreeRTOS\Source\include -I..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\..\BSP -I..\..\USER -I..\..\USMART -I..\..\FATFS\src -I..\..\FATFS\exfuns -I..\..\Helix\pub -I..\..\Helix\real -I..\..\AMR1-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx -DSTM32F40_41xxx-o .\objects\cmdhandler.o --omf_browse .\objects\cmdhandler.crf --depend .\objects\cmdhandler.d)
-I (..\..\USER\cmdhandler.h)(0x581AE16A)
+F (..\..\USER\cmdhandler.c)(0x581AF9DE)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I..\..\Libraries -I..\..\Libraries\CORE -I..\..\Libraries\FWLIB\inc -I..\..\SYSTEM\delay -I..\..\SYSTEM\sys -I..\..\SYSTEM\usart -I..\..\FreeRTOS -I..\..\FreeRTOS\Source\include -I..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\..\BSP -I..\..\USER -I..\..\USMART -I..\..\FATFS\src -I..\..\FATFS\exfuns -I..\..\Helix\pub -I..\..\Helix\real -I..\..\AMR1-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx -DSTM32F40_41xxx-o .\objects\cmdhandler.o --omf_browse .\objects\cmdhandler.crf --depend .\objects\cmdhandler.d)
+I (..\..\USER\cmdhandler.h)(0x581AF44D)
 I (..\..\FreeRTOS\Source\include\FreeRTOS.h)(0x573F3A16)
 I (C:\Keil_v5\ARM\ARMCC\include\stddef.h)(0x53463A44)
 I (C:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x57280156)
@@ -1487,7 +1487,7 @@ I (..\..\FreeRTOS\Source\include\semphr.h)(0x57D2624A)
 I (..\..\USER\wavplay.h)(0x580B8D30)
 I (..\..\Helix\pub\mp3dec.h)(0x5801185E)
 I (..\..\USER\md5.h)(0x5806006E)
-I (..\..\USER\cmdhandler.h)(0x581AE16A)
+I (..\..\USER\cmdhandler.h)(0x581AF44D)
 I (..\..\FreeRTOS\Source\include\timers.h)(0x581AA921)
 I (..\..\BSP\can.h)(0x58188073)
 F (..\..\USMART\usmart_config.c)(0x57FDF31E)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I..\..\Libraries -I..\..\Libraries\CORE -I..\..\Libraries\FWLIB\inc -I..\..\SYSTEM\delay -I..\..\SYSTEM\sys -I..\..\SYSTEM\usart -I..\..\FreeRTOS -I..\..\FreeRTOS\Source\include -I..\..\FreeRTOS\Source\portable\RVDS\ARM_CM4F -I..\..\BSP -I..\..\USER -I..\..\USMART -I..\..\FATFS\src -I..\..\FATFS\exfuns -I..\..\Helix\pub -I..\..\Helix\real -I..\..\AMR1-I C:\Keil_v5\ARM\RV31\INC-I C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.1.1\CMSIS\Include-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DSTM32F40_41xxx -DSTM32F40_41xxx-o .\objects\usmart_config.o --omf_browse .\objects\usmart_config.crf --depend .\objects\usmart_config.d)
