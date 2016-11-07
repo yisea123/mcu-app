@@ -372,9 +372,10 @@ void uart6_init(u32 bound)
 
 
 
-extern Ringfifo uart6fifo;
-extern TaskHandle_t pxDownStreamTask;
-extern xSemaphoreHandle xDownStreamSemaphore;
+extern Ringfifo 		uart6fifo;
+extern Ringfifo 		uart3fifo[1];
+extern TaskHandle_t 	pxDownStreamTask;
+//extern xSemaphoreHandle xDownStreamSemaphore;
 
 void USART3_IRQHandler( void )
 {
@@ -386,14 +387,21 @@ void USART3_IRQHandler( void )
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE); 	
 		
 		Res =USART_ReceiveData( USART3 );
+		
+#if( BOARD_NUM == 3 )	
+		if( rfifo_put( uart3fifo, &Res, 1 ) != 1 ) 
+		{
+			uart3fifo->lostBytes++; 
+		} 		
+#else
 		if( rfifo_put( &uart6fifo, &Res, 1 ) != 1 ) 
 		{
 			uart6fifo.lostBytes++; 
 		} 
 
-		//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-		xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
-		
+		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		//xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
+#endif		
     } 
 	
 	(void) vPortExitCritical();
@@ -436,8 +444,8 @@ void UART4_IRQHandler(void)
 				uart6fifo.lostBytes++;
 		} 
 
-		//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-		xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
+		vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+		//xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
     } 
 	(void) vPortExitCritical();
 	
@@ -462,10 +470,10 @@ void USART6_IRQHandler(void)                	//¡ä??¨²1?D??¡¤t??3¨¬D¨°
 		{
 			uart6fifo.lostBytes++;
 		}
-		if( pxDownStreamTask ) 
+		if( pxDownStreamTask )
 		{
-			//vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
-			xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
+			vTaskNotifyGiveFromISR( pxDownStreamTask, NULL );
+			//xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
 		}
 	} 
 	(void) vPortExitCritical();	

@@ -25,8 +25,8 @@ typedef struct {
 	char 				canx;			/*can Number*/
 	int 				id;				/*can message ID*/
 	char 				*data;			/*can message DATA*/
-	int 				period;			/*period for timer*/
-	char    			*pvTimerID;		/*for indentify timer*/
+	int 				period;			/*period for timer in ms*/
+	char    			*pvName;		/*for indentify timer*/
 	char    	 		type;			/*TYPE_EVENT or TYPE_PEROID*/
 	char 		  		count;			/*for event can message send count*/
 	TimerHandle_t 		timer;			/*store the TimerHandle_t struct*/

@@ -752,6 +752,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\BSP\gpio.c</FilePath>
             </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\BSP\can.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

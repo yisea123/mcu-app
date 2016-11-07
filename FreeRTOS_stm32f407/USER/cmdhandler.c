@@ -1,6 +1,5 @@
 #include "cmdhandler.h"
 
-static char cStart = 1;
 static xSemaphoreHandle mCanSendMutex = NULL;
 
 /*
@@ -32,11 +31,11 @@ static CanMsgPriv pcMsg[] =
 	CAN_B, 0x34a, data34a, 100, "34a", TYPE_PEROID, 0XFF, NULL, NULL,
 	CAN_B, 0x203, data203, 30, 	"203", TYPE_EVENT, 	0x00, NULL, NULL,		
 	CAN_B, 0x205, data205, 30,	"205", TYPE_EVENT,	0x00, NULL, NULL, 	
-	CAN_B, 0x205, data335, 100,	"335", TYPE_PEROID,	0x00, NULL, NULL, 	
+	CAN_B, 0x335, data335, 100,	"335", TYPE_PEROID,	0x00, NULL, NULL, 	
 	CAN_B, 0x3d,  data03d, 30,	"03d", TYPE_EVENT,	0x00, NULL, NULL, 	
 	CAN_B, 0x351, data351, 100,	"351", TYPE_PEROID, 0x00, NULL, NULL, 	
-	CAN_B, 0x3d,  data03e, 30,	"03e", TYPE_EVENT,	0x00, NULL, NULL, 	
-	CAN_B, 0x3d,  data03f, 30,	"03f", TYPE_EVENT,	0x00, NULL, NULL, 	
+	CAN_B, 0x3e,  data03e, 30,	"03e", TYPE_EVENT,	0x00, NULL, NULL, 	
+	CAN_B, 0x3f,  data03f, 30,	"03f", TYPE_EVENT,	0x00, NULL, NULL, 	
 	CAN_B, 0x339, data339, 100, "339", TYPE_PEROID, 0XFF, NULL, NULL,
 	CAN_B, 0x33e, data33e, 100, "33e", TYPE_PEROID, 0XFF, NULL, NULL,	
 	CAN_B, 0x40,  data040, 30,	"040", TYPE_EVENT,	0x00, NULL, NULL, 	
@@ -96,18 +95,17 @@ unsigned char cane_send_lock(unsigned int id, unsigned char* msg, unsigned char 
 
 /*
 * author: 	yangjianzhou
-* function: 	start_timer_work : stop can message send timer.
+* function: 	start_timer_work : stop can message send timer for period message.
 */
 void stop_timer_work( void )
 {
 	int i;
 	
-	cStart = 0;
 	for ( i = 0; i< SIZE_ARRAY(pcMsg); i++ ) 
 	{
-		if( pcMsg[i].timer )
+		if( pcMsg[i].timer && pcMsg[i].type == TYPE_PEROID )
 		{
-			if( pdFAIL == xTimerStop( pcMsg[i].timer, 0 ) )
+			if( pdFAIL == xTimerStop( pcMsg[i].timer, 1 / portTICK_RATE_MS ) )
 			{
 				printf("%s fail to stop timer.\r\n", __func__);
 			}
@@ -117,13 +115,12 @@ void stop_timer_work( void )
 
 /*
 * author: 	yangjianzhou
-* function: 	start_timer_work : start can message send timer.
+* function: 	start_timer_work : start can message send timer for period message.
 */
 void start_timer_work( void )
 {
 	int i;
 
-	cStart = 1;
 	for ( i = 0; i< SIZE_ARRAY(pcMsg); i++ ) 
 	{
 		if( pcMsg[i].timer && pcMsg[i].type == TYPE_PEROID )
@@ -144,7 +141,7 @@ int handle_can_command( char *data, int len)
 {
 	unsigned int id, canx, i;
 	char msg[CAN_DATA_LEN], tmp[60];
-	CanMsgPriv *p = NULL;
+	CanMsgPriv *pointer = NULL;
 	
 	id = *( ( unsigned int * ) data );
 	canx = data[4] & 0x01;
@@ -152,24 +149,24 @@ int handle_can_command( char *data, int len)
 
 	for ( i = 0; i< SIZE_ARRAY(pcMsg); i++ ) 
 	{
-		p = &( pcMsg[i] );
+		pointer = &( pcMsg[i] );
 		
-		if( p->id == id )
+		if( pointer->id == id )
 		{
-			if( p->type == TYPE_PEROID )
+			if( pointer->type == TYPE_PEROID )
 			{
-				xSemaphoreTake( p->mutex, portMAX_DELAY );
-				memcpy( p->data, msg, CAN_DATA_LEN );
-				xSemaphoreGive( p->mutex );
+				xSemaphoreTake( pointer->mutex, portMAX_DELAY );
+				memcpy( pointer->data, msg, CAN_DATA_LEN );
+				xSemaphoreGive( pointer->mutex );
 			}
-			else if( p->type == TYPE_EVENT )
+			else if( pointer->type == TYPE_EVENT )
 			{
-				p->count = EVENT_COUNT;							
-				xSemaphoreTake( p->mutex, portMAX_DELAY );			
-				memcpy( p->data, msg, CAN_DATA_LEN );
-				xSemaphoreGive( p->mutex );
+				pointer->count = EVENT_COUNT;							
+				xSemaphoreTake( pointer->mutex, portMAX_DELAY );			
+				memcpy( pointer->data, msg, CAN_DATA_LEN );
+				xSemaphoreGive( pointer->mutex );
 
-				if( cStart && pdFAIL == xTimerReset( p->timer, 1 ))
+				if( pdFAIL == xTimerReset( pointer->timer, 1 / portTICK_RATE_MS ) )
 				{
 					printf("%s fail to xTimerReset.\r\n", __func__);;
 				}
@@ -196,10 +193,10 @@ void do_send_can_msg( TimerHandle_t xTimer )
 	CanMsgPriv *pPriv;
 	unsigned char message[CAN_DATA_LEN];
 	
-	pPriv = pvTimerGetPrivate( xTimer );	
+	pPriv = ( CanMsgPriv * ) pvTimerGetTimerID( xTimer );	
 	if( pPriv == NULL )
 	{
-		printf("%s pvTimerGetPrivate return Null.\r\n", __func__);
+		printf("%s pvTimerGetTimerID return Null.\r\n", __func__);
 		return;
 	}
 	
@@ -220,7 +217,7 @@ void do_send_can_msg( TimerHandle_t xTimer )
 	{
 		if( --( pPriv->count ) <= 0 )
 		{
-			if( pdFAIL == xTimerStop( pPriv->timer, 1 ) )
+			if( pdFAIL == xTimerStop( pPriv->timer, 1 / portTICK_RATE_MS ) )
 			{
 				printf("%s fail to stop timer.\r\n", __func__);
 			}					
@@ -236,8 +233,8 @@ void HandleCanCommandTask(void * pvParameters)
 {
 	int i;
 	int count = 1;
-	static TimerHandle_t *mTimerHandler;
-	CanMsgPriv *p = NULL;
+	CanMsgPriv *pointer;	
+	TimerHandle_t *mTimerHandler;
 
 	mCanSendMutex = xSemaphoreCreateMutex();
 	vSetTaskLogLevel( NULL, eLogLevel_3 );	
@@ -260,21 +257,21 @@ void HandleCanCommandTask(void * pvParameters)
 
 	for ( i = 0; i< SIZE_ARRAY(pcMsg); i++ ) 
 	{
-		p = &( pcMsg[i] );	
-		p->mutex = xSemaphoreCreateMutex();
-	    if( p->mutex == NULL )
+		pointer = &( pcMsg[i] );	
+		pointer->mutex = xSemaphoreCreateMutex();
+		
+	    if( pointer->mutex == NULL )
 	    {
 			printf("%s fail to create mutex.\r\n", __func__);
 	    }		
-		mTimerHandler[i] = xTimerCreate( p->pvTimerID, p->period / portTICK_RATE_MS, 
-			pdTRUE, p->pvTimerID, do_send_can_msg );
+		mTimerHandler[i] = xTimerCreate( pointer->pvName, pointer->period / portTICK_RATE_MS, 
+			pdTRUE, pointer, do_send_can_msg );
 		
 		if( mTimerHandler[i] )
 		{	
-			p->timer = mTimerHandler[i];
-			vTimerSetPrivate( mTimerHandler[i], p );
+			pointer->timer = mTimerHandler[i];
 			
-			if( TYPE_PEROID == p->type )
+			if( TYPE_PEROID == pointer->type )
 			{
 				if( pdFAIL == xTimerStart( mTimerHandler[i], 0 ) )
 				{
@@ -289,8 +286,9 @@ void HandleCanCommandTask(void * pvParameters)
 		}
 	}	
 	
-	while (1)
+	while( 1 )
 	{
+		/*for do something later*/
 		ulTaskNotifyTake( pdFALSE, portMAX_DELAY );		
 	}
 	

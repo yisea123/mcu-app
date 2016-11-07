@@ -22,6 +22,7 @@ extern Ringfifo 	uart6fifo;
 extern Ringfifo 	canfifo;
 extern Ringfifo 	upStreamFifo;
 
+extern unsigned char xmem_used_pecent( unsigned char memx );
 extern void Printf_Application_Version( void );
 extern void vPrintRamdDisk( unsigned int sector );
 extern void vPrintFlashDisk( unsigned int sector );
@@ -30,6 +31,8 @@ extern void MusicCircle( void );
 extern void amr_set_sample_rate( unsigned int rate );
 extern void SpeakerAddVolume( void );
 extern void SpeakerDelVolume( void );
+extern void notifyAndroidPowerOn( void );
+extern void notifyAndroidPowerOff( void );
 
 typedef enum
 {
@@ -1070,7 +1073,7 @@ void Printf_System_Jiffies( void )
 {
 	TickType_t tick = xTaskGetTickCount();
 	printf("Sytem times from boot is %u (s), system tick = %u (ms).\r\n", 
-			portTICK_PERIOD_MS*tick/1000, portTICK_PERIOD_MS*tick);	
+			portTICK_PERIOD_MS * tick / 1000, portTICK_PERIOD_MS * tick);	
 }
 
 __asm void Stm32f407_Force_Reboot( void )
@@ -1213,8 +1216,9 @@ void Printf_Memory_Information( void )
 		size_t xFreeSize = xPortGetFreeHeapSize();
 		float  fUsePercent = 100 - 100 * ( xFreeSize*1.0 / ( configTOTAL_HEAP_SIZE ) );
 	
-		printf("Memory used %f%%, Free Size = %d, Total = %d\r\n", 
+		printf("Memory1 used %f%%, Free Size = %d, Total = %d.\r\n", 
 				fUsePercent, xFreeSize, configTOTAL_HEAP_SIZE);
+		printf("Memory1 used (%d).\r\n",xmem_used_pecent(0));		
 }
 
 void Deal_Command_For_Task( unsigned char *command , vActionType action)
@@ -1335,6 +1339,8 @@ u8 *sys_cmd_tab[]=
 	/*timer*/
 	"tstart",
 	"tstop",
+	"poweron",
+	"poweroff",
 };	    
 
 /*
@@ -1686,6 +1692,13 @@ UBaseType_t pre;
 		case 51:
 			stop_timer_work();
 			break;
+		case 52:
+			notifyAndroidPowerOn();
+			break;
+		case 53:
+			notifyAndroidPowerOff();
+			break;
+			
 		/*Add For FreeRTOS*/
 		default://∑«∑®÷∏¡Ó
 			return USMART_FUNCERR;

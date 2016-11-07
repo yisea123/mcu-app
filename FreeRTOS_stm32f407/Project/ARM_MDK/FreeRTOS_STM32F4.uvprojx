@@ -607,6 +607,31 @@
               <FileType>1</FileType>
               <FilePath>..\..\USER\transport.c</FilePath>
             </File>
+            <File>
+              <FileName>mqtt_msg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\mqtt_msg.c</FilePath>
+            </File>
+            <File>
+              <FileName>xmalloc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\xmalloc.c</FilePath>
+            </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\cJSON.c</FilePath>
+            </File>
+            <File>
+              <FileName>longsung.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\longsung.c</FilePath>
+            </File>
+            <File>
+              <FileName>xlist.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\USER\xlist.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

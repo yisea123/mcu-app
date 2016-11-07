@@ -26,6 +26,7 @@
 #include "uartprotocol.h"
 #include "transport.h"
 #include "cmdhandler.h"
+//#include "longsung.h"
 
 #if( BOARD_NUM == 3 )
 #include "gpioconfig.h"
@@ -33,12 +34,13 @@
 
 #define BOOT_LOG   \
 printf(" \
-\r\n\r\n/******       MCU   +   START        ******/ \
+\r\n\r\n/******       MCU       START        ******/ \
 \r\n/***** YANGJIANZHOU AT GUANGZHOU 21TH *****/ \
 \r\n/********* %s %s *********/ \
 \r\n/******************************************/ \
 \r\n\r\n", __DATE__, __TIME__);
 
+extern void HandleLongSungTask( void * pvParameters );
 extern void Fatfs_Cat_File( char *str );
 void Software_Hardware_Init( void );
 void LED0_Task(void * pvParameters);
@@ -70,6 +72,7 @@ TaskHandle_t pxUpStreamTask;
 TaskHandle_t pxTransportTask;
 TaskHandle_t pxCanTask;
 TaskHandle_t pxCanCommandTask;
+TaskHandle_t pxLongSungTask;
 
 //Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=102816  
 //Program Size: Code=136478 RO-data=58522 RW-data=25568 ZI-data=103328   after add unsigned char mSendBuffer[512];
@@ -86,17 +89,18 @@ int main(void)
 	//vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 #if( BOARD_NUM == 3)	
+	xTaskCreate( HandleLongSungTask, (const char *)"LongSung", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, &pxLongSungTask );
 	xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
 	xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
 #endif
 	//xTaskCreate( TransportTask, (const char *)"Transport", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 6, &pxTransportTask );
 	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 9, &pxUpStreamTask );
-	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*5, NULL, tskIDLE_PRIORITY + 8, &pxDownStreamTask );
+	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 8, &pxDownStreamTask );
 #if( BOARD_NUM != 3)	
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 #endif
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 2, &pxUsmartTask );
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 3, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, configMAX_PRIORITIES - 1 , NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
@@ -366,7 +370,7 @@ void Feed_Wdg_Task( void * pvParameters )
 	vTaskPrioritySet( NULL, pre );
 	
 #if( BOARD_NUM == 3)		
-	( void )android_power_reset();
+	//( void )android_power_reset();
 #endif
 	
 	pxPreviousWakeTime = xTaskGetTickCount();

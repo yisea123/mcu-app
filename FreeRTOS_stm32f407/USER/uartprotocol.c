@@ -19,18 +19,27 @@
 #define 	MSG_STATUS_WAITING				0
 #define 	MSG_STATUS_ACK					1
 
-extern TaskHandle_t 	pxCanTask;
-extern TaskHandle_t     pxUpStreamTask;
-Ringfifo 	   	 		uart6fifo;
-Ringfifo 	    		upStreamFifo;
+extern TaskHandle_t 		pxCanTask;
+extern TaskHandle_t    		pxUpStreamTask;
+Ringfifo 	   	 			uart6fifo;
+Ringfifo 	    			upStreamFifo;
 Ringfifo 					canfifo;
-static WaitAckInfo      waitAckInfo;
-static xSemaphoreHandle xWaitAckSemaphore = NULL ;
-static xSemaphoreHandle mUartSendMutex = NULL;
-xSemaphoreHandle 		xDownStreamSemaphore = NULL ;
-static QueueHandle_t  	mStreamMutex = NULL;
-xSemaphoreHandle 		xSenderSemaphore = NULL ;
-static char 			mSendBuffer[300];
+static WaitAckInfo      	waitAckInfo;
+
+/*mSendBuffer use for DMA buffer*/
+static char 				mSendBuffer[300];
+
+/* xWaitAckSemaphore use for block after send command to android*/
+static xSemaphoreHandle 	xWaitAckSemaphore = NULL ;
+
+/* mUartSendMutex use for lock uart*/
+static xSemaphoreHandle 	mUartSendMutex = NULL;
+
+/* mStreamMutex use for lock upStreamFifo*/
+static xSemaphoreHandle  	mStreamMutex = NULL;
+
+/* xSenderSemaphore use by DMA interrupt to notify UpStreamTask*/
+xSemaphoreHandle 			xSenderSemaphore = NULL ;
 
 #if( VERSION == 2 )
 
@@ -66,31 +75,56 @@ static const unsigned short crctable[256] =
 
 #endif
 
+/*
+* author: 	yangjianzhou
+* function: 	block_wait_ack : block to wait ack form android.
+*/
 static void block_wait_ack( void )
 {
 	xSemaphoreTake( xWaitAckSemaphore, 300 / portTICK_RATE_MS );
 }
 
+/*
+* author: 	yangjianzhou
+* function: 	notify_stream_task : notify the stream task 
+*			receive ack from android.
+*/
 static void notify_stream_task( void )
 {
 	xSemaphoreGive( xWaitAckSemaphore );	
 }
 
+/*
+* author: 	yangjianzhou
+* function: 	obtain_uart_mutex : get mutex for use uart.
+*/
 static void obtain_uart_mutex( void )
 {
 	xSemaphoreTake( mUartSendMutex, portMAX_DELAY );	
 }
 
+/*
+* author: 	yangjianzhou
+* function: 	release_uart_mutex : release mutex for use uart done.
+*/
 static void release_uart_mutex( void )
 {
 	xSemaphoreGive( mUartSendMutex );	
 }
 
+/*
+* author: 	yangjianzhou
+* function: 	obtain_stream_mutex : get mutex for upStreamFifo.
+*/
 static void obtain_stream_mutex( void )
 {
 	xSemaphoreTake( mStreamMutex, portMAX_DELAY );	
 }
 
+/*
+* author: 	yangjianzhou
+* function: 	obtain_stream_mutex : release mutex for upStreamFifo.
+*/
 static void release_stream_mutex( void )
 {
 	xSemaphoreGive( mStreamMutex );	
@@ -99,10 +133,9 @@ static void release_stream_mutex( void )
 /*
 * author: 	yangjianzhou
 * function: 	fill ackBuff by using msg_id and crc.
+* aa bb len(2) msgid(2) type(1) d0~dn = buf, crc(1).     packLen = data len
+* aa bb len(1) msgid(2) type(1) d0~dn = buf, crc(2).     packLen = data len
 */
-
-/*aa bb len(2) msgid(2) type(1) d0~dn = buf, crc(1).     packLen = data len*/
-/*aa bb len(1) msgid(2) type(1) d0~dn = buf, crc(2).     packLen = data len*/
 CRC_Type calculate_crc( unsigned char *buf, int packLen )
 {
 #if( VERSION == 1 )
@@ -343,6 +376,8 @@ static int handle_remote_command( ProtocolData *rData )
 /*
 * author:	yangjianzhou
 * function: 	catch_data_frame get a frame data.
+*	v1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
+*	v2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 */
 static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 {
@@ -354,9 +389,6 @@ static int catch_data_frame( void *fifo, char buff[], int *bufflen )
 	static LEN_Type  datalen;	
 	static int		 state = UHEAD1;	
 	struct rfifo*    mfifo = ( struct rfifo * ) fifo;
-
-	//1:	aa bb len(2) msgid(2) type(1) d0~dn crc(1)					
-	//2:	aa bb len(1) msgid(2) type(1) d0~dn crc(2)
 
 	while( 1 )
 	{
@@ -499,7 +531,6 @@ void HandleDownStreamTask( void * pvParameters )
 	ProtocolAck  *rAck;
 	
 	register_rom_handlers();	
-	xDownStreamSemaphore 	= xSemaphoreCreateCounting( 0xffffffff, 0 );
 	mUartSendMutex 		 	= xSemaphoreCreateMutex();		
 	waitAckInfo.status 		= MSG_STATUS_ACK;
 	waitAckInfo.time 		= 0;
@@ -508,7 +539,7 @@ void HandleDownStreamTask( void * pvParameters )
 	
 	while( 1 )
 	{
-		xSemaphoreTake( xDownStreamSemaphore, portMAX_DELAY );
+		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 
 		while( rfifo_len( &uart6fifo ) > 0 ) 
 		{
@@ -554,10 +585,10 @@ void HandleUpstreamTask( void * pvParameters )
 
 #if( BOARD_NUM == 3 )	
 	MYDMA_Config( DMA2_Stream6, DMA_Channel_5, ( unsigned int )&USART6->DR,
-			( unsigned int )mSendBuffer, sizeof( mSendBuffer ) );
+			( unsigned int ) mSendBuffer, sizeof( mSendBuffer ) );
 #else
 	MYDMA_Config( DMA1_Stream3, DMA_Channel_4, ( unsigned int )&USART3->DR,
-			( unsigned int )mSendBuffer, sizeof( mSendBuffer ) );
+			( unsigned int ) mSendBuffer, sizeof( mSendBuffer ) );
 #endif	
 
 	vTaskDelay( 40 / portTICK_RATE_MS );
@@ -581,7 +612,7 @@ void HandleUpstreamTask( void * pvParameters )
 			wait->status = MSG_STATUS_WAITING;			
 			do {
 				uart_send_lock( buffer, len );
-				block_wait_ack();
+				( void ) block_wait_ack();
 				if( wait->status != MSG_STATUS_ACK ) {
 					printf("%s: send again\r\n", __func__);
 				}
@@ -606,7 +637,7 @@ void process_can_message(unsigned int id, unsigned char buffer[])
 	memcpy( data + sizeof( unsigned int ) + 1, buffer, 8 );
 	
 	len = compose_protocol_command( 13, 0x8001, data, command );
-	add_command_to_stream( command,  len, WAIT_NOT );	
+	add_command_to_stream( command,  len, WAIT_BLOCK/*WAIT_NOT*/ );	
 }
 
 /*
@@ -627,11 +658,11 @@ void HandleCanTask( void * pvParameters )
 	while( 1 )
 	{
 		ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-		while( rfifo_len( &canfifo ) >= sizeof(unsigned int) + sizeof(unsigned char) * 8 )
+		while( rfifo_len( &canfifo ) >= sizeof( unsigned int ) + sizeof( unsigned char ) * 8 )
 		{
-			rfifo_get( &canfifo, &id, sizeof(unsigned int) );
-			rfifo_get( &canfifo, message, sizeof(unsigned char) * 8 );
-			process_can_message( id, message );
+			rfifo_get( &canfifo, &id, sizeof( unsigned int ) );
+			rfifo_get( &canfifo, message, sizeof( unsigned char ) * 8 );
+			( void ) process_can_message( id, message );
 		}
 	}
 

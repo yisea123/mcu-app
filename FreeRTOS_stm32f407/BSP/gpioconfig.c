@@ -298,8 +298,8 @@ void android_power_init( void )
 {
 	DIO_Port_Set_Pin_State(uP2PS_ENABLE,1);// 1 12最先开启
 	DIO_Port_Set_Pin_State(uP24G_BAT_ON,1);// 2 打开4G电源
-	//DIO_Port_Set_Pin_State(uP24G_PWR_ON,1);// 3
-	//DIO_Port_Set_Pin_State(uP24G_RST,1);// 4
+	DIO_Port_Set_Pin_State(uP24G_PWR_ON,1);// 3
+	DIO_Port_Set_Pin_State(uP24G_RST,1);// 4
 	DIO_Port_Set_Pin_State(uP24G_WAKE_AP,1);// 5
 	DIO_Port_Set_Pin_State(uP24G_W_DISABLE,1);// 6 
 	DIO_Port_Set_Pin_State(uP2BL_PWR_EN,1);// 7 开启显示屏背光
@@ -335,6 +335,32 @@ void android_power_reset( void )
 	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );
 	vTaskDelay( 500 / portTICK_RATE_MS );
 	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 1 );	
+}
+
+void android_power_on( void )
+{
+	printf("%s \r\n", __func__);
+	android_power_reset();
+}
+
+void android_power_off( void )
+{
+	printf("%s \r\n", __func__);
+	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );
+	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );
+}
+
+void longsung_power_reset( void )
+{
+	printf("%s \r\n", __func__);
+
+	DIO_Port_Set_Pin_State(uP24G_PWR_ON,0);// 3
+	vTaskDelay( 2000 / portTICK_RATE_MS );	
+	DIO_Port_Set_Pin_State(uP24G_PWR_ON,1);// 3	
+	//vTaskDelay( 100 / portTICK_RATE_MS );
+	DIO_Port_Set_Pin_State(uP24G_RST,0);// 4	
+	vTaskDelay( 100 / portTICK_RATE_MS );
+	DIO_Port_Set_Pin_State(uP24G_RST,1);// 4		
 }
 
 

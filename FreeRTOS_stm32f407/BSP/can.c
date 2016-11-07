@@ -235,8 +235,8 @@ void CAN1_RX0_IRQHandler(void)
 	CAN_Receive(CAN1, 0, &RxMessage);
 	while( fifo->size - rfifo_len( fifo ) < sizeof(unsigned int) + sizeof(unsigned char)*8 )
 	{
-
-		printf("can fifo error!\r\n");
+		//printf("can fifo error!\r\n");
+		fifo->lostBytes += 8;
 		(void) vPortExitCritical();				
 		return;
 	}
@@ -245,12 +245,7 @@ void CAN1_RX0_IRQHandler(void)
 	{
 		rfifo_put(fifo, &RxMessage.StdId, sizeof(unsigned int));
 		rfifo_put(fifo, RxMessage.Data, sizeof(unsigned char)*8);
-		if( pxCanTask )
-		{
-			vTaskNotifyGiveFromISR( pxCanTask, NULL );		
-			
-		}			
-		
+		vTaskNotifyGiveFromISR( pxCanTask, NULL );
 		//xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
 	}	
 	
@@ -468,7 +463,8 @@ void CAN2_RX1_IRQHandler(void) //CAN2_RX0_IRQHandler
 	
 	while( fifo->size - rfifo_len( fifo ) < sizeof(unsigned int) + sizeof(unsigned char)*8 )
 	{
-		printf("can fifo error!\r\n");
+		//printf("can fifo error!\r\n");
+		fifo->lostBytes += 8;
 		(void) vPortExitCritical();				
 		return;
 	}
@@ -477,11 +473,7 @@ void CAN2_RX1_IRQHandler(void) //CAN2_RX0_IRQHandler
 	{
 		rfifo_put(fifo, &RxMessage.StdId, sizeof(unsigned int));
 		rfifo_put(fifo, RxMessage.Data, sizeof(unsigned char)*8);
-		if( pxCanTask )
-		{
-			vTaskNotifyGiveFromISR( pxCanTask, NULL );	
-		}		
-		
+		vTaskNotifyGiveFromISR( pxCanTask, NULL );	
 		//xSemaphoreGiveFromISR(xDownStreamSemaphore, NULL);
 	}	
 
