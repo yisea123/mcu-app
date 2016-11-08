@@ -73,8 +73,9 @@ enum mqtt_dev_statu
   MQTT_DEV_STATUS_DISCONNECT  = 15
 };
 
-enum mqtt_message_type
+typedef enum
 {
+  MQTT_MSG_TYPE_NULL		= -1,
   MQTT_MSG_TYPE_CONNECT     = 1,
   MQTT_MSG_TYPE_CONNACK     = 2,
   MQTT_MSG_TYPE_PUBLISH     = 3,
@@ -89,7 +90,7 @@ enum mqtt_message_type
   MQTT_MSG_TYPE_PINGREQ     = 12,
   MQTT_MSG_TYPE_PINGRESP    = 13,
   MQTT_MSG_TYPE_DISCONNECT  = 14
-};
+}mqtt_message_type;
 
 typedef struct
 {
@@ -147,7 +148,7 @@ typedef struct mqtt_event_data_t
 #define MQTT_EVENT_TYPE_EXITED                7
 #define MQTT_EVENT_TYPE_PUBLISH_CONTINUATION  8
 
-#define OUT_DATA_LEN_MAX        							40
+#define OUT_DATA_LEN_MAX        							60
 
 typedef struct mqtt_state_t
 {

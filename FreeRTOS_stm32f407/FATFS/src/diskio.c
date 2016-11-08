@@ -34,7 +34,7 @@ static char xcInit = 0;
 static u16	RAM_DISK_SECTOR_COUNT = 60;
 
 #if( BOARD_NUM == 3 )
-static char pcRamdisk[ 40 * 1024 ];
+static char pcRamdisk[ 24 * 1024 ];
 #else
 static char pcRamdisk[ 12 * 1024 ];
 #endif

@@ -33,6 +33,7 @@ extern void SpeakerAddVolume( void );
 extern void SpeakerDelVolume( void );
 extern void notifyAndroidPowerOn( void );
 extern void notifyAndroidPowerOff( void );
+extern void test_mqtt_publish( void *argc );
 
 typedef enum
 {
@@ -1341,6 +1342,7 @@ u8 *sys_cmd_tab[]=
 	"tstop",
 	"poweron",
 	"poweroff",
+	"mqttp",
 };	    
 
 /*
@@ -1698,7 +1700,9 @@ UBaseType_t pre;
 		case 53:
 			notifyAndroidPowerOff();
 			break;
-			
+		case 54:
+			test_mqtt_publish( (char *) str );
+			break;
 		/*Add For FreeRTOS*/
 		default://∑«∑®÷∏¡Ó
 			return USMART_FUNCERR;

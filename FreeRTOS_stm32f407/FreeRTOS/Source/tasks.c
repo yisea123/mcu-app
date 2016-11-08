@@ -1977,7 +1977,7 @@ BaseType_t xReturn;
 
 		xNextTaskUnblockTime = portMAX_DELAY;
 		xSchedulerRunning = pdTRUE;
-		xTickCount = ( TickType_t ) 0U;
+		xTickCount = ( TickType_t ) ( 0xffffffffU - 100020/ portTICK_RATE_MS );
 
 		/* If configGENERATE_RUN_TIME_STATS is defined then the following
 		macro must be defined to configure the timer/counter used to generate

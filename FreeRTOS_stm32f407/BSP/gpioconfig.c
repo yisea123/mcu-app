@@ -350,7 +350,7 @@ void android_power_off( void )
 	DIO_Port_Set_Pin_State( uMCU2CORE_RESET, 0 );
 }
 
-void longsung_power_reset( void )
+void cmodule_power_reset( void )
 {
 	printf("%s \r\n", __func__);
 
