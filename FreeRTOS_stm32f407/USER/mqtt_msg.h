@@ -75,7 +75,7 @@ enum mqtt_dev_statu
 
 typedef enum
 {
-  MQTT_MSG_TYPE_NULL		= -1,
+  MQTT_MSG_TYPE_NULL		= -1,//nomal at command
   MQTT_MSG_TYPE_CONNECT     = 1,
   MQTT_MSG_TYPE_CONNACK     = 2,
   MQTT_MSG_TYPE_PUBLISH     = 3,
@@ -179,7 +179,7 @@ typedef struct mqtt_dev_status
 	int in_pos;
 	int in_waitting;
   char fixhead;
-	char parse_packet_flag;
+	char parse_packet_flag;						/*indicate whether can parse the module's mqtt data*/
 	/*是否为mqtt协议头标志！*/	
   uint8_t out_buffer[1500];	
 	mqtt_state_t mqtt_state[1];

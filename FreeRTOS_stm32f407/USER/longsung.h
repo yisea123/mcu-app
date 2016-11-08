@@ -144,9 +144,55 @@ typedef struct {
 	struct list_head list;					/*node for list*/
 }AtCommand;
 
+struct device_operations {
+	void (* init_module )( void *dev );	
+	void (* poll_module_signal )( void *dev );
+	void (* check_module_sm )( void *dev ) ;
+	void (* check_module_ip )( void *dev ) ;
+	void (* module_request_ip )( void *dev ) ;	
+	void (* close_module_socket )( void *dev ) ;
+	void (* tcp_connect_server )( void *dev ) ;
+	void (* push_socket_data )( void *dev ) ;
+	void (* delete_module_sm )( void *dev ) ;
+	void (* read_module_sm )( void *dev ) ;
+};
+
+struct module_callback_operations {
+	void (* tcp_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+
+	void (* connect_err_callback)( void *dev, RemoteTokenizer *tzer );
+	void (* connect_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* disconnect_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+
+	void (* signal_strength_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+
+	void (* get_ip_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* get_ip_fail_callback)( void *dev, RemoteTokenizer *tzer );
+
+	void (* at_command_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* at_command_success_callback)( void *dev, RemoteTokenizer *tzer );
+	void (* at_command_fail_callback)( void *dev, RemoteTokenizer *tzer );
+
+	void (* check_simcard_type_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+
+	void (* check_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* read_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* sm_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok, int index );
+	void (* sm_notify_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* sm_read_err_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );	
+};
+
+typedef struct {
+	char name[20];
+	struct device_operations *d_ops;	
+	struct module_callback_operations* c_ops;
+	void (* module_reader_parse )( UartReader *reader );	
+	void *dev;
+}ComModule;
+
 typedef struct {
 	char is_inited;
-	int simcard_type;						/*indicate sim care type*/
+	int simcard_type;						/*indicate sim care type,  0 is no card*/
 	
 	char reset_request;
 	char boot_status;						/*indicate if cmodule boot finish*/
@@ -188,46 +234,9 @@ typedef struct {
 	uint32_t free_count;
 	long long sys_time;
 	mqtt_dev_status *mqtt_dev;				/*pointer to mqtt_dev_status*/
+	ComModule *module;
 }DevStatus;
 
-struct cmodule_callback_operations {
-	void (* tcp_data_callback)(RemoteTokenizer *tzer, Token* tok);
-
-	void (* connect_err_callback)(RemoteTokenizer *tzer);
-	void (* connect_success_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* disconnect_callback)(RemoteTokenizer *tzer, Token* tok);
-
-	void (* signal_strength_callback)(RemoteTokenizer *tzer, Token* tok);
-
-	void (* get_ip_success_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* get_ip_fail_callback)(RemoteTokenizer *tzer);
-
-	void (* at_command_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* at_command_success_callback)(RemoteTokenizer *tzer);
-	void (* at_command_fail_callback)(RemoteTokenizer *tzer);
-
-	void (* check_simcard_type_callback)(RemoteTokenizer *tzer, Token* tok);
-
-	void (* check_sm_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* read_sm_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* sm_data_callback)(RemoteTokenizer *tzer, Token* tok, int index);
-	void (* sm_notify_callback)(RemoteTokenizer *tzer, Token* tok);
-	void (* sm_read_err_callback)(RemoteTokenizer *tzer, Token* tok);	
-};
-
-typedef struct {
-	char name[20];
-	UartReader *reader;
-	struct cmodule_callback_operations* c_c_ops;
-	
-}Cmodule;
-
-//extern void longsung_init(void);
-//extern void handle_longsung_uart_msg(void);
-//extern int str2int(const char* p, const char* end);
-//extern void notify_longsung_period(void);
-//extern void handle_longsung_setting(void);
-//extern void notify_longsung_second(void);
 extern DevStatus dev[1];
 extern void HandleLongSungTask( void * pvParameters );
 #endif

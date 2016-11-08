@@ -17,7 +17,7 @@ AtCommand 					*pAtCommand;
 MqttBuffer					*pMqttBuff[3];
 /*buffer manager for at command and mqtt buffer*/
 
-extern void cmodule_power_reset( void );
+extern void module_power_reset( void );
 static char* make_mqtt_packet(char* buff, unsigned char* data, int len);
 static void make_command_to_list(char index, unsigned int interval, int para);
 static void mqtt_set_mesg_ack(int type, uint16_t msg_id);
@@ -414,7 +414,7 @@ Fail:
 	return -1;
 }
 
-static int cmodule_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
+static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
 {
 	int count = 0;
 
@@ -454,7 +454,7 @@ static int cmodule_tokenizer_init( RemoteTokenizer* t, const char* p, const char
 	return count;		
 }
 
-static Token cmodule_tokenizer_get( RemoteTokenizer* t, int index )
+static Token module_tokenizer_get( RemoteTokenizer* t, int index )
 {
 	Token  tok;
 	static const char*  dummy = "";
@@ -1009,7 +1009,7 @@ void check_packet_from_fixhead(char *fixhead, uint8_t *read, int nbytes)
 	msg_len = mqtt_get_total_length(read, nbytes);
 
 	/* 如果解析包错误，如果递归， 结束递归！*/
-	if(!mqtt_dev->parse_packet_flag)
+	if( !mqtt_dev->parse_packet_flag )
 	{
 		printf("%s: waitting mqtt tcp connect server!\r\n", __func__);
 		return;
@@ -1066,7 +1066,7 @@ void on_tcp_data_callback(RemoteTokenizer *tzer, Token* tok)
 
 	mqtt_dev->recv_bytes += nbytes;
 		/* 如果解析包错误， 结束解析数据 */
-	if(!mqtt_dev->parse_packet_flag)
+	if( !mqtt_dev->parse_packet_flag )
 	{
 		printf("%s: drop %d bytes. waitting mqtt reset finish...\r\n", __func__, nbytes);
 		return;
@@ -1153,13 +1153,17 @@ void on_connect_service_success_callback(RemoteTokenizer *tzer, Token* tok)
 	//+MIPOPEN=1,1
 	int i, socketId = str2int(tok[0].p+9, tok[0].end);
 	//printf("[%s: socketId = %d]\r\n", __func__, socketId);
-	switch(socketId)
+	switch( socketId )
 	{
 		case 1:
 		case 2:
 		case 3:
-		case 4: i = socketId - 1; break;
-		default: return;
+		case 4: 
+			i = socketId - 1; 
+			break;
+			
+		default: 
+			return;
 	}
 	
 	dev->socket_open[i] = socketId;
@@ -1308,10 +1312,13 @@ void on_at_cmd_fail_callback(RemoteTokenizer *tzer)
 	{
 		//AT+MIPOPEN=1,0,"
 		printf("[TCP CONNECT FAIL! AT: %s", dev->at_sending);
-		dev->socket_open[0] = 1;
-		dev->socket_open[1] = 2;
-		dev->socket_open[2] = 3;
-		dev->socket_open[3] = 4;
+		if( dev->socket_num > 0 )
+		{
+			dev->socket_open[0] = 1;
+			dev->socket_open[1] = 2;
+			dev->socket_open[2] = 3;
+			dev->socket_open[3] = 4;
+		}
 		dev->tcp_connect = 0;
 	} 
 	else if( !memcmp(dev->at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) 
@@ -1480,7 +1487,7 @@ void on_sm_read_err_callback(RemoteTokenizer *tzer, Token* tok)
 	dev->sm_read_flag = 1;	
 }
 
-static void longsung_reader_parse( UartReader* r )
+static void module_reader_parse( UartReader* r )
 {
 	int i;	
 	Token tok[35];
@@ -1490,7 +1497,7 @@ static void longsung_reader_parse( UartReader* r )
 	print_line( UART4, r->in, r->pos );//jzyang
 	/*打印4G的所有串口消息, release 版本时去掉。*/
 	
-	cmodule_tokenizer_init( tzer, r->in, r->in + r->pos );
+	module_tokenizer_init( tzer, r->in, r->in + r->pos );
 	
 	if( tzer->count == 0 ) 
 		return;
@@ -1502,7 +1509,7 @@ static void longsung_reader_parse( UartReader* r )
 	
 	for( i = 0; i < tzer->count; i++ ) 
 	{
-		tok[i] = cmodule_tokenizer_get(tzer, i);
+		tok[i] = module_tokenizer_get(tzer, i);
 	}
 	
 	if( dev->sm_data_flag ) 
@@ -1562,7 +1569,7 @@ static void longsung_reader_parse( UartReader* r )
 	}
 }
 
-static void cmodule_reader_addc( UartReader* r, int c )
+static void module_reader_addc( UartReader* r, int c )
 {
 	if ( r->overflow ) 
 	{
@@ -1584,21 +1591,21 @@ static void cmodule_reader_addc( UartReader* r, int c )
 
 	if( c == '\n' /*|| c == '\0'*/ ) 
 	{
-		longsung_reader_parse( r );
+		module_reader_parse( r );
 		r->pos = 0;
 		/*for fix bug. must memset r->in*/
 		memset( r->in, '\0', sizeof(r->in) );
 	}
 }
 
-void handle_cmodule_uart_msg( void )
+void handle_module_uart_msg( void )
 {
 	unsigned char ch;
 
 	while( rfifo_len( uart3fifo ) > 0 ) 
 	{
 		rfifo_get( uart3fifo, &ch, 1 );
-		cmodule_reader_addc( reader, ch );
+		module_reader_addc( reader, ch );
 	}	
 }
 
@@ -1646,7 +1653,7 @@ void test_mqtt_publish( void *argc )
 
 }
 
-static void init_cmodule_reader(void) 
+static void init_module_reader(void) 
 {
 	reader->inited = 1;
 	reader->pos = 0;
@@ -1717,7 +1724,7 @@ static void init_mqtt_dev(mqtt_dev_status* dev)
 	}
 }
 
-static void init_cmodule_status(char flag)
+static void init_module_status(char flag)
 {
   	int i;
 	
@@ -2507,7 +2514,7 @@ scsq-rcsq=4! error.
 AT+MIPSEND=1,"3215000b2f78702f7075626c6973680004686920746f6d"
 ERROR
 init_mqtt_dev
-cmodule_power_reset 
+module_power_reset 
 sending [PUBLISH]! mqtype=3,id=0x0004
 sending [PINGREQ]! mqtype=12,id=0x0000
 sending [PINGREQ]! mqtype=12,id=0x0000
@@ -2659,7 +2666,7 @@ static void check_socket_number( void )
 	if( ( dev->socket_num > 1 || dev->socket_close_flag ) ) 
 	{
 		/*检查是否已经发过ATMIPCLOSE*/
-		if(!check_command_exist( ATMIPCLOSE, &dev->at_head )) 
+		if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
 		{ 
 			//for( i=0; i < sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) 
 			for( i = 0; i < SIZE_ARRAY( dev->socket_open ); i++ ) 
@@ -2780,7 +2787,7 @@ static void check_reset_condition(void)
 	}
 }
 
-static void send_init_at_command(void)
+static void init_module(void)
 {
 	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
 		
@@ -2789,7 +2796,7 @@ static void send_init_at_command(void)
 	make_command_to_list(ATMIPCALL_, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);
 	make_command_to_list(ATMIPCALL0, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
 	make_command_to_list(ATMIPPROFILE, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
-	make_command_to_list(ATMIPCALL1, ONE_SECOND, -1);
+	make_command_to_list(ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
 	/*ATMIPHEX有时没成功，注意原因*/
 	make_command_to_list(ATMIPHEX, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);						
 	make_command_to_list(ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
@@ -2798,10 +2805,15 @@ static void send_init_at_command(void)
 	ATMIPHEX不成功，导致返回1438 而不是1469， 1500为buffer长度。
 	AT+MIPSEND=1,"101d00064d5149736470030400780003594a5a00036d637500056465617468"
 	+MIPSEND:1,1438
-	*****************************************************************************/				
-
+	*****************************************************************************/
 	make_command_to_list(ATMIPCALL_, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);		
 	dev->heartbeat_tick = 6;				
+}
+
+static void poll_module_signal( void )
+{
+	make_command_to_list( ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
+	dev->scsq++;
 }
 
 static void list_sm_event(void)
@@ -2856,9 +2868,9 @@ static void clean_run_status()
 }
 
 /*状态机模式： 横竖两种写法。*/
-void handle_cmodule_setting(void)
+void handle_module_setting(void)
 {
-	static char period = 0;
+	char period_flag = 0;
 	
 	/*android关闭，重启4G模块*/
 	if( dev->reset_request ) 
@@ -2873,10 +2885,10 @@ void handle_cmodule_setting(void)
 			printf("%s xTimer working.\r\n", __func__);
 		}
 
-		init_cmodule_status( 0 );
+		init_module_status( 0 );
 		init_mqtt_dev( mqtt_dev );					
 		/*reset 4g modules by gpio*/
-		cmodule_power_reset();
+		module_power_reset();
 		release_command_from_list( &dev->at_head );
 		release_command_from_list( &dev->mqtt_head );
 		release_command_from_list( &dev->atcmd_head );		
@@ -2887,22 +2899,21 @@ void handle_cmodule_setting(void)
 		/*check at every 50s*/
 		dev->period_tick = 0;
 		dev->heartbeat_tick++;		
-		period = 1;	
+		period_flag = 1;	
 		
 		printf("*********************************\r\n");
-		make_command_to_list( ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
-		dev->scsq++;
+		poll_module_signal();
 
 		if( dev->simcard_type == -1 ) 
 		{				
-			send_init_at_command();
+			init_module();
 		}			
 	}
 
 	if( dev->boot_status ) 
 	{
 		/*check at every moment*/
-		if( period ) 
+		if( period_flag ) 
 		{
 			/*check at every 40s*/
 			check_reset_condition();		
@@ -2935,10 +2946,9 @@ void handle_cmodule_setting(void)
 	at_list_cmd();
 	mqtt_list_cmd();	
 	atcmd_list_cmd(); 
-	period = 0;	
 }
 
-void cmodule_clean_work( void )
+void module_clean_work( void )
 {
 	unsigned int tick;
 
@@ -2975,10 +2985,10 @@ void cmodule_clean_work( void )
 			}
 			rfifo_clean( uart3fifo );
 			/*set mqtt_alive to 0*/
-			init_cmodule_status( 1 );
+			init_module_status( 1 );
 			init_mqtt_dev( mqtt_dev );
 			/*reset 4g modules by gpio*/
-			cmodule_power_reset(); 	
+			module_power_reset(); 	
 		}
 		
 		break;
@@ -2986,10 +2996,10 @@ void cmodule_clean_work( void )
 
 }
 
-void cmodule_init()
+void module_init()
 {	
-	init_cmodule_reader();
-	init_cmodule_status( 1 );
+	init_module_reader();
+	init_module_status( 1 );
 	
 	INIT_LIST_HEAD( &dev->at_head );
 	INIT_LIST_HEAD( &dev->mqtt_head );
@@ -3039,7 +3049,7 @@ void HandleLongSungTask( void * pvParameters )
 	init_mqtt_buffer();
 	rfifo_init( uart3fifo, 1024 * 2 );	
 	(void) uart3_init( 115200 );
-	cmodule_init();
+	module_init();
  	xTimer = xTimerCreate( "longsung", 50000 / portTICK_RATE_MS, 
 							pdTRUE, dev, notify_longsung_period );
 	vSetTaskLogLevel( NULL, eLogLevel_3 );
@@ -3055,10 +3065,10 @@ void HandleLongSungTask( void * pvParameters )
 		printf("%s: android power off, go to work..\r\n", __func__);
 		while( !mAndroidPowerStatus )
 		{
-			handle_cmodule_uart_msg();
-			handle_cmodule_setting();
+			handle_module_uart_msg();
+			handle_module_setting();
 		}
-		cmodule_clean_work();
+		module_clean_work();
 	}
 }
 
