@@ -373,7 +373,7 @@ void uart6_init(u32 bound)
 
 
 extern Ringfifo 		uart6fifo;
-extern Ringfifo 		uart3fifo[1];
+Ringfifo 	   	 		uart3fifo[1];
 extern TaskHandle_t 	pxDownStreamTask;
 //extern xSemaphoreHandle xDownStreamSemaphore;
 

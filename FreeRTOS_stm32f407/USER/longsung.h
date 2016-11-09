@@ -8,29 +8,27 @@
 #include "aes.h"
 #include "md5.h"
 #include "sys.h"
-#include "xmalloc.h"
 #include "usart.h"
 #include "rfifo.h"
 #include "xlist.h"
-#include "cjson.h"
 #include "mqtt_msg.h"
 #include <string.h>
 #include <stdio.h>
-#include "mqtt_msg.h"
+#include <math.h>
+#include <stdlib.h>
+#include <float.h>
+#include <limits.h>
+#include <ctype.h>
 
-//#define ONE_SECOND		300300
+#define NOW_TICK		xTaskGetTickCount()
+#define SIZE_ARRAY(a) 	(sizeof(a) / sizeof((a)[0]))
+
 #define ONE_SECOND		( 1000/portTICK_RATE_MS )
 #define MAX_TOKENS		20
 
 /*可使用的JSON长度小于二分之一MAX_LINE_LEN, 
 由于4G模块每包最多1500， hex就750个！*/
 #define MAX_LINE_LEN		1555//1024 1500
-
-/******************************/
-#define PPP_DISCONNECT 		0
-#define PPP_CONNECTING 		1
-#define PPP_CONNECTED  		2
-/******************************/
 
 /******************************/
 #define ATCSQ					1
@@ -53,6 +51,12 @@
 #define ATMQTT					18
 /******************************/
 
+typedef enum {
+	 PPP_DISCONNECT = 0,
+	 PPP_CONNECTING = 1,
+	 PPP_CONNECTED  = 2
+}module_ppp_status;
+
 typedef struct {
     const char*  p;
     const char*  end;
@@ -63,33 +67,34 @@ typedef struct {
 	Token tokens[MAX_TOKENS];
 }RemoteTokenizer;
 
-typedef void (* tcp_data_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* tcp_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
 
-typedef void (* connect_err_callback)(RemoteTokenizer *tzer);
-typedef void (* connect_success_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* disconnect_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* connect_err_callback)( void *dev, RemoteTokenizer *tzer);
+typedef void (* connect_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* disconnect_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
 
-typedef void (* signal_strength_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* signal_strength_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
 
-typedef void (* get_ip_success_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* get_ip_fail_callback)(RemoteTokenizer *tzer);
+typedef void (* get_ip_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* get_ip_fail_callback)( void *dev, RemoteTokenizer *tzer);
 
-typedef void (* at_command_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* at_command_success_callback)(RemoteTokenizer *tzer);
-typedef void (* at_command_fail_callback)(RemoteTokenizer *tzer);
+typedef void (* at_command_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* at_command_success_callback)( void *dev, RemoteTokenizer *tzer);
+typedef void (* at_command_fail_callback)( void *dev, RemoteTokenizer *tzer);
 
-typedef void (* check_simcard_type_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* check_simcard_type_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
 
-typedef void (* check_sm_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* read_sm_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* sm_data_callback)(RemoteTokenizer *tzer, Token* tok, int index);
-typedef void (* sm_notify_callback)(RemoteTokenizer *tzer, Token* tok);
-typedef void (* sm_read_err_callback)(RemoteTokenizer *tzer, Token* tok);
+typedef void (* check_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* read_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* sm_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok, int index);
+typedef void (* sm_notify_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
+typedef void (* sm_read_err_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
 
 typedef struct {
 	char inited;
 	int pos;
 	int overflow;
+	void *p_dev;
 	
 	connect_err_callback on_connect_fail;
 	connect_success_callback on_connect_success;
@@ -135,13 +140,14 @@ typedef struct {
 	mqtt_message_type mqtype;				/*MQTT_MSG_TYPE_CONNECT ... 
 											type for mqtt message,  MQTT_MSG_TYPE_NULL
 											for AT type*/
-	uint16_t msgid;							/*message id for mqtt message*/
+	unsigned short msgid;					/*message id for mqtt message*/
 	char mqttack;							/*for check mqtt ack*/
 	unsigned char *mqttdata;				/*for pointer malloc mqtt data*/
 	int mqttdata_len;						/*for store mqtt data length*/
 	char mqtt_try;							/*for store mqtt message send times*/		
 	char mqtt_clean;							/*clean for mqtt command*/
 	struct list_head list;					/*node for list*/
+	//void *priv;								/*private data pointer*/
 }AtCommand;
 
 struct device_operations {
@@ -155,9 +161,10 @@ struct device_operations {
 	void (* push_socket_data )( void *dev ) ;
 	void (* delete_module_sm )( void *dev ) ;
 	void (* read_module_sm )( void *dev ) ;
+	void (* send_command_to_module )( AtCommand* cmd );
 };
 
-struct module_callback_operations {
+struct callback_operations {
 	void (* tcp_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
 
 	void (* connect_err_callback)( void *dev, RemoteTokenizer *tzer );
@@ -182,29 +189,37 @@ struct module_callback_operations {
 	void (* sm_read_err_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );	
 };
 
-typedef struct {
+/*
+后续会对通讯模块进行抽象并实现
+在换其它的模块时，可以在不修改核心
+代码的情况下，只需实现对具体模块
+的操作即可，对模块的具体操作抽象
+成对所有通讯模块操作的最大集合
+*/
+typedef struct ComModule{
+	void *dev;	
 	char name[20];
+	struct ComModule * next;
 	struct device_operations *d_ops;	
-	struct module_callback_operations* c_ops;
-	void (* module_reader_parse )( UartReader *reader );	
-	void *dev;
+	struct callback_operations* c_ops;
+	void (* module_reader_parse )( UartReader *reader );
 }ComModule;
 
 typedef struct {
-	char is_inited;
+//	char is_inited;
 	int simcard_type;						/*indicate sim care type,  0 is no card*/
 	
-	char reset_request;
+	char reset_request;						/*request to power reset module*/
 	char boot_status;						/*indicate if cmodule boot finish*/
 	
 	int singal[2];
 	
-	char tcp_connect;
+	char tcp_connect_status;				/*indicate tcp status*/
 	char ip[30];							/*store ip from china mobile*/
-	char ppp_status;						/*indicate the net status*/
-	char socket_close_flag;
-	int socket_open[4];
-	char socket_num;
+	module_ppp_status ppp_status;			/*indicate the net status*/
+	char socket_close_flag;					/*close all socket flag, if it is 1, close socket*/
+	int socket_open[4];						/*store socket number*/
+	char socket_num;						/*socket number open in module*/
 	
 	int sm_index[20];
 	char sm_num;
@@ -221,24 +236,34 @@ typedef struct {
 	char period_tick;						/*peroid flag*/
 	
 	int at_count;
-	char at_sending[64];
+	char at_sending[64];					/*store sending at command*/
 	AtCommand* atcmd;						/*AtCommand that be sending*/
 	struct list_head at_head;				/*all AtCommand sending list*/
 	struct list_head mqtt_head;				/*mqtt type AtCommand wait ack list, add to list if need wait ack*/	
 	struct list_head atcmd_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/
 	unsigned int close_tcp_interval;		/*for waitting someting times then close tcp*/
-	unsigned int clean_interval;			/*for clean waitting someting times*/
+	//unsigned int clean_interval;			/*for clean waitting someting times*/
 	unsigned int tick_sum;					/*relate to close_tcp_interval and clean_interval*/
 	unsigned int tick_tag;					/*relate to close_tcp_interval and clean_interval*/
 	uint32_t malloc_count;
 	uint32_t free_count;
 	long long sys_time;
-	mqtt_dev_status *mqtt_dev;				/*pointer to mqtt_dev_status*/
+	unsigned char tcp_read[750];			/*cache tcp data*/
+	
+	UartReader *reader;					/*UartReader instance*/
+	mqtt_dev_status *mqtt_dev;			/*mqtt_dev_status instance*/
 	ComModule *module;
+
+	AtCommand *p_atcommand;					/*buffer manager for at command*/
+	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/	
+	TimerHandle_t os_timer; 				/*freeRTOS timer*/
+	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
+	char android_power_status;
+	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
 }DevStatus;
 
-extern DevStatus dev[1];
-extern void HandleLongSungTask( void * pvParameters );
+extern void HandleModuleTask( void * pvParameters );
+extern void test_mqtt_publish( void *data );
 #endif
 
 

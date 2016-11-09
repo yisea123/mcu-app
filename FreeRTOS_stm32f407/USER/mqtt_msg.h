@@ -148,7 +148,7 @@ typedef struct mqtt_event_data_t
 #define MQTT_EVENT_TYPE_EXITED                7
 #define MQTT_EVENT_TYPE_PUBLISH_CONTINUATION  8
 
-#define OUT_DATA_LEN_MAX        							60
+//#define OUT_DATA_LEN_MAX        							60
 
 typedef struct mqtt_state_t
 {
@@ -167,30 +167,30 @@ typedef struct mqtt_state_t
   uint16_t pending_msg_id;
   int pending_msg_type;
 	int mqtt_flags;
-	unsigned char *outdata[OUT_DATA_LEN_MAX];
-	char jsonbuff[750];
+//	unsigned char *outdata[OUT_DATA_LEN_MAX];
+	//char jsonbuff[750];
 } mqtt_state_t;
 
 typedef struct mqtt_dev_status
 {
 	enum mqtt_dev_statu connect_status;
 	/*由于4G模块的原因，最多支持1500个字节，也就750个hex!*/
-  uint8_t in_buffer[1500];//750 1024
+  	uint8_t in_buffer[1500];//750 1024
 	int in_pos;
 	int in_waitting;
-  char fixhead;
+  	char fixhead;
 	char parse_packet_flag;						/*indicate whether can parse the module's mqtt data*/
 	/*是否为mqtt协议头标志！*/	
-  uint8_t out_buffer[1500];	
+  	uint8_t out_buffer[1500];	
 	mqtt_state_t mqtt_state[1];
 	mqtt_connect_info_t connect_info;
 	char subscribe_topic[128];
 	uint32_t pub_in_num;
 	uint32_t pub_out_num;
 	uint32_t reset_count;
-	long long recv_bytes;
+	unsigned int recv_bytes;
  	char iot;
-	void *pDev;
+	void *p_dev;
 } mqtt_dev_status;
 
 static int mqtt_get_type(uint8_t* buffer)   { return (buffer[0] & 0xf0) >> 4; }
