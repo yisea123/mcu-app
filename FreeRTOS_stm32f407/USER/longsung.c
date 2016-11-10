@@ -28,7 +28,7 @@ MqttBuffer * do_init_mqtt_buffer( int num, int capacity )
 	mbuffer = ( MqttBuffer * ) pvPortMalloc( sizeof( MqttBuffer ) * num );
 	if( !mbuffer )
 	{
-		printf("%s: pvPortMalloc pMqttBuff fail\r\n", __func__);
+		printf("%s: pvPortMalloc MqttBuffer fail\r\n", __func__);
 		return NULL;
 	}	
 	for( i = 0; i < num; i++ )
@@ -80,23 +80,25 @@ void init_mqtt_buffer( MqttBuffer **p_mqttbuff, int size )
 		p_mqttbuff[i] = do_init_mqtt_buffer( num, capacity );
 		if( !p_mqttbuff[i] )
 		{
-			printf("%s: pvPortMalloc pMqttBuff[%d] fail\r\n", __func__, i);
+			printf("%s: pvPortMalloc MqttBuffer[%d] fail\r\n", __func__, i);
 			break;
 		}
 	}
 }
 
-char* alloc_mqtt_buffer( DevStatus *dev, int len )
+char* alloc_mqtt_buffer( int len )
 {
 	int i = 0;
 	int j = 0;
 	MqttBuffer* p;
 
+	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 	if( !dev )
 	{
-		printf("%s: dev null pointer error!\r\n", __func__);
+		printf("%s: StoragePointer fail!\r\n", __func__);
 		return NULL;
-	}	
+	}
+
 	for( i = 0; i < SIZE_ARRAY( dev->p_mqttbuff ); i++ )
 	{	
 		p = dev->p_mqttbuff[i];
@@ -109,9 +111,10 @@ char* alloc_mqtt_buffer( DevStatus *dev, int len )
 					if( p[j].be_used == 0 ) 
 					{
 						memset( p[j].buff, 0, sizeof( p[j].capacity ) );
-						printf("%s: alloc node ok! len(%d), pMqttBuff[%d][%d].apacity(%d)\r\n", 
-							__func__, len, i, j, p[0].capacity);					
+						//printf("%s: alloc node ok! len(%d), pMqttBuff[%d][%d].apacity(%d)\r\n", 
+						//	__func__, len, i, j, p[0].capacity);					
 						p[j].be_used = 1;
+						dev->malloc_count++;
 						return p[j].buff;
 					}
 				}
@@ -123,17 +126,19 @@ char* alloc_mqtt_buffer( DevStatus *dev, int len )
 	return NULL;
 }
 
-void dealloc_mqtt_buffer( DevStatus *dev, char *buff )
+void dealloc_mqtt_buffer( char *buff )
 {
 	int i = 0;
 	int j = 0;
 	MqttBuffer* p;
 	
+	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 	if( !dev )
 	{
-		printf("%s: dev null pointer error!\r\n", __func__);
+		printf("%s: StoragePointer fail!\r\n", __func__);
 		return;
-	}	
+	}
+
 	for( i = 0; i < SIZE_ARRAY( dev->p_mqttbuff ); i++ )
 	{	
 		p = dev->p_mqttbuff[i];
@@ -143,9 +148,10 @@ void dealloc_mqtt_buffer( DevStatus *dev, char *buff )
 			{
 				if( p[j].be_used == 1 &&  p[j].buff == buff ) 
 				{
-					printf("%s: dealloc node ok! p_mqttbuff[%d][%d]\r\n", __func__, i, j);					
+					//printf("%s: dealloc node ok! p_mqttbuff[%d][%d]\r\n", __func__, i, j);					
 					p[j].be_used = 0;
 					memset( p[j].buff, 0, sizeof( p[j].capacity ) );
+					dev->free_count++;
 					return;
 				}
 			}
@@ -172,13 +178,14 @@ void init_command_buffer( AtCommand **p_atcommand, unsigned char num )
 	}
 }
 
-AtCommand* alloc_command( DevStatus *dev )
+AtCommand* alloc_command()
 {
 	int i = 0;
 
+	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 	if( !dev )
 	{
-		printf("%s: dev null pointer error!\r\n", __func__);
+		printf("%s: StoragePointer fail!\r\n", __func__);
 		return NULL;
 	}
 
@@ -192,9 +199,9 @@ AtCommand* alloc_command( DevStatus *dev )
 		if( dev->p_atcommand[i].be_used == 0 )
 		{
 			dev->p_atcommand[i].be_used = 1;
-			printf("%s: alloc atcommand[%d](%p) ok.\r\n", __func__, 
-				i, &( dev->p_atcommand[i] ));
-			
+			//printf("%s: alloc atcommand[%d](%p) ok.\r\n", __func__, 
+			//	i, &( dev->p_atcommand[i] ));
+			dev->malloc_count++;
 			return &( dev->p_atcommand[i] );
 		}
 	}
@@ -203,24 +210,29 @@ AtCommand* alloc_command( DevStatus *dev )
 	return NULL;
 }
 
-void dealloc_command( DevStatus *dev, AtCommand* command )
+void dealloc_command( AtCommand* command )
 {
 	int i;
 
+	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 	if( !dev )
 	{
-		printf("%s: dev null pointer error!\r\n", __func__);
+		printf("%s: StoragePointer fail!\r\n", __func__);
 		return;
 	}
 	if( command )
 	{
 		for( i = 0; i < command->num; i++ ) 
 		{
-		 if( command == &( dev->p_atcommand[i] ) )
-		 	break;
+		 	if( command == &( dev->p_atcommand[i] ) )
+		 	{
+		 		break;
+		 	}
 		}
 		if( i >= command->num )
+		{
 			printf("%s: i(%d) error!!!!\r\n", __func__, i);
+		}
 	}
 	if( command && command->be_used )
 	{
@@ -235,7 +247,8 @@ void dealloc_command( DevStatus *dev, AtCommand* command )
 		command->mqttack = 0;
 		command->index = 0;
 		command->para = 0;
-		printf("%s: dealloc_command ok! (%p), i(%d)\r\n", __func__, command, i);		
+		//printf("%s: dealloc_command ok! (%p), i(%d)\r\n", __func__, command, i);
+		dev->free_count++;
 	}
 	else
 	{
@@ -1007,10 +1020,11 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	int i, nbytes;
 
+	static unsigned char tcp_read[750];
 	DevStatus *dev = ( DevStatus* ) priv;	
 	mqtt_dev_status *mqtt_dev = dev->mqtt_dev;
 	
-	memset(dev->tcp_read, '\0', sizeof( dev->tcp_read ));
+	memset( tcp_read, '\0', sizeof( tcp_read ) );
 	nbytes = str2int( tok[1].p, tok[1].end );//nbytes <= 750
 
 	mqtt_dev->recv_bytes += nbytes;
@@ -1023,14 +1037,14 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	//printf("%s:--->", __func__);
 	for( i = 0; i < nbytes; i++ )
 	{
-		dev->tcp_read[i] = str_to_hex( ( char* ) tok[2].p + 2  * i );
+		tcp_read[i] = str_to_hex( ( char* ) tok[2].p + 2  * i );
 		//printf("0X%02x ", dev->tcp_read[i]);
 	}	
 	//printf("##### ##### nbytes(%d)\r\n", nbytes);
 	
 	if( mqtt_dev->fixhead )
 	{
-		check_packet_from_fixhead( mqtt_dev, dev->tcp_read, nbytes );
+		check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes );
 	}
 	else 
 	{
@@ -1039,7 +1053,7 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 			if(mqtt_dev->in_waitting == nbytes)
 			{
 				printf("%s: in_waitting == nbytes = %d\r\n", __func__, nbytes);
-				memcpy( mqtt_dev->in_buffer + mqtt_dev->in_pos, dev->tcp_read, nbytes);
+				memcpy( mqtt_dev->in_buffer + mqtt_dev->in_pos, tcp_read, nbytes);
 				parse_mqtt_packet( mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
 				mqtt_dev->fixhead = 1;
 				mqtt_dev->in_waitting = 0;
@@ -1048,18 +1062,18 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 			else if(mqtt_dev->in_waitting < nbytes)
 			{
 				printf("%s: [%d] in_waitting < nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
-				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, dev->tcp_read, mqtt_dev->in_waitting);
+				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, mqtt_dev->in_waitting);
 				parse_mqtt_packet(mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
-				memmove(dev->tcp_read, dev->tcp_read+mqtt_dev->in_waitting, nbytes-mqtt_dev->in_waitting);
+				memmove( tcp_read, tcp_read + mqtt_dev->in_waitting, nbytes-mqtt_dev->in_waitting);
 				mqtt_dev->fixhead = 1;
 				mqtt_dev->in_waitting = 0;
 				mqtt_dev->in_pos = 0;				
-				check_packet_from_fixhead( mqtt_dev, dev->tcp_read, nbytes-mqtt_dev->in_waitting);
+				check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes-mqtt_dev->in_waitting);
 			}
 			else if(mqtt_dev->in_waitting > nbytes)
 			{
 				printf("%s: [%d] in_waitting > nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
-				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, dev->tcp_read, nbytes);
+				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, nbytes);
 				mqtt_dev->in_pos += nbytes;
 				mqtt_dev->in_waitting -= nbytes;
 			}				
@@ -1086,9 +1100,9 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 				mqtt_dev->in_waitting = 0;
 				mqtt_dev->in_pos = 0;
 				mqtt_dev->fixhead = 1;
-				memmove(dev->tcp_read, dev->tcp_read+(nbytes-len), len);
+				memmove( tcp_read, tcp_read + ( nbytes - len ), len );
 				printf("%s: Drop some char in packet! len = %d, nbytes=%d\r\n", __func__, len, nbytes);
-				check_packet_from_fixhead( mqtt_dev, dev->tcp_read, mqtt_dev->in_waitting);
+				check_packet_from_fixhead( mqtt_dev, tcp_read, mqtt_dev->in_waitting);
 			}
 		}
 		else if(mqtt_dev->in_waitting > 750)
@@ -1602,7 +1616,7 @@ void test_mqtt_publish( void *data )
 {	
 	static int i = 0;
 	char *str = ( char* ) data;
-	char json_buff[256];
+	char json_buff[300];
 	mqtt_dev_status *mqtt;	
 	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 	if( !dev )
@@ -1617,9 +1631,9 @@ void test_mqtt_publish( void *data )
 		memset(json_buff, '\0', sizeof(json_buff));
 		xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
 		
-		sprintf(json_buff, "IN360s: time:[%llds]. mqtt_bytes=%u, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
+		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes=%u, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
 		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d", 
-					dev->sys_time, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
+					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
 					mqtt->in_waitting, mqtt->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
 					get_at_command_count(&dev->atcmd_head));		
@@ -2119,7 +2133,7 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 		cmd->para == MQTT_MSG_TYPE_PUBACK ) 
 	{	
 		cmd->mqttdata_len = dev->mqtt_dev->mqtt_state->outbound_message->length;
-		cmd->mqttdata = ( unsigned char * ) alloc_mqtt_buffer( dev, cmd->mqttdata_len );
+		cmd->mqttdata = ( unsigned char * ) alloc_mqtt_buffer( cmd->mqttdata_len );
 		
 		if( !( cmd->mqttdata ) ) 
 		{
@@ -2127,15 +2141,13 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 			printf("ERROR: malloc for MQTT [%s] fail!\r\n", mqtt_get_name(cmd->mqtype));
 			printf("\r\n");
 			cmd->mqttdata = NULL;
-			dealloc_command( dev, cmd );
-			dev->free_count++;
+			dealloc_command( cmd );
 			return;
 		} 
 		else 
 		{
 			printf("%s: alloc mqtt buffer ok, mqttdata_len(%d)\r\n", __func__, cmd->mqttdata_len);
 			/*store the outbound_message->data, make cmd->mqttdata point to it. */
-			dev->malloc_count++;
 			memcpy( cmd->mqttdata, dev->mqtt_dev->mqtt_state->outbound_message->data, cmd->mqttdata_len );
 			cmd->msgid = mqtt_get_id( dev->mqtt_dev->mqtt_state->outbound_message->data, cmd->mqttdata_len );
 			add_cmd_to_list( cmd, &( dev->at_head ) );					
@@ -2169,10 +2181,9 @@ static void make_command_to_list( DevStatus *dev, char index, unsigned int inter
 		printf("%s: dev null pointer error!\r\n", __func__);
 		return;
 	}	
-	cmd = alloc_command( dev );
+	cmd = alloc_command();
 	if( cmd != NULL ) 
 	{
-		dev->malloc_count++;
 		cmd->mqttdata = NULL;
 		cmd->mqttdata_len = 0;
 		cmd->mqttack = 0;		
@@ -2291,16 +2302,10 @@ static void mqtt_set_mesg_ack( mqtt_dev_status *mqtt_dev, int type, uint16_t msg
 }
 
 /*删除链表节点，释放AtCommand*/
-static void release_command( DevStatus *dev, AtCommand *cmd, struct list_head *head, struct list_head *pos )
+static void release_command( AtCommand *cmd, struct list_head *head, struct list_head *pos )
 {
-//	int i;
 	//DevStatus *dev = (DevStatus *)( cmd->priv );
 
-	if( !dev )
-	{
-		printf("%s:\r\n", __func__);
-		//return;
-	}
 	if( head )
 	{
 		del_cmd_from_list( cmd, head );
@@ -2313,38 +2318,37 @@ static void release_command( DevStatus *dev, AtCommand *cmd, struct list_head *h
 	/*release mqtt type message data: mqttdata pointer!*/
 	if( cmd->mqtype != MQTT_MSG_TYPE_NULL && cmd->mqttdata != NULL ) 
 	{	
-		//for( i = 0; i < OUT_DATA_LEN_MAX; i++ )
-		//{
-		//	if( cmd->mqttdata != NULL )//&& dev_s->mqtt_dev->mqtt_state->outdata[i] == cmd->mqttdata ) 
-		//	{
-				dealloc_mqtt_buffer( dev, ( char* ) cmd->mqttdata );
-				dev->free_count++;
-				//dev_s->mqtt_dev->mqtt_state->outdata[i] = NULL;						
-		//		break;
-		//	}
-		//}
+		dealloc_mqtt_buffer( ( char* ) cmd->mqttdata );
 	}
 	
-	dealloc_command( dev, cmd );
-	dev->free_count++;	
+	dealloc_command( cmd );
 }
 
-static void release_list_command( DevStatus *dev, struct list_head *head )
+static void release_list_command( struct list_head *head )
 {
 	int total = 0;
 	AtCommand *cmd = NULL;
 	struct list_head *pos, *n;
+	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 
 	list_for_each_safe( pos, n, head )
 	{
 		total++;
 		cmd = list_entry( pos, AtCommand, list );
-		release_command(dev, cmd, NULL, pos );
+		release_command( cmd, NULL, pos );
 	}
-	
-	printf("%s: release %d cmd form %s\r\n", __func__, total, 
-		(&(dev->at_head) == head)?"at_head":((&(dev->mqtt_head)
-		== head)?"mqtt_head":"atcmd_head"));
+
+	if( !dev )
+	{
+		printf("%s: StoragePointer fail!\r\n", __func__);
+		return;
+	}
+	else
+	{
+		printf("%s: release %d cmd form %s\r\n", __func__, total, 
+			(&(dev->at_head) == head)?"at_head":((&(dev->mqtt_head)
+			== head)?"mqtt_head":"atcmd_head"));
+	}
 }
 
 /*store AT command for send again.*/
@@ -2365,7 +2369,7 @@ static void atcmd_list_cmd( DevStatus *dev )
 		if( cmd->atack == 1 )
 		{	
 			printf("%s: releas command %s!\r\n", __func__, at_get_name( cmd->index ));
-			release_command( dev, cmd, &dev->atcmd_head, NULL );
+			release_command( cmd, &dev->atcmd_head, NULL );
 		}	
 		else if( cmd->tick_sum >= cmd->interval )
 		{
@@ -2383,7 +2387,7 @@ static void atcmd_list_cmd( DevStatus *dev )
 			}
 			else
 			{
-				release_command( dev, cmd, NULL, NULL );
+				release_command( cmd, NULL, NULL );
 				printf("%s: warnning->release command whatevet! ip(%s)\r\n", __func__, dev->ip);
 				return;
 			}
@@ -2414,13 +2418,13 @@ static void mqtt_list_cmd( DevStatus *dev )
 		if( cmd->mqtt_clean ) 
 		{
 			printf("%s: clean message [%d].\r\n", __func__, i++);
-			release_command( dev, cmd, &dev->mqtt_head, NULL );
+			release_command( cmd, &dev->mqtt_head, NULL );
 			continue;
 		}
 		else if( cmd->mqttack == 1 )
 		{
 			//printf("%s: mqtt mesg is ack.\r\n", __func__);
-			release_command( dev, cmd, &dev->mqtt_head, NULL );
+			release_command( cmd, &dev->mqtt_head, NULL );
 		}
 		else if( cmd->tick_sum >= cmd->interval )		
 		{ 
@@ -2433,8 +2437,7 @@ static void mqtt_list_cmd( DevStatus *dev )
 					( cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREL ) &&
 					( cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREC ) ) 
 			{
-				dealloc_command( dev, cmd );
-				dev->free_count++;
+				dealloc_command( cmd );
 				printf("ERROR: [%s] mqttdata is NULL remote it from mqtt_head.\r\n", mqtt_get_name( cmd->mqtype ));
 				continue;
 			}
@@ -2452,7 +2455,7 @@ static void mqtt_list_cmd( DevStatus *dev )
 				dev->tick_sum = 0;
 				dev->tick_tag = NOW_TICK;				
 				/*只释放CMD*/
-				release_command( dev, cmd, NULL, NULL );
+				release_command( cmd, NULL, NULL );
 				continue;
 			}
 			
@@ -2480,7 +2483,7 @@ static void at_list_cmd( DevStatus *dev )
 		if( dev->atcmd && dev->atcmd->mqtt_clean ) 
 		{
 			printf("%s: mqtt_clean#\r\n", __func__);
-			release_command( dev, dev->atcmd, &dev->at_head, NULL );
+			release_command( dev->atcmd, &dev->at_head, NULL );
 			dev->atcmd = NULL;		
 		} 
 		else if( dev->atcmd ) 
@@ -2499,7 +2502,7 @@ static void at_list_cmd( DevStatus *dev )
 		if( dev->atcmd->mqtt_clean ) 
 		{
 			printf("%s: mqtt_clean(%d)##\r\n", __func__, dev->atcmd->mqtt_clean);
-			release_command( dev, dev->atcmd, &dev->at_head, NULL );
+			release_command( dev->atcmd, &dev->at_head, NULL );
 			dev->atcmd = NULL;
 			return;
 		}
@@ -2564,7 +2567,7 @@ static void at_list_cmd( DevStatus *dev )
 							mqtt_get_qos( dev->atcmd->mqttdata ));
 					}
 				}
-				release_command( dev, dev->atcmd, NULL, NULL );
+				release_command( dev->atcmd, NULL, NULL );
 			}
 			
 			dev->atcmd = NULL;
@@ -2799,9 +2802,9 @@ static void clean_run_status( DevStatus *dev )
 	int i;
 	char cmd[15];
 
-	release_list_command( dev, &dev->at_head );
-	release_list_command( dev, &dev->mqtt_head );
-	release_list_command( dev, &dev->atcmd_head );
+	release_list_command( &dev->at_head );
+	release_list_command( &dev->mqtt_head );
+	release_list_command( &dev->atcmd_head );
 	
 	if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
 	{
@@ -2838,19 +2841,19 @@ void handle_module_setting(  DevStatus* dev )
 		/*reset timer when android power down.*/
 		if( pdFAIL == xTimerReset( dev->os_timer, 2 ) )
 		{
-			printf("%s fail to xTimerReset timer\r\n", __func__);
+			printf("%s fail to xTimerReset timer!\r\n", __func__);
 		}
 		else
 		{
-			printf("%s os_timer working.\r\n", __func__);
+			printf("%s os_timer reset to work.\r\n", __func__);
 		}
 
 		reset_module_status( dev, 0 );
 		reset_mqtt_dev( dev, dev->mqtt_dev );					
 		module_power_reset();
-		release_list_command( dev, &dev->at_head );
-		release_list_command( dev, &dev->mqtt_head );
-		release_list_command( dev, &dev->atcmd_head );		
+		release_list_command( &dev->at_head );
+		release_list_command( &dev->mqtt_head );
+		release_list_command( &dev->atcmd_head );		
 	}
 	
 	if( dev->period_tick ) 
@@ -2874,7 +2877,7 @@ void handle_module_setting(  DevStatus* dev )
 		/*check at every moment*/
 		if( period_flag ) 
 		{
-			/*check at every 40s*/
+			/*check at every 50s*/
 			check_reset_condition( dev );		
 			check_sm_and_ppp( dev );
 		}
@@ -2940,7 +2943,6 @@ void module_system_init( DevStatus* dev )
 	INIT_LIST_HEAD( &dev->mqtt_head );
 	INIT_LIST_HEAD( &dev->atcmd_head );	
 	
-	dev->sys_time = 0;
 	dev->os_mutex = xSemaphoreCreateMutex();
  	dev->os_timer = xTimerCreate( "module", 50000 / portTICK_RATE_MS, 
 						pdTRUE, dev, notify_module_period );
@@ -3013,7 +3015,7 @@ void HandleModuleTask( void * pvParameters )
 			printf("%s: android power on, go to sleep..\r\n", __func__);
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		}
-		printf("%s: android power off, go to work..\r\n", __func__);
+		printf("%s: android power off, go to work.\r\n", __func__);
 		while( !dev->android_power_status )
 		{
 			xSemaphoreTake( dev->os_mutex, portMAX_DELAY );

@@ -206,7 +206,6 @@ typedef struct ComModule{
 }ComModule;
 
 typedef struct {
-//	char is_inited;
 	int simcard_type;						/*indicate sim care type,  0 is no card*/
 	
 	char reset_request;						/*request to power reset module*/
@@ -237,29 +236,27 @@ typedef struct {
 	
 	int at_count;
 	char at_sending[64];					/*store sending at command*/
-	AtCommand* atcmd;						/*AtCommand that be sending*/
-	struct list_head at_head;				/*all AtCommand sending list*/
-	struct list_head mqtt_head;				/*mqtt type AtCommand wait ack list, add to list if need wait ack*/	
-	struct list_head atcmd_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/
 	unsigned int close_tcp_interval;		/*for waitting someting times then close tcp*/
-	//unsigned int clean_interval;			/*for clean waitting someting times*/
 	unsigned int tick_sum;					/*relate to close_tcp_interval and clean_interval*/
 	unsigned int tick_tag;					/*relate to close_tcp_interval and clean_interval*/
-	uint32_t malloc_count;
-	uint32_t free_count;
-	long long sys_time;
-	unsigned char tcp_read[750];			/*cache tcp data*/
+	unsigned int malloc_count;
+	unsigned int free_count;
+	char android_power_status;
 	
-	UartReader *reader;					/*UartReader instance*/
-	mqtt_dev_status *mqtt_dev;			/*mqtt_dev_status instance*/
-	ComModule *module;
+	struct list_head at_head;				/*all AtCommand sending list*/
+	struct list_head mqtt_head;				/*mqtt type AtCommand wait ack list, add to list if need wait ack*/	
+	struct list_head atcmd_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
-	AtCommand *p_atcommand;					/*buffer manager for at command*/
-	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/	
+	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
 	TimerHandle_t os_timer; 				/*freeRTOS timer*/
 	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
-	char android_power_status;
-	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
+
+	AtCommand* atcmd;						/*AtCommand that be sending*/
+	AtCommand *p_atcommand;					/*buffer manager for at command*/
+	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		
+	UartReader *reader;						/*UartReader instance*/
+	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
+	ComModule *module;	
 }DevStatus;
 
 extern void HandleModuleTask( void * pvParameters );
