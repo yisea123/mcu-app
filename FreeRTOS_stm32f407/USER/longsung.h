@@ -1,17 +1,5 @@
 #ifndef __LONGSUNG_H
-#define __LONGSUNG_H	 
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
-#include "timers.h"	
-#include "aes.h"
-#include "md5.h"
-#include "sys.h"
-#include "usart.h"
-#include "rfifo.h"
-#include "xlist.h"
-#include "mqtt_msg.h"
+#define __LONGSUNG_H
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -19,6 +7,16 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "semphr.h"
+#include "timers.h"	
+#include "sys.h"
+#include "usart.h"
+#include "rfifo.h"
+#include "xlist.h"
+#include "mqtt_msg.h"
 
 #define NOW_TICK		xTaskGetTickCount()
 #define SIZE_ARRAY(a) 	(sizeof(a) / sizeof((a)[0]))
@@ -248,7 +246,10 @@ typedef struct {
 	struct list_head atcmd_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
 	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
+	unsigned int timer_tick;				/*wake_timer's peroid tick*/
+	TimerHandle_t wake_timer;				/*timer for wake up pxModuleTask*/	
 	TimerHandle_t os_timer; 				/*freeRTOS timer*/
+	TaskHandle_t pxModuleTask;				/*pointer module TCB*/
 	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
 
 	AtCommand* atcmd;						/*AtCommand that be sending*/

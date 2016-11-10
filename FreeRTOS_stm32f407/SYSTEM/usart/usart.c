@@ -375,6 +375,7 @@ void uart6_init(u32 bound)
 extern Ringfifo 		uart6fifo;
 Ringfifo 	   	 		uart3fifo[1];
 extern TaskHandle_t 	pxDownStreamTask;
+extern TaskHandle_t 	pxModuleTask;
 //extern xSemaphoreHandle xDownStreamSemaphore;
 
 void USART3_IRQHandler( void )
@@ -393,6 +394,7 @@ void USART3_IRQHandler( void )
 		{
 			uart3fifo->lostBytes++; 
 		} 		
+		vTaskNotifyGiveFromISR( pxModuleTask, NULL);
 #else
 		if( rfifo_put( &uart6fifo, &Res, 1 ) != 1 ) 
 		{

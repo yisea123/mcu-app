@@ -15,7 +15,7 @@ static void mqtt_msg_set_clean( DevStatus *dev );
 static int mqtt_publish(mqtt_dev_status *mqtt_dev, const char* topic, char* data, int qos, int retain);
 static int get_at_command_count(struct list_head *head);
 
-MqttBuffer * do_init_mqtt_buffer( int num, int capacity )
+static MqttBuffer * do_init_mqtt_buffer( int num, int capacity )
 {
 	int i = 0;
 	MqttBuffer *mbuffer;
@@ -53,7 +53,7 @@ MqttBuffer * do_init_mqtt_buffer( int num, int capacity )
 	return mbuffer;
 }
 
-void init_mqtt_buffer( MqttBuffer **p_mqttbuff, int size )
+static void init_mqtt_buffer( MqttBuffer **p_mqttbuff, int size )
 {
 	int i = 0;
 	int num = 0;
@@ -86,7 +86,7 @@ void init_mqtt_buffer( MqttBuffer **p_mqttbuff, int size )
 	}
 }
 
-char* alloc_mqtt_buffer( int len )
+static char* alloc_mqtt_buffer( int len )
 {
 	int i = 0;
 	int j = 0;
@@ -126,7 +126,7 @@ char* alloc_mqtt_buffer( int len )
 	return NULL;
 }
 
-void dealloc_mqtt_buffer( char *buff )
+static void dealloc_mqtt_buffer( char *buff )
 {
 	int i = 0;
 	int j = 0;
@@ -161,7 +161,7 @@ void dealloc_mqtt_buffer( char *buff )
 	printf("%s: dealloc node fail!\r\n", __func__ );
 }
 
-void init_command_buffer( AtCommand **p_atcommand, unsigned char num )
+static void init_command_buffer( AtCommand **p_atcommand, unsigned char num )
 {
 	int i = 0;
 
@@ -178,7 +178,7 @@ void init_command_buffer( AtCommand **p_atcommand, unsigned char num )
 	}
 }
 
-AtCommand* alloc_command()
+static AtCommand* alloc_command()
 {
 	int i = 0;
 
@@ -210,7 +210,7 @@ AtCommand* alloc_command()
 	return NULL;
 }
 
-void dealloc_command( AtCommand* command )
+static void dealloc_command( AtCommand* command )
 {
 	int i;
 
@@ -264,7 +264,7 @@ void print_char(USART_TypeDef* USARTx, char ch)
 		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
 }
 
-void print_line(USART_TypeDef* USARTx, const char* data, int len)
+static void print_line(USART_TypeDef* USARTx, const char* data, int len)
 {
 	int t;
 
@@ -307,7 +307,7 @@ void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
 	
 }
 
-void select_sort(int a[], int len)  
+static void select_sort(int a[], int len)  
 {  
     int i,j,x,l;  
     for(i=0;i<len;i++)  
@@ -336,7 +336,7 @@ static int is_little_endian()
 }
 
 /*网络字节是大端*/
-uint32_t htonl(uint32_t hostlong)
+unsigned int htonl(uint32_t hostlong)
 {
 	int value;
 	char *p, *q;
@@ -359,7 +359,7 @@ uint32_t htonl(uint32_t hostlong)
 	return value;
 }
 
-uint32_t ntohl(uint32_t netlong)
+unsigned int ntohl(uint32_t netlong)
 {
 	int value;
 	char *p, *q;
@@ -383,7 +383,7 @@ uint32_t ntohl(uint32_t netlong)
 }
 
 /*send AT commnad to 4G*/
-void send_at_command(const char* ack, int ack_len)
+static void send_at_command(const char* ack, int ack_len)
 {
 	int t;
 	for(t=0; t<ack_len; t++) 
@@ -399,7 +399,7 @@ void send_at_command(const char* ack, int ack_len)
 	while(USART_GetFlagStatus(USART3,USART_FLAG_TC)!=SET);	
 }
 
-void at(char *at)
+static void at(char *at)
 {
 	int len;
 	
@@ -433,7 +433,7 @@ int memcmp_x(const void *cs, const void *ct, int count)
 	return res;
 }
 
-int str2int(const char* p, const char* end)
+static int str2int(const char* p, const char* end)
 {
 	int   result = 0;
 	int   len    = end - p;
@@ -457,6 +457,10 @@ Fail:
 	return -1;
 }
 
+/*
+* author:	yangjianzhou
+* function: 	module_tokenizer_init,  format data to Token.
+*/
 static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
 {
 	int count = 0;
@@ -497,6 +501,10 @@ static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char*
 	return count;		
 }
 
+/*
+* author:	yangjianzhou
+* function: 	module_tokenizer_get,  get a Token.
+*/
 static Token module_tokenizer_get( RemoteTokenizer* t, int index )
 {
 	Token  tok;
@@ -517,7 +525,7 @@ static Token module_tokenizer_get( RemoteTokenizer* t, int index )
 /*******************************************
 +MIPCALL:1,10.154.27.94		
 ********************************************/
-void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	DevStatus *dev = ( DevStatus* ) priv;
 	
@@ -530,7 +538,7 @@ void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* t
 	dev->ppp_status = PPP_CONNECTED;
 }
 
-void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer)
+static void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer)
 {
 	DevStatus *dev = ( DevStatus* ) priv;	
 
@@ -627,7 +635,7 @@ static void complete_pending( mqtt_dev_status *mqtt_dev, int event_type, uint16_
 	return;
 }
 
-void process_test_mqtt_publish( mqtt_dev_status *mqtt_dev, int qos, char *topic, char *payload )
+static void process_test_mqtt_publish( mqtt_dev_status *mqtt_dev, int qos, char *topic, char *payload )
 {
 	//mqtt_state_t* state = mqtt_dev->mqtt_state;
 	printf("%s: topic=%s, payload=%s, qos=%d\r\n", __func__, topic, payload, qos);
@@ -668,14 +676,31 @@ static int deliver_publish( mqtt_dev_status *mqtt_dev, uint8_t* message, int len
 	printf("topic.length = %d, topic=%s\r\n", edata.topic_length, topic);
 	printf("payload.length = %d, payload=%s\r\n", edata.data_length, edata.data);			
 
-	process_test_mqtt_publish( mqtt_dev, 0, "/xp/publish", edata.data );
+	if( !memcmp(edata.data, "report", strlen("report")))
+	{
+		char json_buff[300];
+		DevStatus *dev = ( DevStatus *)(mqtt_dev->p_dev);
+		if( !dev ) return 0;
+		sprintf(json_buff, "time:[%u(s)],mqtt_bytes=%u,lostbytes=%d,MQTT:reset_count=%d,in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
+		"4G: malloc=%d,free=%d,simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d,at_head=%d,atcmd_head=%d\n", 
+					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt_dev->recv_bytes, dev->uart_fifo->lostBytes, mqtt_dev->reset_count, mqtt_dev->pub_in_num, 
+					get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
+					mqtt_dev->in_waitting, mqtt_dev->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
+					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
+					get_at_command_count(&dev->atcmd_head));		
 
+		process_test_mqtt_publish( mqtt_dev, 1, "/xp/publish", json_buff );
+	}
+	else if( edata.data_length <= 468)
+	{
+		process_test_mqtt_publish( mqtt_dev, 0, "/xp/publish", edata.data );
+	}
 	//APP_4G_OnControlMsg(payload);
 	return 1;
 }
 
 /* Publish the specified message */
-int mqtt_publish_with_length( mqtt_dev_status *mqtt_dev, const char* topic, const char* data, int data_length, int qos, int retain )
+static int mqtt_publish_with_length( mqtt_dev_status *mqtt_dev, const char* topic, const char* data, int data_length, int qos, int retain )
 {
 	DevStatus *dev = ( DevStatus *)(mqtt_dev->p_dev);
 	mqtt_state_t *state = mqtt_dev->mqtt_state;
@@ -719,8 +744,10 @@ static void mqtt_subscribe( mqtt_dev_status *mqtt_dev )
 	make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );	
 }
 
-//extern void report_mcu_status(void);
-
+/*
+* author:	yangjianzhou
+* function: 	mqtt_reset_status,  reset mqtt_dev_status.
+*/
 static void mqtt_reset_status( mqtt_dev_status * mqtt )
 {	
 	DevStatus *dev = ( DevStatus *)(mqtt->p_dev);
@@ -746,6 +773,10 @@ static void mqtt_reset_status( mqtt_dev_status * mqtt )
 	/* close tcp 0.5 second later */
 }
 
+/*
+* author:	yangjianzhou
+* function: 	check_mqtt_packet,  check if it legal packet.
+*/
 static int check_mqtt_packet( mqtt_dev_status *mqtt_dev, int protocol_len )
 {
 	int ret;
@@ -766,6 +797,10 @@ static int check_mqtt_packet( mqtt_dev_status *mqtt_dev, int protocol_len )
 	return ret;
 }
 
+/*
+* author:	yangjianzhou
+* function: 	parse_mqtt_packet,  deal with mqtt message packet.
+*/
 static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes )
 {
 	uint8_t msg_type;
@@ -961,8 +996,12 @@ static uint8_t str_to_hex( char *src )
 	return (s1*16 + s2);
 }
 
+/*
+* author:	yangjianzhou
+* function: 	check_packet_from_fixhead,  deal with mqtt message head.
+*/
 /*如果为mqtt消息头，此函数解析！*/
-void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
+static void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
 {
 	int msg_len;
 	
@@ -1016,7 +1055,7 @@ void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int
 }
 
 /* TCP 消息处理函数 */
-void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	int i, nbytes;
 
@@ -1113,7 +1152,7 @@ void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	}
 }
 
-void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	//+MIPOPEN=1,1
 	DevStatus *dev = ( DevStatus* ) priv;		
@@ -1140,7 +1179,7 @@ void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Tok
 	dev->mqtt_dev->parse_packet_flag = 1;
 }
 
-void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer)
+static void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer)
 {
 	//+MIP:ERROR
 	DevStatus *dev = ( DevStatus* ) priv;	
@@ -1150,7 +1189,7 @@ void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer)
 	atcmd_set_ack( dev, ATMIPOPEN);
 }
 
-void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	//+MIPCLOSE:2
 	int socketId = str2int(tok[0].p+10, tok[0].end);	
@@ -1174,7 +1213,7 @@ void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* t
 /*******************************************
 +CSQ: 7,99
 ********************************************/
-void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	int signal[2];
 	DevStatus *dev = ( DevStatus* ) priv;	
@@ -1186,7 +1225,7 @@ void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	dev->singal[1] = signal[1];
 }
 
-void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	//printf("%s!\r\n", __func__);
 	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
@@ -1209,7 +1248,7 @@ void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	//printf("at_sending=%s, len=%d\r\n", at_sending, strlen(at_sending));
 }
 
-void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
+static void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
 {
 	//printf("%s!\r\n", __func__);
 	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
@@ -1272,7 +1311,7 @@ void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
 	}
 }
 
-void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
+static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 {
 	//printf("%s!\r\n", __func__);
 	DevStatus *dev = ( DevStatus* ) priv;	
@@ -1322,7 +1361,7 @@ void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 	}
 }
 
-void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	/*+SIMTEST:3; 3
 	AT+SIMTEST?
@@ -1335,7 +1374,7 @@ void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	printf("%s: simcard_type(%d)\r\n", __func__, dev->simcard_type);
 }
 
-void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	int i;
 	DevStatus *dev = ( DevStatus* ) priv;	
@@ -1396,7 +1435,7 @@ void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	printf("}\r\n");
 }
 
-void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	DevStatus *dev = ( DevStatus* ) priv;	
 
@@ -1404,7 +1443,7 @@ void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	dev->sm_data_flag = 1;
 }
 
-void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
+static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
 {
 	DevStatus *dev = ( DevStatus* ) priv;	
 
@@ -1416,7 +1455,7 @@ void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int ind
 	/*读取到短信内容，删除之*/
 }
 
-void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	/*+CMTI: "SM",1*/
 	int i, index, addflag = 1;
@@ -1453,7 +1492,7 @@ void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	}
 }
 
-void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+static void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	/*******************************
 		当发送了错误的短信index时发生
@@ -1466,10 +1505,14 @@ void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	dev->sm_read_flag = 1;	
 }
 
+/*
+* author:	yangjianzhou
+* function: 	module_reader_parse,  parse one line.
+*/
 static void module_reader_parse( UartReader* r )
 {
 	int i;	
-	Token tok[32];
+	Token tok[MAX_TOKENS];
 	RemoteTokenizer tzer[1];
 	DevStatus *dev = ( DevStatus * )( r->p_dev );
 	
@@ -1479,7 +1522,8 @@ static void module_reader_parse( UartReader* r )
 		return;
 	}
 	
-	print_line( UART4, r->in, r->pos );	
+	print_line( UART4, r->in, r->pos );
+	//+CMGD: (),(0-4)
 	module_tokenizer_init( tzer, r->in, r->in + r->pos );
 	
 	if( tzer->count == 0 )
@@ -1554,6 +1598,10 @@ static void module_reader_parse( UartReader* r )
 	}
 }
 
+/*
+* author:	yangjianzhou
+* function: 	module_reader_addc,  deal with an charactor.
+*/
 static void module_reader_addc( UartReader* r, int c )
 {
 	if ( r->overflow ) 
@@ -1583,7 +1631,11 @@ static void module_reader_addc( UartReader* r, int c )
 	}
 }
 
-void handle_module_uart_msg(  DevStatus* dev )
+/*
+* author:	yangjianzhou
+* function: 	handle_module_uart_msg,  handle module message.
+*/
+static void handle_module_uart_msg(  DevStatus* dev )
 {
 	unsigned char ch;
 	
@@ -1599,8 +1651,11 @@ void handle_module_uart_msg(  DevStatus* dev )
 	}	
 }
 
-/*need to invoved in every 50s.*/
-void notify_module_period( TimerHandle_t xTimer )
+/*
+* author:	yangjianzhou
+* function: 	notify_module_period, need to invoved in every 50s.
+*/
+static void notify_module_period( TimerHandle_t xTimer )
 {	
 	DevStatus * dev = ( DevStatus * ) pvTimerGetTimerID( xTimer );	
 	if( !dev )
@@ -1610,6 +1665,22 @@ void notify_module_period( TimerHandle_t xTimer )
 	}
 	Printf_System_Jiffies();
 	dev->period_tick = 1;
+	xTaskNotifyGive( dev->pxModuleTask );
+}
+
+/*
+* author:	yangjianzhou
+* function: 	wake_up_module_timer, wake up HandleModuleTask.
+*/
+static void wake_up_module_timer( TimerHandle_t xTimer )
+{	
+	DevStatus * dev = ( DevStatus * ) pvTimerGetTimerID( xTimer );	
+	if( !dev )
+	{
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}
+	xTaskNotifyGive( dev->pxModuleTask );
 }
 
 void test_mqtt_publish( void *data )
@@ -1629,8 +1700,8 @@ void test_mqtt_publish( void *data )
 	if( strlen( str ) == 0 && mqtt->connect_status == MQTT_DEV_STATUS_CONNECT )
 	{
 		memset(json_buff, '\0', sizeof(json_buff));
+		/*start to protect all thing*/
 		xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
-		
 		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes=%u, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
 		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d", 
 					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
@@ -1649,7 +1720,8 @@ void test_mqtt_publish( void *data )
 		if( strlen( str ) > 0 )
 		{
 			memset(json_buff, '\0', sizeof(json_buff));
-			memcpy( json_buff, str , strlen( str ) );	
+			memcpy( json_buff, str , strlen( str ) );
+			/*start to protect all thing*/
 			xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
 			process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );	
 			xSemaphoreGive( dev->os_mutex );
@@ -2253,7 +2325,10 @@ static void atcmd_set_ack( DevStatus *dev, int index )
 	}		
 }
 
-/*set ack for nomal mqtt command*/
+/*
+* author:	yangjianzhou
+* function: 	mqtt_set_mesg_ack,  set ack for nomal mqtt command, when qos=2, deal more later.
+*/
 static void mqtt_set_mesg_ack( mqtt_dev_status *mqtt_dev, int type, uint16_t msg_id )
 {
 	int del_done = 0;
@@ -2378,12 +2453,14 @@ static void atcmd_list_cmd( DevStatus *dev )
 			if( cmd->index == ATMIPOPEN && dev->socket_num == 0 && dev->ppp_status == PPP_CONNECTED )
 			{
 				cmd->interval = ONE_SECOND / 3;
-				add_cmd_to_list( cmd, &dev->at_head );				
+				add_cmd_to_list( cmd, &dev->at_head );
+				xTaskNotifyGive( dev->pxModuleTask );
 			}
 			else if( cmd->index == ATMIPHEX )
 			{
 				cmd->interval = ONE_SECOND / 20;
-				add_cmd_to_list( cmd, &dev->at_head );						
+				add_cmd_to_list( cmd, &dev->at_head );
+				xTaskNotifyGive( dev->pxModuleTask );
 			}
 			else
 			{
@@ -2394,6 +2471,13 @@ static void atcmd_list_cmd( DevStatus *dev )
 			cmd->tick_sum = 0;
 			printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", __func__, at_get_name( cmd->index ),
 				NOW_TICK);			
+		}
+		else 
+		{
+			if( dev->timer_tick > cmd->interval - cmd->tick_sum )
+			{
+				dev->timer_tick = cmd->interval - cmd->tick_sum;
+			}	
 		}
 	}
 	
@@ -2414,12 +2498,11 @@ static void mqtt_list_cmd( DevStatus *dev )
 		tick = NOW_TICK;
 		cmd->tick_sum += tick - cmd->tick_tag;
 		cmd->tick_tag = tick;
-		
+	
 		if( cmd->mqtt_clean ) 
 		{
 			printf("%s: clean message [%d].\r\n", __func__, i++);
 			release_command( cmd, &dev->mqtt_head, NULL );
-			continue;
 		}
 		else if( cmd->mqttack == 1 )
 		{
@@ -2427,7 +2510,7 @@ static void mqtt_list_cmd( DevStatus *dev )
 			release_command( cmd, &dev->mqtt_head, NULL );
 		}
 		else if( cmd->tick_sum >= cmd->interval )		
-		{ 
+		{ 		
 			list_del( pos );
 			cmd->interval = ONE_SECOND / 20;
 			cmd->tick_sum = 0;
@@ -2453,9 +2536,13 @@ static void mqtt_list_cmd( DevStatus *dev )
 				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
 				dev->close_tcp_interval = 3 * ONE_SECOND;
 				dev->tick_sum = 0;
-				dev->tick_tag = NOW_TICK;				
+				dev->tick_tag = NOW_TICK;
 				/*只释放CMD*/
 				release_command( cmd, NULL, NULL );
+				if( dev->timer_tick > dev->close_tcp_interval )
+				{
+					dev->timer_tick = dev->close_tcp_interval;
+				}				
 				continue;
 			}
 			
@@ -2467,9 +2554,17 @@ static void mqtt_list_cmd( DevStatus *dev )
 			}
 			add_cmd_to_list( cmd, &dev->at_head );
 			make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );
+			xTaskNotifyGive( dev->pxModuleTask );
 			printf("%s: add [%s] to AT LIST HEAD again! type=%d, msgid=0x%04x!\r\n", 
 							__func__, mqtt_get_name( cmd->mqtype ), cmd->mqtype, cmd->msgid);			
 		} 	
+		else 
+		{
+			if( dev->timer_tick > cmd->interval - cmd->tick_sum )
+			{
+				dev->timer_tick = cmd->interval - cmd->tick_sum;
+			}	
+		}
 	}
 	
 }
@@ -2484,13 +2579,18 @@ static void at_list_cmd( DevStatus *dev )
 		{
 			printf("%s: mqtt_clean#\r\n", __func__);
 			release_command( dev->atcmd, &dev->at_head, NULL );
-			dev->atcmd = NULL;		
+			dev->atcmd = NULL;
+			xTaskNotifyGive( dev->pxModuleTask );
 		} 
 		else if( dev->atcmd ) 
 		{
 			send_command_to_device( dev, dev->atcmd );
 			dev->atcmd->tick_tag = NOW_TICK;
 			dev->atcmd->tick_sum = 0;
+			if( dev->timer_tick > dev->atcmd->interval )
+			{
+				dev->timer_tick = dev->atcmd->interval;
+			}
 		}
 	} 
 	else 
@@ -2504,10 +2604,9 @@ static void at_list_cmd( DevStatus *dev )
 			printf("%s: mqtt_clean(%d)##\r\n", __func__, dev->atcmd->mqtt_clean);
 			release_command( dev->atcmd, &dev->at_head, NULL );
 			dev->atcmd = NULL;
-			return;
+			xTaskNotifyGive( dev->pxModuleTask );
 		}
-		
-		if( dev->atcmd->tick_sum >= dev->atcmd->interval )
+		else if( dev->atcmd->tick_sum >= dev->atcmd->interval )
 		{
 			del_cmd_from_list( dev->atcmd, &dev->at_head );
 			
@@ -2571,6 +2670,14 @@ static void at_list_cmd( DevStatus *dev )
 			}
 			
 			dev->atcmd = NULL;
+			xTaskNotifyGive( dev->pxModuleTask );
+		}
+		else
+		{
+			if( dev->timer_tick > dev->atcmd->interval - dev->atcmd->tick_sum )
+			{
+				dev->timer_tick = dev->atcmd->interval - dev->atcmd->tick_sum;
+			}
 		}
 	}		
 }
@@ -2620,7 +2727,9 @@ static void check_socket_number( DevStatus *dev )
 	for( i=0; i < SIZE_ARRAY( dev->socket_open ); i++ ) 
 	{
 		if( dev->socket_open[i] != -1 )
+		{
 			dev->socket_num++;
+		}
 	}
 
 	/*若发现socket大于1，关闭所有socket,重新建立连接*/
@@ -2639,8 +2748,10 @@ static void check_socket_number( DevStatus *dev )
 			}
 		}
 		
-		if( dev->socket_close_flag == 1 ) 
+		if( dev->socket_close_flag == 1 )
+		{
 			dev->socket_close_flag = 0;
+		}
 	}	
 }
 
@@ -2730,12 +2841,17 @@ static void check_sm_and_ppp( DevStatus *dev )
 	}	
 }
 
+/*
+* author:	yangjianzhou
+* function: 	check_reset_condition,  check if need to reset module.
+*/
 static void check_reset_condition( DevStatus *dev )
 {
 	/*if there have not sim card, we reset communicate module for something 4 peroid*/
 	if( dev->simcard_type == 0 && dev->scsq > 3 ) 
 	{
 		dev->reset_request = 1;
+		xTaskNotifyGive( dev->pxModuleTask );
 		printf("sim card no exit! reset the communication module!\r\n");
 	}	
 
@@ -2743,11 +2859,16 @@ static void check_reset_condition( DevStatus *dev )
 	{
 		dev->reset_request = 1;
 		dev->socket_close_flag = 1;
+		xTaskNotifyGive( dev->pxModuleTask );
 		printf("scsq-rcsq=%d! reset the communication module!\r\n", 
 			dev->scsq - dev->rcsq );
 	}
 }
 
+/*
+* author:	yangjianzhou
+* function: 	initialise_module,  init module by AT command.
+*/
 static void initialise_module( DevStatus *dev )
 {
 	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
@@ -2771,12 +2892,20 @@ static void initialise_module( DevStatus *dev )
 	dev->heartbeat_tick = 6;				
 }
 
+/*
+* author:	yangjianzhou
+* function: 	poll_module_signal,  poll signal data.
+*/
 static void poll_module_signal( DevStatus *dev )
 {
 	make_command_to_list( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
 	dev->scsq++;
 }
 
+/*
+* author:	yangjianzhou
+* function: 	list_sm_event,  poll sm event.
+*/
 static void list_sm_event( DevStatus *dev )
 {
 	/*删除sim卡中的短信, 短信相关的AT指令时间要长些NE_SECOND/5~ONE_SECOND/2*/
@@ -2797,6 +2926,10 @@ static void list_sm_event( DevStatus *dev )
 	}	
 }
 
+/*
+* author:	yangjianzhou
+* function: 	clean_run_status,  clean module running status.
+*/
 static void clean_run_status( DevStatus *dev )
 {
 	int i;
@@ -2819,14 +2952,17 @@ static void clean_run_status( DevStatus *dev )
 			sprintf(cmd, "AT+MIPCLOSE=%d", i);
 			vTaskDelay( 10 / portTICK_RATE_MS );
 			at( cmd );
-			vTaskDelay( 50 / portTICK_RATE_MS );
-			vTaskDelay( 200 / portTICK_RATE_MS );				
+			vTaskDelay( 300 / portTICK_RATE_MS );				
 		}
 	}	
 }
 
+/*
+* author:	yangjianzhou
+* function: 	handle_module_setting, handle module running status.
+*/
 /*状态机模式： 横竖两种写法。*/
-void handle_module_setting(  DevStatus* dev )
+static void handle_module_setting(  DevStatus* dev )
 {
 	char period_flag = 0;
 
@@ -2834,7 +2970,16 @@ void handle_module_setting(  DevStatus* dev )
 	{
 		printf("%s: dev null pointer error!\r\n", __func__);
 		return;
-	}	
+	}
+	
+	dev->timer_tick = portMAX_DELAY;
+	if( xTimerIsTimerActive( dev->wake_timer ) != pdFALSE )
+	{
+		if( pdFAIL == xTimerStop( dev->wake_timer, 0 ) )
+		{
+			printf("%s fail to stop wake_timer\r\n", __func__);
+		}
+	}
 	/*android power off, reboot module*/
 	if( dev->reset_request ) 
 	{	
@@ -2849,7 +2994,8 @@ void handle_module_setting(  DevStatus* dev )
 		}
 
 		reset_module_status( dev, 0 );
-		reset_mqtt_dev( dev, dev->mqtt_dev );					
+		reset_mqtt_dev( dev, dev->mqtt_dev );
+		rfifo_clean( dev->uart_fifo );		
 		module_power_reset();
 		release_list_command( &dev->at_head );
 		release_list_command( &dev->mqtt_head );
@@ -2887,7 +3033,12 @@ void handle_module_setting(  DevStatus* dev )
 		{
 			unsigned int tick = NOW_TICK;
 			dev->tick_sum += tick - dev->tick_tag;
-			dev->tick_tag = tick;				
+			dev->tick_tag = tick;
+			
+			if( dev->timer_tick > dev->close_tcp_interval - dev->tick_sum )
+			{
+				dev->timer_tick = dev->close_tcp_interval - dev->tick_sum;
+			}				
 			if( dev->tick_sum >= dev->close_tcp_interval )
 			{
 				dev->close_tcp_interval = 0;
@@ -2907,10 +3058,22 @@ void handle_module_setting(  DevStatus* dev )
 
 	at_list_cmd( dev );
 	mqtt_list_cmd( dev );	
-	atcmd_list_cmd( dev ); 
+	atcmd_list_cmd( dev );
+	
+	if( dev->timer_tick != portMAX_DELAY )
+	{
+		if( pdFAIL == xTimerChangePeriod( dev->wake_timer, dev->timer_tick + 1, 2 ) )
+		{
+			printf("%s fail to xTimerChangePeriod wake_timer!\r\n", __func__);
+		}	
+	}
 }
 
-void module_clean_work( DevStatus* dev )
+/*
+* author:	yangjianzhou
+* function: 	module_clean_work  clean module system.
+*/
+static void module_clean_work( DevStatus* dev )
 {
 	if( xTimerIsTimerActive( dev->os_timer ) != pdFALSE )
 	{
@@ -2930,7 +3093,11 @@ void module_clean_work( DevStatus* dev )
 	module_power_reset(); 	
 }
 
-void module_system_init( DevStatus* dev )
+/*
+* author:	yangjianzhou
+* function: 	module_system_init  init module system.
+*/
+static void module_system_init( DevStatus* dev )
 {	
 	init_command_buffer( &( dev->p_atcommand ), 60 );
 	init_mqtt_buffer( dev->p_mqttbuff, 3 );
@@ -2944,8 +3111,12 @@ void module_system_init( DevStatus* dev )
 	INIT_LIST_HEAD( &dev->atcmd_head );	
 	
 	dev->os_mutex = xSemaphoreCreateMutex();
+	
  	dev->os_timer = xTimerCreate( "module", 50000 / portTICK_RATE_MS, 
 						pdTRUE, dev, notify_module_period );
+	
+	dev->wake_timer = xTimerCreate( "wakeup", 100 / portTICK_RATE_MS, 
+						pdFALSE, dev, wake_up_module_timer );
 }
 
 /*
@@ -2980,12 +3151,12 @@ void notifyAndroidPowerOff( void )
 
 	android_power_off();
 	dev->android_power_status = 0;
-	xTaskNotifyGive( pxModuleTask );
+	xTaskNotifyGive( dev->pxModuleTask );
 }
 
 /*
 * author:	yangjianzhou
-* function: 	HandleModuleTask  handle module.
+* function: 	HandleModuleTask  handle module system.
 */
 void HandleModuleTask( void * pvParameters )
 {	
@@ -2994,6 +3165,7 @@ void HandleModuleTask( void * pvParameters )
 	static mqtt_dev_status mqtt_dev[1];
 
 	dev->uart_fifo = uart3fifo;
+	dev->pxModuleTask = pxModuleTask;
 	dev->mqtt_dev = mqtt_dev;
 	dev->reader = reader;
 	dev->android_power_status = 0;
@@ -3018,8 +3190,9 @@ void HandleModuleTask( void * pvParameters )
 		printf("%s: android power off, go to work.\r\n", __func__);
 		while( !dev->android_power_status )
 		{
+			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 			xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
-			handle_module_uart_msg( dev );
+			handle_module_uart_msg( dev );						
 			handle_module_setting( dev );
 			xSemaphoreGive( dev->os_mutex );
 		}
@@ -3028,98 +3201,6 @@ void HandleModuleTask( void * pvParameters )
 		xSemaphoreGive( dev->os_mutex );
 	}
 }
-
-
-
-
-/**
-root@2:/ #mqttp xiaopeng    
-process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
-alloc_mqtt_buffer: alloc node ok! len(23), pMqttBuff[0][0].apacity(50)
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
-+MIPSEND:1,1477
-
-OK
-sending [PUBLISH]! mqtype=3,id=0x0000
-dealloc_mqtt_buffer: dealloc node ok! pMqttBuff[0][0]
-dealloc_command: dealloc_command fail! command->be_used(0)
-
-
-
-root@2:/ #mqttp xiaopeng
-process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
-alloc_command: alloc atcommand[0](2000d418) ok.
-alloc_mqtt_buffer: alloc node ok! len(23), pMqttBuff[0][0].apacity(50)
-alloc_command: alloc atcommand[1](2000d44c) ok.
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
-+MIPSEND:1,1477
-
-OK
-dealloc_command: i(5) error!!!!
-dealloc_command: dealloc_command ok! (2000d400), i(5)
-sending [PUBLISH]! mqtype=3,id=0x0000
-dealloc_mqtt_buffer: dealloc node ok! p_mqttbuff[0][ 
-
-
-root@2:/ #mqttp xiaopeng
-process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
-alloc_command: alloc atcommand[0](2000d818) ok.
-alloc_mqtt_buffer: alloc node ok! len(23), pMqttBuff[0][0].apacity(50)
-alloc_command: alloc atcommand[1](2000d84c) ok.
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
-+MIPSEND:1,1477
-
-OK
-dealloc_command: i(5) error!!!!
-dealloc_command: dealloc_command ok! (2000d800), i(5)
-sending [PUBLISH]! mqtype=3,id=0x0000
-dealloc_mqtt_buffer: dealloc node ok! p_mqttbuff[0][0]
-dealloc_command: dealloc_command fail! (2000d818), i(0), command->be_used(0)
-dealloc_command: dealloc_command ok! (2000d84c), i(1)
-
-
-root@2:/ #mqttp xiao
-process_test_mqtt_publish: topic=/xp/publish, payload=xiao, qos=0
-alloc_command: alloc atcommand[0](2000d818) ok.
-alloc_mqtt_buffer: alloc node ok! len(19), pMqttBuff[0][0].apacity(50)
-alloc_command: alloc atcommand[1](2000d84c) ok.
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3011000b2f78702f7075626c6973687869616f"
-+MIPSEND:1,1481
-
-OK
-dealloc_mqtt_buffer: dealloc node ok! p_mqttbuff[0][0]
-dealloc_command: dealloc_command ok! (2000d818), i(0)
-dealloc_command: dealloc_command ok! (2000d84c), i(1)
-
-root@2:/ #mqttp xiaoeeeeAT+MIPPUSH=1
-+MIP:OK
-OK
-
-process_test_mqtt_publish: topic=/xp/publish, payload=xiaoeeee, qos=0
-alloc_command: alloc atcommand[0](2000d728) ok.
-alloc_mqtt_buffer: alloc node ok! len(23), pMqttBuff[0][0].apacity(50)
-make_command_to_list: alloc mqtt ok, dev(200024c0)
-alloc_command: alloc atcommand[1](2000d75c) ok.
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f65656565"
-+MIPSEND:1,1477
-
-OK
-at_list_cmd: clean
-release_command: dev(200024c0), dev_s(00000014)
-dealloc_command: i(214) error!!!!
-dealloc_command: dealloc_command ok! (2000d700), i(214)
-sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f65656565"
-+MIPSEND:1,1454
-
-OK
-
-**/
 
 
 
