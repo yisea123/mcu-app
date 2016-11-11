@@ -849,6 +849,7 @@ static void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, T
 	
 	if( tok[1].end - tok[1].p < sizeof(dev->ip) )
 	{
+		memset(dev->ip, 0, sizeof(dev->ip));
 		memcpy(dev->ip, tok[1].p, tok[1].end - tok[1].p);
 		dev->ip[tok[1].end - tok[1].p] = '\0';
 	}
@@ -1517,7 +1518,7 @@ static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, T
 	DevStatus *dev = ( DevStatus* ) priv;		
 
 	printf("%s: +MIPCLOSE !!!!! success. socket id = %d\r\n", __func__, socketId);
-	dev->socket_open[socketId-1] = -1;
+	dev->socket_open[ socketId - 1 ] = -1;
 	dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
 	dev->mqtt_dev->in_pos = 0;
 	dev->mqtt_dev->in_waitting = 0;	
@@ -1639,7 +1640,19 @@ static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 
 	if( !memcmp(dev->at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) 
 	{
-		dev->socket_close_flag = 1;
+		if( dev->socket_num > 0 )
+		{
+			dev->socket_close_flag = 1;
+		}
+		else if( dev->socket_num == 0 && dev->tcp_connect_status )
+		{
+			dev->tcp_connect_status = 0;
+			if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
+			{
+				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
+			}
+			printf("%s: catch bug#####\r\n", __func__);
+		}
 		printf("[%s: result: ERROR AT:%s\r\n", __func__, dev->at_sending);
 	} 
 	else if(!memcmp(dev->at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) 
@@ -1674,7 +1687,7 @@ static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 		
 		printf("%s: close socketid[%d] error! AT:%s\r\n", __func__, socketId, dev->at_sending);
 		
-		dev->socket_open[socketId-1] = -1;
+		dev->socket_open[ socketId - 1 ] = -1;  //bug???? jzyang need to check later
 	}
 	else if( !memcmp(dev->at_sending, "AT+MIPHEX=", strlen("AT+MIPHEX=")))
 	{
@@ -2024,11 +2037,11 @@ void test_mqtt_publish( void *data )
 		/*start to protect all thing*/
 		xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
 		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes=%u, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
-		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d", 
+		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d, tcp_connect_status(%d)", 
 					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
 					mqtt->in_waitting, mqtt->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
-					get_at_command_count(&dev->atcmd_head));		
+					get_at_command_count(&dev->atcmd_head), dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );
 		xSemaphoreGive( dev->os_mutex );
@@ -2044,7 +2057,7 @@ void test_mqtt_publish( void *data )
 			memcpy( json_buff, str , strlen( str ) );
 			/*start to protect all thing*/
 			xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
-			process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );	
+			process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );
 			xSemaphoreGive( dev->os_mutex );
 		}
 	}
@@ -2148,6 +2161,8 @@ static void reset_module_status( DevStatus* dev, char flag )
 	dev->sm_delete_flag = 1;
 	dev->atcmd = NULL;
 	dev->close_tcp_interval = 0;
+	dev->tcp_connect_status = 0;
+	memset(dev->ip, 0, sizeof(dev->ip));	
 	memcpy( dev->ip, "null", strlen("null") );
 	
 	if( flag ) 
@@ -3071,6 +3086,15 @@ static void check_socket_number( DevStatus *dev )
 			dev->socket_close_flag = 0;
 		}
 	}	
+	else if( dev->socket_num == 0 && dev->tcp_connect_status )
+	{
+		dev->tcp_connect_status = 0;
+		if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
+		{
+			dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
+		}
+		printf("%s: catch bug****\r\n", __func__);
+	}	
 }
 
 static void mqtt_send_connect_or_tick( DevStatus *dev )
@@ -3125,7 +3149,8 @@ static void tcp_connect_server( DevStatus *dev )
 				/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
 				make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
 				make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );			
-				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);					
+				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
+				printf("%s: start tcp connect remote server.\r\n", __func__);
 				dev->heartbeat_tick = 6;
 			}
 		}
@@ -3176,7 +3201,10 @@ static void check_reset_condition( DevStatus *dev )
 	if( ( dev->scsq ) - ( dev->rcsq ) > 3 ) 
 	{
 		dev->reset_request = 1;
-		dev->socket_close_flag = 1;
+		if( dev->socket_num > 0 )
+		{
+			dev->socket_close_flag = 1;
+		}
 		xTaskNotifyGive( dev->pxModuleTask );
 		printf("scsq-rcsq=%d! reset the communication module!\r\n", 
 			dev->scsq - dev->rcsq );
@@ -3199,7 +3227,7 @@ static void initialise_module( DevStatus *dev )
 	make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
 	/*ATMIPHEX有时没成功，注意原因*/
 	make_command_to_list(dev, ATMIPHEX, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);						
-	make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
+    make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
 
 	/*****************************************************************************
 	ATMIPHEX不成功，导致返回1438 而不是1469， 1500为buffer长度。
@@ -3525,7 +3553,7 @@ void HandleModuleTask( void * pvParameters )
 	}
 }
 
-
+//+STIN:20
 
 /*
 Sytem times from boot is 8100 (s), system tick = 8100116 (ms).
@@ -4466,8 +4494,12 @@ root@2:/ #
 root@2:/ #
 root@2:/ #
 root@2:/ #mqttp
-process_test_mqtt_publish: topic=/xp/publish, payload=time:[51638(s)]. mqtt_bytes=708, lostbytes=0, MQTT:reset_count=0, in_publish=3, mq_head=0,fixhead=1,in_waitting=0,in_pos=0
-                4G: malloc=4809, free=4809, simcard=3,reset=0,ppp_status=2,socket_num=0,sm_num=0,scsq=10,rcsq=10,at_count=0, at_head=0, atcmd_head=0, qos=1
+
+process_test_mqtt_publish: topic=/xp/publish, payload=time:[51638(s)]. 
+mqtt_bytes=708, lostbytes=0, MQTT:reset_count=0, in_publish=3, mq_head=0,fixhead=1,in_waitting=0,in_pos=0
+4G: malloc=4809, free=4809, simcard=3,reset=0,ppp_status=2,socket_num=0,sm_num=0,scsq=10,rcsq=10,
+at_count=0, at_head=0, atcmd_head=0, qos=1
+
 fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(276)
 root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0006
 AT+MIPSEND=1,"329102000b2f78702f7075626c697368000674696d653a5b35313633382873295d2e206d7174745f62797465733d3730382c206c6f737462797465733d302c204d5154543a72657365745f636f756e743d302c20696e5f7075626c6973683d332c206d715f686561643d302c666978686561643d312c696e5f7761697474696e673d302c696e5f706f733d300d0a090934473a206d616c6c6f633d343830392c20667265653d343830392c2073696d636172643d332c72657365743d302c7070705f7374617475733d322c736f636b65745f6e756d3d302c736d5f6e756d3d302c736373713d31302c726373713d31302c61745f636f756e743d302c2061745f686561643d302c206174636d645f686561643d30"
@@ -4525,6 +4557,331 @@ AT+MIPPUSH=1
 ERROR
 [on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
 handle_module_setting: set socket_close_flag to 1
+
+root@2:/ #
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+root@2:/ #
+root@2:/ #mqttp xiaopeng
+process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=1
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(25)
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      499        06   00
+IDLE            R       00      117        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+Module          S       02      531        01   03
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #Sytem times from boot is 1250 (s), system tick = 1250116 (ms).
+*********************************
+sending [PUBLISH]! mqtype=3,id=0x0004
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800047869616f70656e67"
++MIPSEND:1,1475
+
+OK
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0004), qos(1)
+AT+MIPPUSH=1
++MIP:OK
+OK
+mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0004!
+sending [PUBLISH]! mqtype=3,id=0x0004
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800047869616f70656e67"
++MIPSEND:1,1475
+
+OK
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0004), qos(1)
+AT+MIPPUSH=1
+OK
+mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0004!
+sending [PUBLISH]! mqtype=3,id=0x0004
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800047869616f70656e67"
++MIPSEND:1,1475
+
+OK
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0004), qos(1)
+AT+MIPPUSH=1
++MIP:OK
+OK
+ERROR: [PUBLISH mqtt_try > 2 ], type=3,id=0X0004,len=25,p=0x2000e320
+handle_module_setting: set socket_close_flag to 1
+sending [DISCONNECT]! mqtype=14,id=0x0001
+AT+MIPSEND=1,"e000"
++MIPSEND:1,1498
+
+OK
+at_list_cmd: release command (ATMQTT)
+AT+MIPPUSH=1
+OK
+AT+MIPCLOSE=1
++MIPCLOSE:1,847,198
+on_disconnect_service_callback: +MIPCLOSE !!!!! success. socket id = 1
+mqtt_msg_set_clean:###
+mqtt_msg_set_clean: clean [0] mqtt message!
+
+OK
+AT+MIPHEX=1
+OK
+on_at_cmd_success_callback: success to cmd AT+MIPHEX=1
+atcmd_set_ack: target ATMIPHEX
+atcmd_set_ack: [ATMIPHEX] is ACK, REMOVE it!
+at_list_cmd: release command (ATMIPHEX)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(636306)
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(640307)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(640479)
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(644480)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(644652)
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(648653)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(648825)
+Sytem times from boot is 1300 (s), system tick = 1300116 (ms).
+*********************************
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(652826)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(652998)
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(656999)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(657171)
+AT+MIPOPEN=1,0,"112.124.102.62",1883,0
++MIPOPEN=1,1
+on_connect_service_success_callback:TCP connect success! socket id=1
+atcmd_set_ack: target ATMIPOPEN
+atcmd_set_ack:[ATMIPOPEN] is ACK, REMOVE it!
++MIP:OK
+OK
+sending [CONNECT]! mqtype=1,id=0x0000
+atcmd_list_cmd: releas command ATMIPOPEN!
+AT+MIPSEND=1,"102000064d5149736470031601c200066a7a79616e6700036d637500056465617468"
++MIPSEND:1,1466
+
+OK
+ADD [CONNECT] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,4,20020000
+check_packet_from_fixhead: msg_len = nbytes = 4
+received (CONNACK)! msg_type(2), QOS=0, msg_id=0X00, mesg_len=4, nbytes=4
+mqtt_set_mesg_ack: msgid=0x0000, [CONNECT] is ACK, REMOVE it!
+MQTT_MSG_TYPE_CONNACK, ack=00, status=2
+sending [SUBSCRIBE]! mqtype=8,id=0x0005
+AT+MIPSEND=1,"82130005000e2f73797374656d2f73656e736f7202"
++MIPSEND:1,1479
+
+OK
+ADD [SUBSCRIBE] to mqtt_head to wait ACK! msgid(0x0005), qos(0)
+AT+MIPPUSH=1
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,5,9003000502
+check_packet_from_fixhead: msg_len = nbytes = 5
+received (SUBACK)! msg_type(9), QOS=0, msg_id=0X05, mesg_len=5, nbytes=5
+parse_mqtt_packet: subscribe success.
+mqtt_set_mesg_ack: msgid=0x0005, [SUBSCRIBE] is ACK, REMOVE it!
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(46)
+sending [PUBLISH]! mqtype=3,id=0x0006
+AT+MIPSEND=1,"322c000b2f78702f7075626c69736800064d435520626520726561647920746f207265637620636f6d6d616e642e"
++MIPSEND:1,1454
+
+OK
+
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0006), qos(1)
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,4,40020006
+check_packet_from_fixhead: msg_len = nbytes = 4
+received (PUBACK)! msg_type(4), QOS=0, msg_id=0X06, mesg_len=4, nbytes=4
+mqtt_set_mesg_ack: msgid=0x0006, [PUBLISH] is ACK, REMOVE it!
+Sytem times from boot is 1350 (s), system tick = 1350116 (ms).
+*********************************
+scsq-rcsq=4! reset the communication module!
+handle_module_setting os_timer reset to work.
+reset_mqtt_dev
+module_power_reset 
+release_list_command: release 5 cmd form at_head
+release_list_command: release 0 cmd form mqtt_head
+release_list_command: release 0 cmd form atcmd_head
+SQ: 21,72
+
+OK
+[0] welcome to lk
+
+[10] platform_init()
+[10] target_init()
+[10] smem ptable found: ver: 4 len: 19
+[10] Loading boot image (3684352): start
+[780] Loading boot image (3684352): done
+[790] cmdline: noinitrd root=/dev/mtdblock17 rw rootfstype=yaffs2 console=ttyHSL0,115200,n8 androidboot.hardware=qcom ehci-hcd.park=3 g-android.rx_trigger_enabled=1 androidboot.serialno=MDM9625 androidboot.baseband=msm
+[810] Updating device tree: start
+[850] Updating device tree: done
+[850] booting linux @ 0x308000, ramdisk @ 0x308000 (0), tags/device 
+
+
+
+
+
+
+
+正常开机log:
+
+Starting qti: done
+Stopping Bootlog daemon: bootlogd.
+                                  lc_qmi_init end
+                                                 ret=80
+                                                       get project name:9500
+                                                                             from /etc/lc_project_name!
+                                                                                                       trim get project name:9500!
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #Sytem times from boot is 4294917 (s), system tick = 4294917412 (ms).
+*********************************
+AT+CSQ
++CSQ: 19,75
+
+OK
+AT+SIMTEST?
++SIMTEST:3
+on_simcard_type_callback: simcard_type(3)
+
+
+OK
+AT+MIPCALL?
++MIPCALL:0
+warnning->on_request_ip_fail_callback.
+
+OK
+AT+MIPCALL=0
+OK
+AT+MIPPROFILE=1,"3GNET"
+OK
+ADD [ATMIPHEX] to atcmd_head to wait ACK! tick(4294943142)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(4294943397)
+atcmd_list_cmd: add [ATMIPHEX] to AT LIST HEAD again! tick(4294944143)
+ADD [ATMIPHEX] to atcmd_head to wait ACK! tick(4294944172)
+AT+MIPCALL=1
++MIPCALL:1,10.16.50.156
+on_request_ip_success_callback: dev->ip(10.16.50.156)
++MIP:OK
+OK
+atcmd_list_cmd: add [ATMIPHEX] to AT LIST HEAD again! tick(4294945173)
+AT+MIPHEX=1
+OK
+on_at_cmd_success_callback: success to cmd AT+MIPHEX=1
+atcmd_set_ack: target ATMIPHEX
+atcmd_set_ack: [ATMIPHEX] is ACK, REMOVE it!
+at_list_cmd: release command (ATMIPHEX)
+atcmd_list_cmd: add [ATMIPOPEN] to AT LIST HEAD again! tick(4294947398)
+ADD [ATMIPOPEN] to atcmd_head to wait ACK! tick(4294947570)
+AT+MIPOPEN=1,0,"112.124.102.62",1883,0
++MIPOPEN=1,1
+on_connect_service_success_callback:TCP connect success! socket id=1
+atcmd_set_ack: target ATMIPOPEN
+atcmd_set_ack:[ATMIPOPEN] is ACK, REMOVE it!
++MIP:OK
+OK
+sending [CONNECT]! mqtype=1,id=0x0000
+atcmd_list_cmd: releas command ATMIPOPEN!
+AT+MIPSEND=1,"102000064d5149736470031601c200066a7a79616e6700036d637500056465617468"
++MIPSEND:1,1466
+
+OK
+ADD [CONNECT] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,4,20020000
+check_packet_from_fixhead: msg_len = nbytes = 4
+received (CONNACK)! msg_type(2), QOS=0, msg_id=0X00, mesg_len=4, nbytes=4
+mqtt_set_mesg_ack: msgid=0x0000, [CONNECT] is ACK, REMOVE it!
+MQTT_MSG_TYPE_CONNACK, ack=00, status=2
+sending [SUBSCRIBE]! mqtype=8,id=0x0001
+AT+MIPSEND=1,"82130001000e2f73797374656d2f73656e736f7202"
++MIPSEND:1,1479
+
+OK
+ADD [SUBSCRIBE] to mqtt_head to wait ACK! msgid(0x0001), qos(0)
+AT+MIPPUSH=1
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,5,9003000102
+check_packet_from_fixhead: msg_len = nbytes = 5
+received (SUBACK)! msg_type(9), QOS=0, msg_id=0X01, mesg_len=5, nbytes=5
+parse_mqtt_packet: subscribe success.
+mqtt_set_mesg_ack: msgid=0x0001, [SUBSCRIBE] is ACK, REMOVE it!
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(46)
+sending [PUBLISH]! mqtype=3,id=0x0002
+AT+MIPSEND=1,"322c000b2f78702f7075626c69736800024d435520626520726561647920746f207265637620636f6d6d616e642e"
++MIPSEND:1,1454
+
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0002), qos(1)
+AT+MIPPUSH=1
+OK
+
++MIPRTCP=1,4,40020002
+check_packet_from_fixhead: msg_len = nbytes = 4
+received (PUBACK)! msg_type(4), QOS=0, msg_id=0X02, mesg_len=4, nbytes=4
+mqtt_set_mesg_ack: msgid=0x0002, [PUBLISH] is ACK, REMOVE it!
 
 root@2:/ #
 
