@@ -1036,6 +1036,9 @@ static int mqtt_publish_with_length( mqtt_dev_status *mqtt_dev, const char* topi
 	state->pending_msg_type = MQTT_MSG_TYPE_PUBLISH;
 
 	make_command_to_list( dev, ATMQTT, ( data_length / 300 + 1 ) * ONE_SECOND / 25, MQTT_MSG_TYPE_PUBLISH );
+	/*when we need to publish message, need to wak up task.*/
+	xTaskNotifyGive( dev->pxModuleTask );
+	
 	return 0;
 }
 
