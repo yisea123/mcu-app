@@ -49,6 +49,10 @@
 #define ATMQTT					18
 /******************************/
 
+#define WAIT					1
+#define WAIT_NOT				0
+
+
 typedef enum {
 	 PPP_DISCONNECT = 0,
 	 PPP_CONNECTING = 1,
@@ -86,6 +90,9 @@ typedef struct {
 	char index;								/*for store command type(AT or MQTT type)*/
 	int para;								/*para for nomal AT command*/
 	unsigned int interval;					/*wait for interval time to finish command*/
+	unsigned int interval_a;
+	unsigned int interval_b;
+	char wait_flag;
 	unsigned int tick_sum;					/*for caculate the interval*/
 	unsigned int tick_tag;					/*for caculate the interval*/
 	char atack;								/*for check nomal AT command(that need to 
@@ -117,7 +124,8 @@ struct device_operations {
 	char* (* at_get_name )( void *instance, int index );
 	char* (* make_tcp_packet )( char* buff, unsigned char* data, int len );
 	void (* send_push_data_directly )( void *instance );
-	void (* close_module_socket_directly )( void *instance, int index ) ;	
+	void (* close_module_socket_directly )( void *instance, int index ) ;
+	int (* is_tcp_connect_server )( void *instance, int index );
 };
 
 struct callback_operations {
@@ -165,7 +173,9 @@ typedef struct ComModule {
 //int check_command_exist( int index, struct list_head *head )
 struct status_operations {
 	int (* check_command_exist )( int index, struct list_head *head );	
-	void (* make_command )( void *dev, char index, unsigned int interval, int para );
+	void (* make_at_command )( void *argc, char index, char wait_falg, unsigned int interval_a, unsigned int interval_b, int para );
+	void (* make_mqtt_command )( void *argc, char index, unsigned int interval, int para );
+
  	void (* atcmd_set_ack )( void *dev, int index );
 	void (* set_mqtt_cmd_clean )( void *dev );
 	void (* mqtt_set_mesg_ack ) ( void *mqtt_dev, int type, uint16_t msg_id );	
@@ -198,7 +208,7 @@ typedef struct {
 	char rcsq;								/*receive signal check AT command ack count*/
 	
 	char heartbeat_tick;					/*mqtt tick times (heartbeat_tick*peroid) */
-	char period_tick;						/*peroid flag*/
+	char period_flag;						/*peroid flag*/
 	
 	int at_count;
 	char at_sending[64];					/*store sending at command*/
@@ -211,15 +221,15 @@ typedef struct {
 	
 	struct list_head at_head;				/*all AtCommand sending list*/
 	struct list_head mqtt_head;				/*mqtt type AtCommand wait ack list, add to list if need wait ack*/	
-	struct list_head atcmd_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
+	struct list_head at_wait_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
 	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
-	unsigned int timer_tick;				/*wake_timer's peroid tick*/
-	TimerHandle_t wake_timer;				/*timer for wake up pxModuleTask*/	
-	TimerHandle_t os_timer; 				/*freeRTOS timer*/
+	unsigned int wu_tick;				/*wake_timer's peroid tick*/
+	TimerHandle_t wu_timer;					/*timer for wake up pxModuleTask*/	
+	TimerHandle_t hb_timer; 				/*heartbeat freeRTOS timer*/
 	TaskHandle_t pxModuleTask;				/*pointer module TCB*/
-	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
 
+	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
 	AtCommand* atcmd;						/*AtCommand that be sending*/
 	AtCommand *p_atcommand;					/*buffer manager for at command*/
 	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		

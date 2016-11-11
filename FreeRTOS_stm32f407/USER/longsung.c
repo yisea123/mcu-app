@@ -285,21 +285,21 @@ static void initialise_longsung_module( void *instance )
 	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
 		
 	/*为了第一时间连接上服务器*/
-	dev->ops->make_command( dev, ATSIMTEST, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
-	dev->ops->make_command( dev, ATMIPCALL_, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
-	dev->ops->make_command( dev, ATMIPCALL0, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );	
-	dev->ops->make_command( dev, ATMIPPROFILE, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );	
-	dev->ops->make_command( dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATSIMTEST, WAIT_NOT, ONE_SECOND/10, 0, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATMIPCALL_, WAIT_NOT, ONE_SECOND/10, 0, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATMIPCALL0, WAIT_NOT, ONE_SECOND/10, 0, MQTT_MSG_TYPE_NULL );	
+	dev->ops->make_at_command( dev, ATMIPPROFILE, WAIT_NOT, ONE_SECOND/10, 0, MQTT_MSG_TYPE_NULL );	
+	dev->ops->make_at_command( dev, ATMIPCALL1, WAIT_NOT, ONE_SECOND, 0, MQTT_MSG_TYPE_NULL );
 	/*ATMIPHEX有时没成功，注意原因*/
-	dev->ops->make_command( dev, ATMIPHEX, ONE_SECOND/20, MQTT_MSG_TYPE_NULL );						
-	dev->ops->make_command( dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATMIPHEX, WAIT, ONE_SECOND/20, ONE_SECOND * 2, MQTT_MSG_TYPE_NULL );						
+	dev->ops->make_at_command( dev, ATMIPOPEN, WAIT, ONE_SECOND/2, ONE_SECOND * 8, MQTT_MSG_TYPE_NULL );
 
 	/*****************************************************************************
 	ATMIPHEX不成功，导致返回1438 而不是1469， 1500为buffer长度。
 	AT+MIPSEND=1,"101d00064d5149736470030400780003594a5a00036d637500056465617468"
 	+MIPSEND:1,1438
 	*****************************************************************************/
-	dev->ops->make_command( dev, ATMIPCALL_, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);		
+	dev->ops->make_at_command( dev, ATMIPCALL_, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL);		
 }
 
 /*
@@ -310,7 +310,7 @@ static void poll_longsung_signal( void *instance )
 {
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
-	dev->ops->make_command( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATCSQ, WAIT_NOT, ONE_SECOND/10, 0, MQTT_MSG_TYPE_NULL );
 }
 
 static void check_longsung_sm( void *instance )
@@ -318,8 +318,8 @@ static void check_longsung_sm( void *instance )
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
 	/*查询SM短信未读index*/
-	dev->ops->make_command(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
-	dev->ops->make_command(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
+	dev->ops->make_at_command(dev, ATCPMS, WAIT_NOT, ONE_SECOND/20, 0, MQTT_MSG_TYPE_NULL);				
+	dev->ops->make_at_command(dev, ATCMGD_, WAIT_NOT, ONE_SECOND/20, 0, MQTT_MSG_TYPE_NULL);
 	/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
 }
 
@@ -328,7 +328,7 @@ static void check_longsung_ip( void *instance )
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
 	/*查询IP*/
-	dev->ops->make_command( dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATMIPCALL_, WAIT_NOT, ONE_SECOND/20, 0, MQTT_MSG_TYPE_NULL );
 }
 
 static void longsung_close_socket( void *instance )
@@ -343,7 +343,7 @@ static void longsung_close_socket( void *instance )
 		{
 			if( dev->socket_open[i] != -1 ) 
 			{
-				dev->ops->make_command( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
+				dev->ops->make_at_command( dev, ATMIPCLOSE, WAIT_NOT, ONE_SECOND/5, 0, dev->socket_open[i] );
 			}
 		}
 	}
@@ -354,9 +354,9 @@ static void longsung_request_ip( void *instance )
 {
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 	
-	dev->ops->make_command(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);
-	dev->ops->make_command(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
-	dev->ops->make_command(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);	
+	dev->ops->make_at_command(dev, ATMIPCALL0, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL);
+	dev->ops->make_at_command(dev, ATMIPPROFILE, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL);	
+	dev->ops->make_at_command(dev, ATMIPCALL1, WAIT_NOT, ONE_SECOND, 0, MQTT_MSG_TYPE_NULL);	
 }
 
 static void longsung_connect_server( void *instance )
@@ -364,7 +364,7 @@ static void longsung_connect_server( void *instance )
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
 	if( !dev->ops->check_command_exist( ATMIPOPEN, &dev->at_head ) &&
-			!dev->ops->check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
+			!dev->ops->check_command_exist( ATMIPOPEN, &dev->at_wait_head ) )
 	{
 		/*取消上一次要关闭tcp的请求*/
 		if( dev->close_tcp_interval ) 
@@ -372,8 +372,8 @@ static void longsung_connect_server( void *instance )
 			dev->close_tcp_interval = 0;//动作
 		}
 		/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
-		dev->ops->make_command(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
-		dev->ops->make_command(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
+		dev->ops->make_at_command(dev, ATMIPHEX, WAIT, ONE_SECOND/20, ONE_SECOND * 2, MQTT_MSG_TYPE_NULL );							
+		dev->ops->make_at_command(dev, ATMIPOPEN, WAIT, ONE_SECOND/2, ONE_SECOND * 8, MQTT_MSG_TYPE_NULL );
 		printf("%s: start tcp connect remote server.\r\n", __func__);
 	}
 }
@@ -382,7 +382,7 @@ static void longsung_push_socket_data( void *instance, unsigned int tick )
 {
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
-	dev->ops->make_command( dev, ATMIPPUSH, tick, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATMIPPUSH, WAIT_NOT, tick, 0, MQTT_MSG_TYPE_NULL );
 }
 
 /*
@@ -393,8 +393,8 @@ static void longsung_delete_sm( void *instance, int index )
 {
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
-	dev->ops->make_command( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-	dev->ops->make_command( dev, ATCMGD, ONE_SECOND/2, index );					
+	dev->ops->make_at_command( dev, ATCPMS, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATCMGD, WAIT_NOT, ONE_SECOND/2, 0, index );					
 }
 
 /*
@@ -405,9 +405,9 @@ static void longsung_read_sm( void *instance, int index )
 {
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
 
-	dev->ops->make_command( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
-	dev->ops->make_command( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-	dev->ops->make_command( dev, ATCMGR, ONE_SECOND/5, index );
+	dev->ops->make_at_command( dev, ATCPMS, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL );	
+	dev->ops->make_at_command( dev, ATCMGF, WAIT_NOT, ONE_SECOND/5, 0, MQTT_MSG_TYPE_NULL );
+	dev->ops->make_at_command( dev, ATCMGR, WAIT_NOT, ONE_SECOND/5, 0, index );
 }
 
 static void read_longsung_sm( DevStatus *dev , int index )
@@ -533,38 +533,55 @@ static char *longsung_at_get_name( void *instance, int index )
 	{
 		case ATCSQ:
 			return "ATCSQ";
+			
 		case ATSIMTEST:
 			return "ATSIMTEST";
+			
 		case ATCPMS:
 			return "ATCPMS";
+			
 		case ATCMGD_:
 			return "ATCMGD_";
+			
 		case ATMIPCALL_:
-			return "ATMIPCALL_";	
+			return "ATMIPCALL_";
+			
 		case ATMIPCALL0:
-			return "ATMIPCALL0";	
+			return "ATMIPCALL0";
+			
 		case ATMIPPROFILE:
 			return "ATMIPPROFILE";
+			
 		case ATMIPCALL1:
 			return "ATMIPCALL1";
+			
 		case ATMIPOPEN:
 			return "ATMIPOPEN";
+			
 		case ATMIPSEND:
 			return "ATMIPSEND";
+			
 		case ATMIPPUSH:
 			return "ATMIPPUSH";
+			
 		case ATCMGF:
 			return "ATCMGF";
+			
 		case ATMIPCLOSE:
 			return "ATMIPCLOSE";
+			
 		case ATCMGR:
 			return "ATCMGR";
+			
 		case ATCMGD:
 			return "ATCMGD";
+			
 		case ATMIPHEX:
 			return "ATMIPHEX";
+			
 		case ATRESET:
 			return "ATRESET";
+			
 		case ATMQTT:
 			return "ATMQTT";
 			
@@ -611,6 +628,12 @@ static void longsung_send_close_socket_directly( void *instance, int index )
 	at( cmd );
 }
 
+static int is_longsung_tcp_connect_cmd( void *instance, int index )
+{	
+	instance = instance;
+	
+	return index == ATMIPOPEN ? 1: 0;
+}
 
 /********************************************************************************/
 
@@ -1023,6 +1046,7 @@ static void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer)
 	DevStatus *dev = ( DevStatus* ) priv;	
 
 	printf("warnning->%s.\r\n", __func__);
+	memset(dev->ip, 0, sizeof(dev->ip));
 	memcpy(dev->ip, "null", strlen("null"));
 	dev->ppp_status = PPP_DISCONNECT;
 	/*获取IP失败，重新获取*/		
@@ -1181,6 +1205,7 @@ struct device_operations ls_dops =
 	longsung_make_tcp_packet,
 	longsung_send_push_directly,
 	longsung_send_close_socket_directly,
+	is_longsung_tcp_connect_cmd,	
 };
 
 struct callback_operations ls_cops =
@@ -1557,11 +1582,11 @@ static int deliver_publish( void *argc, uint8_t* message, int length )
 		DevStatus *dev = ( DevStatus *)(mqtt_dev->p_dev);
 		if( !dev ) return 0;
 		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes(%u),lostbytes(%d),MQTT:reset_count=%d,in_publish=%d,mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
-			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),atcmd_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
+			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),at_wait_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
 					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt_dev->recv_bytes, dev->uart_fifo->lostBytes, mqtt_dev->reset_count, mqtt_dev->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
 					mqtt_dev->in_waitting, mqtt_dev->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
-					get_at_command_count(&dev->atcmd_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
+					get_at_command_count(&dev->at_wait_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt_dev, 1, "/xp/publish", json_buff );
 	}
@@ -1591,7 +1616,7 @@ static int mqtt_publish_with_length( mqtt_dev_status *mqtt_dev, const char* topi
 	state->mqtt_flags &= ~MQTT_FLAG_READY;
 	state->pending_msg_type = MQTT_MSG_TYPE_PUBLISH;
 
-	dev->ops->make_command( dev, ATMQTT, ( data_length / 300 + 1 ) * ONE_SECOND / 25, MQTT_MSG_TYPE_PUBLISH );
+	dev->ops->make_mqtt_command( dev, ATMQTT, ( data_length / 300 + 1 ) * ONE_SECOND / 25, MQTT_MSG_TYPE_PUBLISH );
 	/*when we need to publish message, need to wak up task.*/
 	xTaskNotifyGive( dev->pxModuleTask );
 	
@@ -1623,7 +1648,7 @@ static void mqtt_subscribe( void *argc )
 	}
 
 	state->pending_msg_type = MQTT_MSG_TYPE_SUBSCRIBE;
-	dev->ops->make_command( dev, ATMQTT, ONE_SECOND/5, MQTT_MSG_TYPE_SUBSCRIBE );
+	dev->ops->make_mqtt_command( dev, ATMQTT, ONE_SECOND/5, MQTT_MSG_TYPE_SUBSCRIBE );
 	dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/40 );	
 }
 
@@ -1776,13 +1801,13 @@ static void parse_mqtt_packet( void *argc, int nbytes )
 			if(msg_qos == 1) 
 			{
 				state->outbound_message = mqtt_msg_puback(&state->mqtt_connection, msg_id);
-				dev->ops->make_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBACK);		
+				dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBACK);		
 			} 
 			else if(msg_qos == 2) 
 			{
 				state->outbound_message = mqtt_msg_pubrec(&state->mqtt_connection, msg_id);
 				/* recv process: */
-				dev->ops->make_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREC);
+				dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREC);
 			}
 			
 			if( -1 == deliver_publish( mqtt_dev, state->in_buffer, state->message_length_read ) )
@@ -1813,7 +1838,7 @@ static void parse_mqtt_packet( void *argc, int nbytes )
 		
 			state->outbound_message = mqtt_msg_pubrel(&state->mqtt_connection, msg_id);
 		  	dev->ops->mqtt_set_mesg_ack( dev, MQTT_MSG_TYPE_PUBLISH, msg_id);
-			dev->ops->make_command( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREL);
+			dev->ops->make_mqtt_command( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBREL);
 
 			break;
 		
@@ -1823,7 +1848,7 @@ static void parse_mqtt_packet( void *argc, int nbytes )
 		
 			state->outbound_message = mqtt_msg_pubcomp(&state->mqtt_connection, msg_id);
 		  	dev->ops->mqtt_set_mesg_ack( dev, MQTT_MSG_TYPE_PUBREC, msg_id);
-			dev->ops->make_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBCOMP);
+			dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBCOMP);
 
 			break;
 		
@@ -1840,7 +1865,7 @@ static void parse_mqtt_packet( void *argc, int nbytes )
 			/*2 bytes*/
 		  if( check_mqtt_packet( mqtt_dev, 2 ) ) return;
 		
-			dev->ops->make_command(dev, ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
+			dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
 			//make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL);
 			dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/50 );
 		
@@ -2050,11 +2075,6 @@ static void handle_module_uart_msg(  DevStatus* dev )
 {
 	unsigned char ch;
 	
-	if( !dev )
-	{
-		printf("%s: dev null pointer error!\r\n", __func__);
-		return;
-	}
 	while( rfifo_len( dev->uart_fifo ) > 0 ) 
 	{
 		rfifo_get( dev->uart_fifo, &ch, 1 );
@@ -2075,7 +2095,7 @@ static void notify_module_period( TimerHandle_t xTimer )
 		return;
 	}
 	Printf_System_Jiffies();
-	dev->period_tick = 1;
+	dev->period_flag = 1;
 	xTaskNotifyGive( dev->pxModuleTask );
 }
 
@@ -2118,11 +2138,11 @@ void test_mqtt_publish( void *data )
 		/*start to protect all thing*/
 		xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
 		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes(%u),lostbytes(%d),MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
-			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),atcmd_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
+			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),at_wait_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
 					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
 					mqtt->in_waitting, mqtt->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
-					get_at_command_count(&dev->atcmd_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
+					get_at_command_count(&dev->at_wait_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );
 		xSemaphoreGive( dev->os_mutex );
@@ -2280,7 +2300,7 @@ static void reset_mqtt_dev( DevStatus *dev, mqtt_dev_status* mqtt )
 	mqtt->connect_info.password = NULL;//"zhou";// NULL
 	mqtt->connect_info.will_topic = "mcu";
 	mqtt->connect_info.will_message = "death";
-	mqtt->connect_info.keepalive = 450;
+	mqtt->connect_info.keepalive = 460;
 	mqtt->connect_info.will_qos = 1;
 	mqtt->connect_info.will_retain = 0;
 	mqtt->connect_info.clean_session = 1;
@@ -2328,7 +2348,7 @@ static void reset_module_status( DevStatus* dev, char flag )
 	dev->socket_num = 0;
 
 	dev->heartbeat_tick = 0;
-	dev->period_tick = 0;	
+	dev->period_flag = 0;	
 	
 	dev->sm_num = 0;
 	dev->sm_data_flag = 0;
@@ -2365,10 +2385,12 @@ static void reset_module_status( DevStatus* dev, char flag )
 /***************************************************************
 把数据加入到链表中去
 ****************************************************************/
-static void add_cmd_to_list(AtCommand *cmd, struct list_head *head)
+static void add_cmd_to_list( AtCommand *cmd, struct list_head *head )
 {
 	if( cmd )
+	{
 		list_add_tail(&cmd->list, head);
+	}
 }
 
 /***************************************************************
@@ -2392,7 +2414,7 @@ static void del_cmd_from_list( AtCommand *cmd, struct list_head *head )
 /***************************************************************
 如果链表里面没有数据，则返回NULL，如果有数据就返回一个数据
 ****************************************************************/
-static AtCommand* get_cmd_from_list(struct list_head *head)
+static AtCommand* get_cmd_from_list( struct list_head *head )
 {
 	AtCommand *command = NULL;
 	struct list_head *pos=NULL, *n=NULL;
@@ -2438,7 +2460,7 @@ static int get_at_command_count( struct list_head *head )
 	int count = 0;
 	struct list_head *pos, *n;
 	
-	list_for_each_safe(pos, n, head)
+	list_for_each_safe( pos, n, head )
 	{
 		count++;	
 	}
@@ -2448,26 +2470,43 @@ static int get_at_command_count( struct list_head *head )
 
 /*
 * author:	yangjianzhou
-* function: 	mqtt_disconnect_server,  make and send mqtt disconnect packet.
+* function: 	make_at_command_to_list,  make a AtCommand and add to at_head list.
 */
-static void mqtt_disconnect_server( mqtt_dev_status *mqtt_dev )
+static void make_at_command_to_list( void *argc, char index, char wait_falg, 
+			unsigned int interval_a, unsigned int interval_b, int para )
 {
-	char buff[128];
-	DevStatus *dev = ( DevStatus * ) mqtt_dev->p_dev;
-	mqtt_state_t *state = mqtt_dev->mqtt_state;
+	AtCommand *cmd;	
+	DevStatus *dev = ( DevStatus * ) argc;
 	
-	printf("%s.\r\n", __func__);
-	memset( buff, '\0', sizeof( buff ) );
-	state->outbound_message = mqtt_msg_disconnect( &state->mqtt_connection );
-	
-	if( dev->module->d_ops->make_tcp_packet( buff, state->outbound_message->data, state->outbound_message->length ) )
+	if( !dev )
 	{
-		vTaskDelay( 15 / portTICK_RATE_MS );
-		at( buff );
-		vTaskDelay( 15 / portTICK_RATE_MS );
-		dev->module->d_ops->send_push_data_directly( dev->module );
-		vTaskDelay( 100 / portTICK_RATE_MS );
-	}		
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}	
+	cmd = alloc_command();
+	if( cmd != NULL ) 
+	{
+		cmd->mqttdata = NULL;
+		cmd->mqttdata_len = 0;
+		cmd->mqttack = 0;		
+		cmd->index = index;
+		cmd->interval = interval_a;
+		cmd->interval_a = interval_a;
+		cmd->interval_b = interval_b;
+		cmd->wait_flag = wait_falg;
+		cmd->tick_sum = 0;
+		cmd->tick_tag = NOW_TICK;
+		cmd->para = para;
+		cmd->mqtt_try = 0;
+		cmd->mqtt_clean = 0;
+		cmd->atack = 0;
+		cmd->mqtype = MQTT_MSG_TYPE_NULL;		
+		add_cmd_to_list( cmd, &dev->at_head );	
+	}
+	else
+	{
+		printf("%s: make node fail!\r\n", __func__);
+	}
 }
 
 /*
@@ -2542,9 +2581,9 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 
 /*
 * author:	yangjianzhou
-* function: 	make_command_to_list,  make a AtCommand and add to at_head list.
+* function: 	make_mqtt_command_to_list,  make a AtCommand and add to at_head list.
 */
-static void make_command_to_list( void *argc, char index, unsigned int interval, int para )
+static void make_mqtt_command_to_list( void *argc, char index, unsigned int interval,  int para )
 {
 	AtCommand *cmd;	
 	DevStatus *dev = ( DevStatus * ) argc;
@@ -2568,16 +2607,7 @@ static void make_command_to_list( void *argc, char index, unsigned int interval,
 		cmd->mqtt_try = 0;
 		cmd->mqtt_clean = 0;
 		cmd->atack = 0;
-		
-		if( index != ATMQTT )
-		{
-			cmd->mqtype = MQTT_MSG_TYPE_NULL;		
-			add_cmd_to_list( cmd, &dev->at_head );	
-		}
-		else
-		{
-			fill_cmd_mqtt_part( dev, cmd );
-		}
+		fill_cmd_mqtt_part( dev, cmd );
 	}
 	else
 	{
@@ -2610,7 +2640,7 @@ static void atcmd_set_ack( void *argc, int index )
 	}
 	else
 	{		
-		list_for_each_safe(pos, n, &dev->atcmd_head)
+		list_for_each_safe(pos, n, &dev->at_wait_head)
 		{
 			cmd = list_entry(pos, AtCommand, list);
 			
@@ -2733,21 +2763,21 @@ static void release_list_command( struct list_head *head )
 	{
 		printf("%s: release %d cmd form %s\r\n", __func__, total, 
 			(&(dev->at_head) == head)?"at_head":((&(dev->mqtt_head)
-			== head)?"mqtt_head":"atcmd_head"));
+			== head)?"mqtt_head":"at_wait_head"));
 	}
 }
 
 /*
 * author:	yangjianzhou
-* function: 	atcmd_list_cmd,  store AT command for send again.
+* function: 	at_wait_list_cmd,  store AT command for send again.
 */
-static void atcmd_list_cmd( DevStatus *dev )
+static void at_wait_list_cmd( DevStatus *dev )
 {
 	unsigned int tick;
 	AtCommand *cmd = NULL;
 	struct list_head *pos, *n;
 	
-	list_for_each_safe( pos, n, &dev->atcmd_head )
+	list_for_each_safe( pos, n, &dev->at_wait_head )
 	{
 		cmd = list_entry( pos, AtCommand, list );
 
@@ -2758,42 +2788,46 @@ static void atcmd_list_cmd( DevStatus *dev )
 		if( cmd->atack == 1 )
 		{	
 			printf("%s: releas command %s!\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ));
-			release_command( cmd, &dev->atcmd_head, NULL );
+			release_command( cmd, &dev->at_wait_head, NULL );
 		}	
 		else if( cmd->tick_sum >= cmd->interval )
 		{
 			list_del( pos );
-			
-			if( cmd->index == ATMIPOPEN && dev->socket_num == 0 && dev->ppp_status == PPP_CONNECTED )
+
+			if( !dev->module->d_ops->is_tcp_connect_server( dev->module, cmd->index ) )
 			{
-				cmd->interval = ONE_SECOND / 3;
+				cmd->interval = cmd->interval_a;
 				add_cmd_to_list( cmd, &dev->at_head );
 				xTaskNotifyGive( dev->pxModuleTask );
 				cmd->tick_sum = 0;
 				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
-					__func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);					
-			}
-			else if( cmd->index == ATMIPHEX )
-			{
-				cmd->interval = ONE_SECOND / 20;
-				add_cmd_to_list( cmd, &dev->at_head );
-				xTaskNotifyGive( dev->pxModuleTask );
-				cmd->tick_sum = 0;
-				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
-					__func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);					
+					__func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);
 			}
 			else
 			{
-				release_command( cmd, NULL, NULL );
-				printf("%s: warnning->release command whatevet! ip(%s), command(%s)\r\n", 
-					__func__, dev->ip, dev->module->d_ops->at_get_name( dev->module, cmd->index ));
-			}		
+				if( dev->socket_num == 0 && dev->ppp_status != PPP_CONNECTED )
+				{	
+					/*fix bug in 2016/11/11    && dev->ppp_status == PPP_CONNECTED */
+					cmd->interval = cmd->interval_a;
+					add_cmd_to_list( cmd, &dev->at_head );
+					xTaskNotifyGive( dev->pxModuleTask );
+					cmd->tick_sum = 0;
+					printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", __func__,
+						dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);					
+				}
+				else
+				{
+					release_command( cmd, NULL, NULL );
+					printf("%s: warnning->release command whatevet! ip(%s), command(%s)\r\n", 
+						__func__, dev->ip, dev->module->d_ops->at_get_name( dev->module, cmd->index ));
+				}
+			}
 		}
 		else 
 		{
-			if( dev->timer_tick > cmd->interval - cmd->tick_sum )
+			if( dev->wu_tick > cmd->interval - cmd->tick_sum )
 			{
-				dev->timer_tick = cmd->interval - cmd->tick_sum;
+				dev->wu_tick = cmd->interval - cmd->tick_sum;
 			}	
 		}
 	}
@@ -2849,15 +2883,15 @@ static void mqtt_list_cmd( DevStatus *dev )
 				printf("ERROR: [%s mqtt_try > 2 ], type=%d,id=0X%04X,len=%d,p=0x%p\r\n", mqtt_get_name( cmd->mqtype ), 
 									cmd->mqtype, cmd->msgid, cmd->mqttdata_len, cmd->mqttdata );
 				/*只要发送DISCONNECT包就可以了, 然后再断开TCP连接*/
-				dev->ops->make_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
+				dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
 				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/2 );
 				dev->close_tcp_interval = 3 * ONE_SECOND;
 				dev->tick_sum = 0;
 				dev->tick_tag = NOW_TICK;
 				release_command( cmd, NULL, NULL );
-				if( dev->timer_tick > dev->close_tcp_interval )
+				if( dev->wu_tick > dev->close_tcp_interval )
 				{
-					dev->timer_tick = dev->close_tcp_interval;
+					dev->wu_tick = dev->close_tcp_interval;
 				}				
 			}
 			else
@@ -2877,9 +2911,9 @@ static void mqtt_list_cmd( DevStatus *dev )
 		} 	
 		else 
 		{
-			if( dev->timer_tick > cmd->interval - cmd->tick_sum )
+			if( dev->wu_tick > cmd->interval - cmd->tick_sum )
 			{
-				dev->timer_tick = cmd->interval - cmd->tick_sum;
+				dev->wu_tick = cmd->interval - cmd->tick_sum;
 			}	
 		}
 	}
@@ -2906,11 +2940,12 @@ static void at_list_cmd( DevStatus *dev )
 		else if( dev->atcmd ) 
 		{
 			dev->module->d_ops->send_command_to_module( dev->module, dev->atcmd );
+			dev->atcmd->interval = dev->atcmd->interval_a;
 			dev->atcmd->tick_tag = NOW_TICK;
 			dev->atcmd->tick_sum = 0;
-			if( dev->timer_tick > dev->atcmd->interval )
+			if( dev->wu_tick > dev->atcmd->interval )
 			{
-				dev->timer_tick = dev->atcmd->interval;
+				dev->wu_tick = dev->atcmd->interval;
 			}
 		}
 	} 
@@ -2954,30 +2989,16 @@ static void at_list_cmd( DevStatus *dev )
 						mqtt_get_qos( dev->atcmd->mqttdata ) );
 			}
 			/* AT command need to be resend*/
-			else if( ( dev->atcmd->index == ATMIPOPEN || dev->atcmd->index == ATMIPHEX ) && 
-						dev->atcmd->atack == 0 )
+			else if( dev->atcmd->wait_flag && dev->atcmd->atack == 0 )
 			{
-				if( dev->atcmd->index == ATMIPOPEN )
-				{
-					dev->atcmd->interval = 8 * ONE_SECOND;
-				}
-				else if( dev->atcmd->index == ATMIPHEX )
-				{
-					dev->atcmd->interval = 2 * ONE_SECOND;
-				}
+				dev->atcmd->interval = dev->atcmd->interval_b;
 				dev->atcmd->tick_sum = 0;
-				add_cmd_to_list( dev->atcmd, &dev->atcmd_head );
-				printf("ADD [%s] to atcmd_head to wait ACK! tick(%u)\r\n", 
+				add_cmd_to_list( dev->atcmd, &dev->at_wait_head );
+				printf("ADD [%s] to at_wait_head to wait ACK! tick(%u)\r\n", 
 					dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ), NOW_TICK);				
 			}
 			else 
 			{
-				/*just print ATMIPOPEN and ATMIPHEX for debug.*/
-				if( ( dev->atcmd->index == ATMIPOPEN || dev->atcmd->index == ATMIPHEX ) )
-				{
-					printf("%s: release command (%s)\r\n", __func__, 
-						dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ));
-				}
 				if( dev->atcmd->index == ATMQTT )
 				{
 					printf("%s: release command (%s)\r\n", __func__, 
@@ -2990,6 +3011,12 @@ static void at_list_cmd( DevStatus *dev )
 							mqtt_get_qos( dev->atcmd->mqttdata ) );
 					}
 				}
+				else
+				{
+					//just print ATMIPOPEN and ATMIPHEX for debug.
+					printf("%s: release(%s).\r\n", __func__, 
+						dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ));
+				}
 				release_command( dev->atcmd, NULL, NULL );
 			}
 			
@@ -2998,9 +3025,9 @@ static void at_list_cmd( DevStatus *dev )
 		}
 		else
 		{
-			if( dev->timer_tick > dev->atcmd->interval - dev->atcmd->tick_sum )
+			if( dev->wu_tick > dev->atcmd->interval - dev->atcmd->tick_sum )
 			{
-				dev->timer_tick = dev->atcmd->interval - dev->atcmd->tick_sum;
+				dev->wu_tick = dev->atcmd->interval - dev->atcmd->tick_sum;
 			}
 		}
 	}		
@@ -3076,6 +3103,7 @@ static void check_socket_number( DevStatus *dev )
 	}	
 	else if( dev->socket_num == 0 && dev->tcp_connect_status )
 	{
+		/* for fix a bug 2016/11/11 */
 		dev->tcp_connect_status = 0;
 		if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
 		{
@@ -3101,7 +3129,7 @@ static void mqtt_send_connect_or_tick( DevStatus *dev )
 			{	//二级状态
 				/*连接前把  mqtt_list at_list 的mqtt消息清空！在+MIPCLOSE:清空*/			
 				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_CONNECTING;
-				dev->ops->make_command(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
+				dev->ops->make_mqtt_command(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
 				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/25 );
 			}		
 			/*发送心跳包给服务 50s每个tick*/				
@@ -3114,7 +3142,7 @@ static void mqtt_send_connect_or_tick( DevStatus *dev )
 					if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT ) 
 					{
 						//有可能是其它的状态MQTT_DEV_STATUS_CONNACK  MQTT_DEV_STATUS_SUBACK
-						dev->ops->make_command( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );
+						dev->ops->make_mqtt_command( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );
 						dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/50 );
 					}
 				}									
@@ -3240,6 +3268,30 @@ static void list_sm_event( DevStatus *dev )
 
 /*
 * author:	yangjianzhou
+* function: 	mqtt_disconnect_server,  make and send mqtt disconnect packet.
+*/
+static void mqtt_disconnect_server( mqtt_dev_status *mqtt_dev )
+{
+	char buff[128];
+	DevStatus *dev = ( DevStatus * ) mqtt_dev->p_dev;
+	mqtt_state_t *state = mqtt_dev->mqtt_state;
+	
+	printf("%s.\r\n", __func__);
+	memset( buff, '\0', sizeof( buff ) );
+	state->outbound_message = mqtt_msg_disconnect( &state->mqtt_connection );
+	
+	if( dev->module->d_ops->make_tcp_packet( buff, state->outbound_message->data, state->outbound_message->length ) )
+	{
+		vTaskDelay( 15 / portTICK_RATE_MS );
+		at( buff );
+		vTaskDelay( 15 / portTICK_RATE_MS );
+		dev->module->d_ops->send_push_data_directly( dev->module );
+		vTaskDelay( 100 / portTICK_RATE_MS );
+	}		
+}
+
+/*
+* author:	yangjianzhou
 * function: 	clean_run_status,  clean module running status.
 */
 static void clean_run_data( DevStatus *dev )
@@ -3248,7 +3300,7 @@ static void clean_run_data( DevStatus *dev )
 
 	release_list_command( &dev->at_head );
 	release_list_command( &dev->mqtt_head );
-	release_list_command( &dev->atcmd_head );
+	release_list_command( &dev->at_wait_head );
 	
 	if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
 	{
@@ -3266,6 +3318,29 @@ static void clean_run_data( DevStatus *dev )
 	}	
 }
 
+static void module_reset_work( DevStatus* dev )
+{
+	/*reset timer when android power down.*/
+	if( pdFAIL == xTimerReset( dev->hb_timer, 2 ) )
+	{
+		printf("%s fail to xTimerReset timer!\r\n", __func__);
+	}
+	else
+	{
+		printf("%s hb_timer reset to work.\r\n", __func__);
+	}
+	
+	reset_module_status( dev, 0 );
+	reset_module_reader( dev, dev->reader );
+	reset_mqtt_dev( dev, dev->mqtt_dev );
+	rfifo_clean( dev->uart_fifo );
+	/*power reset by gpio control*/
+	module_power_reset();
+	release_list_command( &dev->at_head );
+	release_list_command( &dev->mqtt_head );
+	release_list_command( &dev->at_wait_head );	
+}
+
 /*
 * author:	yangjianzhou
 * function: 	handle_module_setting, handle module running status.
@@ -3281,41 +3356,24 @@ static void handle_module_setting(  DevStatus* dev )
 		return;
 	}
 	
-	dev->timer_tick = portMAX_DELAY;
-	if( xTimerIsTimerActive( dev->wake_timer ) != pdFALSE )
+	dev->wu_tick = portMAX_DELAY;
+	if( xTimerIsTimerActive( dev->wu_timer ) != pdFALSE )
 	{
-		if( pdFAIL == xTimerStop( dev->wake_timer, 0 ) )
+		if( pdFAIL == xTimerStop( dev->wu_timer, 0 ) )
 		{
-			printf("%s fail to stop wake_timer\r\n", __func__);
+			printf("%s fail to stop wu_timer\r\n", __func__);
 		}
 	}
 	/*android power off, reboot module*/
 	if( dev->reset_request ) 
 	{	
-		/*reset timer when android power down.*/
-		if( pdFAIL == xTimerReset( dev->os_timer, 2 ) )
-		{
-			printf("%s fail to xTimerReset timer!\r\n", __func__);
-		}
-		else
-		{
-			printf("%s os_timer reset to work.\r\n", __func__);
-		}
-
-		reset_module_status( dev, 0 );
-		reset_module_reader( dev, dev->reader );
-		reset_mqtt_dev( dev, dev->mqtt_dev );
-		rfifo_clean( dev->uart_fifo );		
-		module_power_reset();
-		release_list_command( &dev->at_head );
-		release_list_command( &dev->mqtt_head );
-		release_list_command( &dev->atcmd_head );		
+		module_reset_work( dev );
 	}
 	
-	if( dev->period_tick ) 
+	if( dev->period_flag ) 
 	{
-		/*check at every 50s*/
-		dev->period_tick = 0;
+		/*check at every hb_timer peroid*/
+		dev->period_flag = 0;
 		dev->heartbeat_tick++;		
 		period_flag = 1;	
 		
@@ -3330,10 +3388,9 @@ static void handle_module_setting(  DevStatus* dev )
 
 	if( dev->boot_status ) 
 	{
-		/*check at every moment*/
 		if( period_flag ) 
 		{
-			/*check at every 50s*/
+			/*check at every hb_timer peroid*/
 			check_reset_condition( dev );		
 			check_sm_and_ppp( dev );
 		}
@@ -3345,9 +3402,9 @@ static void handle_module_setting(  DevStatus* dev )
 			dev->tick_sum += tick - dev->tick_tag;
 			dev->tick_tag = tick;
 			
-			if( dev->timer_tick > dev->close_tcp_interval - dev->tick_sum )
+			if( dev->wu_tick > dev->close_tcp_interval - dev->tick_sum )
 			{
-				dev->timer_tick = dev->close_tcp_interval - dev->tick_sum;
+				dev->wu_tick = dev->close_tcp_interval - dev->tick_sum;
 			}				
 			if( dev->tick_sum >= dev->close_tcp_interval )
 			{
@@ -3368,13 +3425,13 @@ static void handle_module_setting(  DevStatus* dev )
 
 	at_list_cmd( dev );
 	mqtt_list_cmd( dev );	
-	atcmd_list_cmd( dev );
+	at_wait_list_cmd( dev );
 	
-	if( dev->timer_tick != portMAX_DELAY )
+	if( dev->wu_tick != portMAX_DELAY )
 	{
-		if( pdFAIL == xTimerChangePeriod( dev->wake_timer, dev->timer_tick, 2 ) )
+		if( pdFAIL == xTimerChangePeriod( dev->wu_timer, dev->wu_tick, 2 ) )
 		{
-			printf("%s fail to xTimerChangePeriod wake_timer!\r\n", __func__);
+			printf("%s fail to xTimerChangePeriod wu_timer!\r\n", __func__);
 		}	
 	}
 }
@@ -3385,15 +3442,15 @@ static void handle_module_setting(  DevStatus* dev )
 */
 static void module_clean_work( DevStatus* dev )
 {
-	if( xTimerIsTimerActive( dev->os_timer ) != pdFALSE )
+	if( xTimerIsTimerActive( dev->hb_timer ) != pdFALSE )
 	{
-		if( pdFAIL == xTimerStop( dev->os_timer, 0 ) )
+		if( pdFAIL == xTimerStop( dev->hb_timer, 0 ) )
 		{
-			printf("%s fail to stop os_timer\r\n", __func__);
+			printf("%s fail to stop hb_timer\r\n", __func__);
 		}
 		else
 		{
-			printf("%s stop os_timer ok.\r\n", __func__);
+			printf("%s stop hb_timer ok.\r\n", __func__);
 		}
 	}
 	clean_run_data( dev );
@@ -3419,14 +3476,14 @@ static void module_system_init( DevStatus* dev )
 	
 	INIT_LIST_HEAD( &dev->at_head );
 	INIT_LIST_HEAD( &dev->mqtt_head );
-	INIT_LIST_HEAD( &dev->atcmd_head );	
+	INIT_LIST_HEAD( &dev->at_wait_head );	
 	
 	dev->os_mutex = xSemaphoreCreateMutex();
 	
- 	dev->os_timer = xTimerCreate( "module", 50000 / portTICK_RATE_MS, 
+ 	dev->hb_timer = xTimerCreate( "heartbeat", 50000 / portTICK_RATE_MS, 
 						pdTRUE, dev, notify_module_period );
 	
-	dev->wake_timer = xTimerCreate( "wakeup", 100 / portTICK_RATE_MS, 
+	dev->wu_timer = xTimerCreate( "wakeup", 100 / portTICK_RATE_MS, 
 						pdFALSE, dev, wake_up_module_timer );
 }
 
@@ -3478,7 +3535,8 @@ void HandleModuleTask( void * pvParameters )
 	static struct status_operations status_ops =
 	{
 		check_command_exist,
-		make_command_to_list,
+		make_at_command_to_list,
+		make_mqtt_command_to_list,
 		atcmd_set_ack,
 		set_mqtt_cmd_clean,
 		mqtt_set_mesg_ack,
@@ -3491,7 +3549,6 @@ void HandleModuleTask( void * pvParameters )
 	dev->reader = reader;
 	dev->module = module;
 	dev->android_power_status = 0;
-	
 	rfifo_init( dev->uart_fifo, 1024 * 2 );	
 	uart3_init( 115200 );
 	

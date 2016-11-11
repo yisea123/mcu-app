@@ -89,7 +89,7 @@ int main(void)
 	//vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 #if( BOARD_NUM == 3)	
-	xTaskCreate( HandleModuleTask, (const char *)"Module", configMINIMAL_STACK_SIZE*7, NULL, tskIDLE_PRIORITY + 2, &pxModuleTask );
+	xTaskCreate( HandleModuleTask, (const char *)"Module", configMINIMAL_STACK_SIZE*7, NULL, tskIDLE_PRIORITY + 7, &pxModuleTask );
 	xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
 	xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
 #endif
