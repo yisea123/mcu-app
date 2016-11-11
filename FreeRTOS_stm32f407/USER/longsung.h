@@ -224,7 +224,7 @@ typedef struct {
 	struct list_head at_wait_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
 	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
-	unsigned int wu_tick;				/*wake_timer's peroid tick*/
+	unsigned int wu_tick;					/*wake_timer's peroid tick*/
 	TimerHandle_t wu_timer;					/*timer for wake up pxModuleTask*/	
 	TimerHandle_t hb_timer; 				/*heartbeat freeRTOS timer*/
 	TaskHandle_t pxModuleTask;				/*pointer module TCB*/
