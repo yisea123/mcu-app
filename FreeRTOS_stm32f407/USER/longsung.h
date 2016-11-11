@@ -65,56 +65,11 @@ typedef struct {
 	Token tokens[MAX_TOKENS];
 }RemoteTokenizer;
 
-typedef void (* tcp_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-
-typedef void (* connect_err_callback)( void *dev, RemoteTokenizer *tzer);
-typedef void (* connect_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* disconnect_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-
-typedef void (* signal_strength_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-
-typedef void (* get_ip_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* get_ip_fail_callback)( void *dev, RemoteTokenizer *tzer);
-
-typedef void (* at_command_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* at_command_success_callback)( void *dev, RemoteTokenizer *tzer);
-typedef void (* at_command_fail_callback)( void *dev, RemoteTokenizer *tzer);
-
-typedef void (* check_simcard_type_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-
-typedef void (* check_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* read_sm_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* sm_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok, int index);
-typedef void (* sm_notify_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-typedef void (* sm_read_err_callback)( void *dev, RemoteTokenizer *tzer, Token* tok);
-
 typedef struct {
 	char inited;
 	int pos;
 	int overflow;
 	void *p_dev;
-	
-	connect_err_callback on_connect_fail;
-	connect_success_callback on_connect_success;
-	disconnect_callback on_disconnect;
-	tcp_data_callback on_tcp_data;
-	
-	signal_strength_callback on_signal_strength;
-	
-	get_ip_success_callback on_ip_success;
-	get_ip_fail_callback on_ip_fail;
-	
-	at_command_callback on_at_command;
-	at_command_success_callback on_at_success;
-	at_command_fail_callback	on_at_fail;
-	check_simcard_type_callback on_simcard_type;
-	
-	check_sm_callback on_sm_check;
-	read_sm_callback on_sm_read;
-	sm_data_callback on_sm_data;
-	sm_notify_callback on_sm_notify;
-	sm_read_err_callback on_sm_read_err;
-	
 	char in[MAX_LINE_LEN];
 }UartReader;
 
@@ -149,17 +104,22 @@ typedef struct {
 }AtCommand;
 
 struct device_operations {
-	void (* initialise_module )( void *dev );	
-	void (* poll_module_signal )( void *dev );
-	void (* check_module_sm )( void *dev ) ;
-	void (* check_module_ip )( void *dev ) ;
-	void (* module_request_ip )( void *dev ) ;	
-	void (* close_module_socket )( void *dev ) ;
-	void (* tcp_connect_server )( void *dev ) ;
-	void (* push_socket_data )( void *dev ) ;
-	void (* delete_module_sm )( void *dev ) ;
-	void (* read_module_sm )( void *dev ) ;
-	void (* send_command_to_module )( AtCommand* cmd );
+	void (* initialise_module )( void *instance );	
+	void (* poll_module_signal )( void *instance );
+	void (* check_module_sm )( void *instance ) ;
+	void (* check_module_ip )( void *instance ) ;
+	void (* module_request_ip )( void *instance ) ;	
+	void (* close_module_socket )( void *instance ) ;
+	void (* tcp_connect_server )( void *instance ) ;
+	void (* load_mqtt_connect )( void *instance ) ;
+	void (* load_mqtt_disconnect )( void *instance ) ;
+	
+	void (* load_mqtt_ping )( void *instance ) ;
+	void (* push_socket_data )( void *instance, unsigned int tick ) ;
+	void (* delete_module_sm )( void *instance, int index ) ;
+	void (* read_module_sm )( void *instance, int index ) ;
+	void (* send_command_to_module )( void *instance, AtCommand* cmd );
+	char*(* at_get_name )( void *instance, int index );
 };
 
 struct callback_operations {
@@ -200,7 +160,7 @@ typedef struct ComModule{
 	struct ComModule * next;
 	struct device_operations *d_ops;	
 	struct callback_operations* c_ops;
-	void (* module_reader_parse )( UartReader *reader );
+	void (* module_reader_parse )( struct ComModule* instance, UartReader *reader );
 }ComModule;
 
 typedef struct {

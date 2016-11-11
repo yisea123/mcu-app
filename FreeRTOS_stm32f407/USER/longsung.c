@@ -11,7 +11,7 @@ static char* make_mqtt_packet( char* buff, unsigned char* data, int len);
 static void make_command_to_list( DevStatus *dev, char index, unsigned int interval, int para);
 static void mqtt_set_mesg_ack( mqtt_dev_status *mqtt_dev, int type, uint16_t msg_id);
 static void atcmd_set_ack( DevStatus *dev, int index );
-static void mqtt_msg_set_clean( DevStatus *dev );
+static void cmd_mqtt_set_clean( DevStatus *dev );
 static int mqtt_publish(mqtt_dev_status *mqtt_dev, const char* topic, char* data, int qos, int retain);
 static int get_at_command_count(struct list_head *head);
 static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end );
@@ -33,7 +33,274 @@ static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
 static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index);
 static void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
 static void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
-static void send_command_to_device( DevStatus *dev, AtCommand* cmd );
+//static void send_command_to_device( DevStatus *dev, AtCommand* cmd );
+static int check_command_exist( int index, struct list_head *head );
+static void prepare_mqtt_packet( mqtt_dev_status *mqtt_dev, AtCommand* cmd );
+static void mqtt_reset_status( mqtt_dev_status * mqtt );
+static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes );
+static void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int nbytes );
+static void at(char *at);
+
+
+
+
+void print_char(USART_TypeDef* USARTx, char ch)
+{
+		USART_ClearFlag(USARTx, USART_FLAG_TC); 
+		USART_SendData(USARTx, ch);
+		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
+}
+
+void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
+{
+
+	int t;
+	for(t=0;t<len;t++) 
+	{
+		USART_ClearFlag(USARTx, USART_FLAG_TC); 
+		USART_SendData(USARTx, data[t]);
+		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
+	}		
+	
+	//add \r\n for new line
+	USART_ClearFlag(USARTx, USART_FLAG_TC); 
+	USART_SendData(USARTx, 0x0d);	
+	while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);	
+
+	USART_ClearFlag(USARTx, USART_FLAG_TC); 
+	USART_SendData(USARTx, 0x0a);	
+	while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);		
+	
+}
+
+static void select_sort(int a[], int len)  
+{  
+    int i,j,x,l;  
+    for(i=0;i<len;i++)  
+    {  
+        x=a[i];  
+        l=i;  
+        for(j=i;j<len;j++)  
+        {  
+            if(a[j]<x)  
+            {  
+                x=a[j];  
+                l=j;  
+            }  
+        }  
+        a[l]=a[i];  
+        a[i]=x;  
+    }  
+}  
+
+static int is_little_endian()
+{
+	int wTest = 0x12345678;
+	short *pTest=(short*)&wTest;
+	//printf("%s:%04x\r\n", __func__, pTest[0]);
+	return !(0x1234 == pTest[0]);
+}
+
+/*网络字节是大端*/
+unsigned int htonl(uint32_t hostlong)
+{
+	int value;
+	char *p, *q;
+	
+	if(is_little_endian()) 
+	{
+		p = (char*)&value;
+		q = (char*)&hostlong;
+		*p = *(q+3);
+		*(p+1) = *(q+2);
+		*(p+2) = *(q+1);
+		*(p+3) = *q;
+	} 
+	else 
+	{
+		value = hostlong;
+	}
+	
+	//printf("value=%04x, hostlong=%04x\r\n", value, hostlong);
+	return value;
+}
+
+unsigned int ntohl(uint32_t netlong)
+{
+	int value;
+	char *p, *q;
+	
+	if(is_little_endian()) 
+	{
+		p = (char*)&value;
+		q = (char*)&netlong;
+		*p = *(q+3);
+		*(p+1) = *(q+2);
+		*(p+2) = *(q+1);
+		*(p+3) = *q;
+	} 
+	else 
+	{
+		value = netlong;
+	}
+	
+	//printf("value=%04x, netlong=%04x\r\n", value, netlong);
+	return value;	
+}
+
+/*send AT commnad to 4G*/
+static void send_at_command(const char* ack, int ack_len)
+{
+	int t;
+	for(t=0; t<ack_len; t++) 
+	{
+		USART_ClearFlag(USART3, USART_FLAG_TC); 
+		USART_SendData(USART3, ack[t]);
+		while(USART_GetFlagStatus(USART3,USART_FLAG_TC)!=SET);
+	}		
+	
+	/*add \r for AT command*/
+	USART_ClearFlag(USART3, USART_FLAG_TC); 
+	USART_SendData(USART3, 0x0d);	
+	while(USART_GetFlagStatus(USART3,USART_FLAG_TC)!=SET);	
+}
+
+static void at(char *at)
+{
+	int len;
+	
+	len = strlen(at);
+	send_at_command(at, len);
+}
+
+void *memchr_x(const void *s, int c, int count)
+{
+	const unsigned char *p = s;
+
+	while (count--)
+		if ((unsigned char)c == *p++)
+			return (void *)(p - 1);
+		
+	return NULL;
+}
+
+int memcmp_x(const void *cs, const void *ct, int count)
+{
+	const unsigned char *su1 = cs, *su2 = ct, *end = su1 + count;
+	int res = 0;
+
+	while (su1 < end) 
+	{
+		res = *su1++ - *su2++;
+		if (res)
+			break;
+	}
+	
+	return res;
+}
+
+static int str2int(const char* p, const char* end)
+{
+	int   result = 0;
+	int   len    = end - p;
+
+	for ( ; len > 0; len--, p++ )
+	{
+			int  c;
+
+			if (p >= end)
+					goto Fail;
+
+			c = *p - '0';
+			if ((unsigned)c >= 10)
+					goto Fail;
+
+			result = result*10 + c;
+	}
+	return  result;
+
+Fail:
+	return -1;
+}
+
+
+static uint8_t str_to_hex( char *src )
+{
+	uint8_t s1,s2;
+
+	s1 = toupper(src[0]) - 0x30;
+	if (s1 > 9) s1 -= 7;
+
+	s2 = toupper(src[1]) - 0x30;
+	if (s2 > 9) s2 -= 7;
+
+	return (s1*16 + s2);
+}
+
+/*
+* author:	yangjianzhou
+* function: 	module_tokenizer_init,  format data to Token.
+*/
+static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
+{
+	int count = 0;
+
+	// remove trailing newline
+	if (end > p && end[-1] == '\n') 
+	{
+			end -= 1;
+			if (end > p && end[-1] == '\r')
+					end -= 1;
+	}	
+
+	while (p < end) 
+	{
+			const char*  q = p;
+
+			q = memchr(p, ',', end-p);
+			if (q == NULL)
+					q = end;
+
+			if (q >= p) 
+			{
+					if (count < MAX_TOKENS) 
+					{
+							t->tokens[count].p   = p;
+							t->tokens[count].end = q;
+							count += 1;
+					}
+			}
+			if (q < end)
+					q += 1;
+
+			p = q;
+	}
+
+	t->count = count;
+
+	return count;		
+}
+
+/*
+* author:	yangjianzhou
+* function: 	module_tokenizer_get,  get a Token.
+*/
+static Token module_tokenizer_get( RemoteTokenizer* t, int index )
+{
+	Token  tok;
+	static const char*  dummy = "";
+
+	if (index < 0 || index >= t->count) 
+	{
+			tok.p = tok.end = dummy;
+	} 
+	else 
+	{
+			tok = t->tokens[index];
+	}
+
+	return tok;
+}
 
 /***************************************instance codes***************************************/
 
@@ -59,105 +326,16 @@ static void print_line(USART_TypeDef* USARTx, const char* data, int len)
 }
 
 
-/*
-* author:	yangjianzhou
-* function: 	module_reader_parse,  parse one line.
-*/
-static void longsung_reader_parse( UartReader* r )
-{
-	int i;	
-	Token tok[MAX_TOKENS];
-	RemoteTokenizer tzer[1];
-	DevStatus *dev = ( DevStatus * )( r->p_dev );
-	
-	if( !dev )
-	{
-		printf("%s: dev null pointer error!\r\n", __func__);
-		return;
-	}
-	
-	print_line( UART4, r->in, r->pos );
-	//+CMGD: (),(0-4)
-	module_tokenizer_init( tzer, r->in, r->in + r->pos );
-	
-	if( tzer->count == 0 )
-	{
-		return;
-	}
-	if( tzer->count > SIZE_ARRAY( tok ) )
-	{
-		printf("%s: tzer->count(%d) error!\r\n", __func__, tzer->count);
-		return;
-	}
-	
-	for( i = 0; i < tzer->count; i++ ) 
-	{
-		tok[i] = module_tokenizer_get( tzer, i );
-	}
-	
-	if( dev->sm_data_flag ) 
-	{
-		dev->sm_data_flag = 0;
-		r->on_sm_data( dev, tzer, tok, dev->sm_index_read );
-	}
-	
-	if( !memcmp( tok[0].p, "AT+", strlen("AT+") ) ) {
-		r->on_at_command( dev, tzer, tok );
-		
-	} else if(!memcmp(tok[0].p, "OK", strlen("OK"))) {
-		r->on_at_success( dev, tzer);
-		
-	} else if(!memcmp(tok[0].p, "ERROR", strlen("ERROR"))) {
-		r->on_at_fail( dev, tzer);
-		
-	} else if(!memcmp(tok[0].p, "+MIPRTCP=", strlen("+MIPRTCP="))&&(tzer->count>2)) {
-		r->on_tcp_data( dev, tzer, tok);
-		
-	} else if(!memcmp(tok[0].p, "+MIPCALL:0", strlen("+MIPCALL:0"))) {
-		r->on_ip_fail( dev, tzer);
-		
-	} else if(!memcmp(tok[0].p, "+MIPCALL:1", strlen("+MIPCALL:1"))&&(tzer->count>1)) {
-		r->on_ip_success( dev, tzer, tok);
-		
-	} else if(!memcmp(tok[0].p, "+CSQ:", strlen("+CSQ:"))&&(tzer->count>1)) {
-		r->on_signal_strength( dev, tzer, tok);
-		
-	} else if(!memcmp(tok[0].p, "+MIP:ERROR", strlen("+MIP:ERROR"))) {
-		r->on_connect_fail( dev, tzer);
-		
-	} else if(!memcmp(tok[0].p, "+MIPOPEN=", strlen("+MIPOPEN="))&&(tzer->count>1)) {
-		if(str2int(tok[1].p, tok[1].end)==1) {
-			r->on_connect_success( dev, tzer, tok);
-		}
-
-	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
-		r->on_disconnect( dev, tzer, tok);
-
-	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
-		r->on_simcard_type( dev, tzer, tok);
-
-	} else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) {
-		r->on_sm_check( dev, tzer, tok);
-
-	} else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
-		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) {
-		r->on_sm_read( dev, tzer, tok);
-
-	} else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) {
-		r->on_sm_notify( dev, tzer, tok);
-
-	} else if(!memcmp(tok[0].p, "+CMS ERROR: 321", strlen("+CMS ERROR: 321"))) {
-		r->on_sm_read_err( dev, tzer, tok);
-		
-	}
-}
+/********************************************************************************/
 
 /*
 * author:	yangjianzhou
 * function: 	initialise_longsung_module,  init module by AT command.
 */
-static void initialise_longsung_module( DevStatus *dev )
+static void initialise_longsung_module( void *instance )
 {
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
 	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
 		
 	/*为了第一时间连接上服务器*/
@@ -176,59 +354,42 @@ static void initialise_longsung_module( DevStatus *dev )
 	+MIPSEND:1,1438
 	*****************************************************************************/
 	make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);		
-	dev->heartbeat_tick = 6;				
 }
 
 /*
 * author:	yangjianzhou
 * function: 	poll_module_signal,  poll signal data.
 */
-static void poll_longsung_signal( DevStatus *dev )
+static void poll_longsung_signal( void *instance )
 {
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
 	make_command_to_list( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
-	dev->scsq++;
 }
 
-static void check_longsung_sm( DevStatus *dev )
+static void check_longsung_sm( void *instance )
 {
-	if( dev->simcard_type > 0 ) 
-	{
-		/*查询SM短信未读index*/
-		make_command_to_list(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
-		make_command_to_list(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
-		/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
-	}
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	/*查询SM短信未读index*/
+	make_command_to_list(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
+	make_command_to_list(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
+	/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
 }
 
-static void check_longsung_ip( DevStatus *dev )
+static void check_longsung_ip( void *instance )
 {
-	/*PPP连接获取IP*/		
-	if( dev->simcard_type > 0 ) 
-	{
-			/*查询IP*/
-		make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
-	}	
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	/*查询IP*/
+	make_command_to_list( dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL );
 }
 
-static void longsung_close_socket( DevStatus *dev )
-{
-	/*PPP连接获取IP*/		
-	if( dev->simcard_type > 0 ) 
-	{//出发条件
-		if( dev->ppp_status == PPP_DISCONNECT ) 
-		{ //状态
-			dev->ppp_status = PPP_CONNECTING;//修改状态
-			/*ppp for get ip*/
-			make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);//动作	
-			make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
-			make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
-		}						
-	}	
-}
-
-static void longsung_request_ip( DevStatus *dev )
+static void longsung_close_socket( void *instance )
 {
 	int i;
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+	
 	/*检查是否已经发过ATMIPCLOSE*/
 	if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
 	{ 
@@ -237,75 +398,873 @@ static void longsung_request_ip( DevStatus *dev )
 			if( dev->socket_open[i] != -1 ) 
 			{
 				make_command_to_list( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
+				//dev->module->d_ops->close_module_socket( dev->module ); 					
 			}
 		}
 	}
+
 }
 
-static void longsung_connect_server( DevStatus *dev )
+static void longsung_request_ip( void *instance )
 {
-	/*连接上远程服务端*/
-	if( dev->socket_num == 0 ) 
-	{//触发条件
-		if( dev->ppp_status == PPP_CONNECTED && dev->simcard_type > 0 ) 
-		{//状态
-			if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
-					!check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+	
+	make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);
+	make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
+	make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);	
+}
+
+static void longsung_connect_server( void *instance )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
+			!check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
+	{
+		/*取消上一次要关闭tcp的请求*/
+		if( dev->close_tcp_interval ) 
+		{
+			dev->close_tcp_interval = 0;//动作
+		}
+		/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
+		make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
+		make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
+		printf("%s: start tcp connect remote server.\r\n", __func__);
+		//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);					
+		//dev->heartbeat_tick = 6;
+	}
+}
+
+static void longsung_load_mqtt_connect( void *instance )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
+}
+
+static void longsung_load_mqtt_disconnect( void *instance )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
+}
+
+static void longsung_load_mqtt_ping( void *instance )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );	
+}
+
+static void longsung_push_socket_data( void *instance, unsigned int tick )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list( dev, ATMIPPUSH, tick, MQTT_MSG_TYPE_NULL );
+}
+
+/*
+* author:	yangjianzhou
+* function: 	list_sm_event,  poll sm event.
+*/
+static void longsung_delete_sm( void *instance, int index )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+	make_command_to_list( dev, ATCMGD, ONE_SECOND/2, index );					
+}
+
+/*
+* author:	yangjianzhou
+* function: 	list_sm_event,  poll sm event.
+*/
+static void longsung_read_sm( void *instance, int index )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
+	make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+	make_command_to_list( dev, ATCMGR, ONE_SECOND/5, index );
+}
+
+static void read_longsung_sm( DevStatus *dev , int index )
+{
+	char cmd[15];
+
+	if( !dev )
+	{
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}
+	dev->sm_index_read = index;
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+CMGR=%d", index);
+	
+	at(cmd);
+}
+
+static void delete_longsung_sm(int index)
+{
+	char cmd[15];
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+CMGD=%d", index);
+	
+	at(cmd);
+}
+
+static void close_longsung_socket(int index)
+{
+	char cmd[15];
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+MIPCLOSE=%d", index);
+	
+	at( cmd );
+}
+
+static void send_command_to_longsung( void *instance, AtCommand* cmd )
+{
+	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+
+	if( !cmd || !dev )
+	{
+		printf("%s: dev or cmd null pointer error!\r\n", __func__);	
+		return;
+	}
+	switch( cmd->index )
+	{
+		case ATCSQ: 
+			at( "AT+CSQ" );			
+			break;
+		case ATSIMTEST: 
+			at( "AT+SIMTEST?" ); 
+			break;
+		case ATCPMS: 
+			at( "AT+CPMS=\"SM\"" ); 
+			break;
+		case ATCMGD_: 
+			at( "AT+CMGD=?" ); 
+			break;
+		case ATMIPCALL_: 
+			at( "AT+MIPCALL?" ); 
+			break;
+		case ATMIPCALL0: 
+			at( "AT+MIPCALL=0" ); 
+			break;
+		case ATMIPPROFILE: 
+			at( "AT+MIPPROFILE=1,\"3GNET\"" ); 
+			break;//3GNET
+		case ATMIPCALL1: 
+			at( "AT+MIPCALL=1" );
+			break;
+		case ATMIPOPEN: 
+			if( dev->mqtt_dev->iot ) 
 			{
-				/*取消上一次要关闭tcp的请求*/
-				if( dev->close_tcp_interval ) 
-				{
-					dev->close_tcp_interval = 0;//动作
-				}
-				/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
-				make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
-				make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );			
-				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);					
-				dev->heartbeat_tick = 6;
+				at( "AT+MIPOPEN=1,0,\"198.41.30.241\",1883,0" );
 			}
-		}
-	}	
-}
-
-
-static void longsung_push_socket_data( DevStatus *dev )
-{
-	make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );
-}
-
-/*
-* author:	yangjianzhou
-* function: 	list_sm_event,  poll sm event.
-*/
-static void longsung_delete_sm( DevStatus *dev )
-{
-	/*删除sim卡中的短信, 短信相关的AT指令时间要长些NE_SECOND/5~ONE_SECOND/2*/
-	if( dev->sm_index_delete != -1 && dev->sm_delete_flag ) 
-	{
-		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list( dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete );					
-		dev->sm_delete_flag = 0;
+			else 
+			{
+				at( "AT+MIPOPEN=1,0,\"112.124.102.62\",1883,0" );
+			}
+		break;
+		case ATMIPSEND: 
+			//prepare_tick_packet();  delete
+			break;
+		case ATMIPPUSH: 
+			at( "AT+MIPPUSH=1" ); 
+			break;
+		case ATCMGF: 
+			at( "AT+CMGF=1" ); 
+			break;
+		case ATMIPCLOSE: 
+			close_longsung_socket( cmd->para ); 
+			break;		
+		case ATCMGR: 
+			read_longsung_sm( dev, cmd->para ); 
+			break;
+		case ATCMGD: 
+			delete_longsung_sm( cmd->para ); 
+			break;	
+		case ATMIPHEX: 
+			at( "AT+MIPHEX=1" ); 
+			break;
+		case ATRESET: 
+			at( "AT^RESET" ); 
+			break;
+		case ATMQTT: 
+			prepare_mqtt_packet( dev->mqtt_dev, cmd ); 
+			break;
+			
+		default: 
+			break;
 	}
 }
 
+static char *longsung_at_get_name( void *instance, int index )
+{
+	switch( index )
+	{
+		case ATCSQ:
+			return "ATCSQ";
+		case ATSIMTEST:
+			return "ATSIMTEST";
+		case ATCPMS:
+			return "ATCPMS";
+		case ATCMGD_:
+			return "ATCMGD_";
+		case ATMIPCALL_:
+			return "ATMIPCALL_";	
+		case ATMIPCALL0:
+			return "ATMIPCALL0";	
+		case ATMIPPROFILE:
+			return "ATMIPPROFILE";
+		case ATMIPCALL1:
+			return "ATMIPCALL1";
+		case ATMIPOPEN:
+			return "ATMIPOPEN";
+		case ATMIPSEND:
+			return "ATMIPSEND";
+		case ATMIPPUSH:
+			return "ATMIPPUSH";
+		case ATCMGF:
+			return "ATCMGF";
+		case ATMIPCLOSE:
+			return "ATMIPCLOSE";
+		case ATCMGR:
+			return "ATCMGR";
+		case ATCMGD:
+			return "ATCMGD";
+		case ATMIPHEX:
+			return "ATMIPHEX";
+		case ATRESET:
+			return "ATRESET";
+		case ATMQTT:
+			return "ATMQTT";
+			
+		default: 
+			return "MSG UNKNOW";
+	}
+}
+
+/********************************************************************************/
+
+/* TCP 消息处理函数 */
+static void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok )
+{
+	int i, nbytes;
+
+	static unsigned char tcp_read[750];
+	DevStatus *dev = ( DevStatus* ) priv;	
+	mqtt_dev_status *mqtt_dev = dev->mqtt_dev;
+	
+	memset( tcp_read, '\0', sizeof( tcp_read ) );
+	nbytes = str2int( tok[1].p, tok[1].end );//nbytes <= 750
+
+	mqtt_dev->recv_bytes += nbytes;
+	/* 如果解析包错误， 结束解析数据 */
+	if( !mqtt_dev->parse_packet_flag )
+	{
+		printf("%s: drop %d bytes. waitting mqtt reset finish...\r\n", __func__, nbytes);
+		return;
+	}
+	//printf("%s:--->", __func__);
+	for( i = 0; i < nbytes; i++ )
+	{
+		tcp_read[i] = str_to_hex( ( char* ) tok[2].p + 2  * i );
+		//printf("0X%02x ", dev->tcp_read[i]);
+	}	
+	//printf("##### ##### nbytes(%d)\r\n", nbytes);
+	
+	if( mqtt_dev->fixhead )
+	{
+		check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes );
+	}
+	else 
+	{
+		if(mqtt_dev->in_waitting > 0 && mqtt_dev->in_waitting <= 750)
+		{
+			if(mqtt_dev->in_waitting == nbytes)
+			{
+				printf("%s: in_waitting == nbytes = %d\r\n", __func__, nbytes);
+				memcpy( mqtt_dev->in_buffer + mqtt_dev->in_pos, tcp_read, nbytes);
+				parse_mqtt_packet( mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
+				mqtt_dev->fixhead = 1;
+				mqtt_dev->in_waitting = 0;
+				mqtt_dev->in_pos = 0;
+			}
+			else if(mqtt_dev->in_waitting < nbytes)
+			{
+				printf("%s: [%d] in_waitting < nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
+				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, mqtt_dev->in_waitting);
+				parse_mqtt_packet(mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
+				memmove( tcp_read, tcp_read + mqtt_dev->in_waitting, nbytes-mqtt_dev->in_waitting);
+				mqtt_dev->fixhead = 1;
+				mqtt_dev->in_waitting = 0;
+				mqtt_dev->in_pos = 0;				
+				check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes-mqtt_dev->in_waitting);
+			}
+			else if(mqtt_dev->in_waitting > nbytes)
+			{
+				printf("%s: [%d] in_waitting > nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
+				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, nbytes);
+				mqtt_dev->in_pos += nbytes;
+				mqtt_dev->in_waitting -= nbytes;
+			}				
+		}
+		else if(mqtt_dev->in_waitting < 0)//-752
+		{
+			mqtt_dev->in_waitting += nbytes;
+			
+			if(mqtt_dev->in_waitting < 0) 
+			{
+				printf("%s: Drop packet! in_waitting = %d\r\n", __func__, mqtt_dev->in_waitting);
+			}
+			else if(mqtt_dev->in_waitting == 0)
+			{
+				mqtt_dev->fixhead = 1;
+				mqtt_dev->in_pos = 0;
+				printf("%s: Drop packet! in_waitting = %d\r\n", __func__, mqtt_dev->in_waitting);
+			}
+			else if(mqtt_dev->in_waitting > 0)//in_waitting=-4 + nbytes=20 = in_waitting=16
+			{
+				int len;
+				
+				len = mqtt_dev->in_waitting;
+				mqtt_dev->in_waitting = 0;
+				mqtt_dev->in_pos = 0;
+				mqtt_dev->fixhead = 1;
+				memmove( tcp_read, tcp_read + ( nbytes - len ), len );
+				printf("%s: Drop some char in packet! len = %d, nbytes=%d\r\n", __func__, len, nbytes);
+				check_packet_from_fixhead( mqtt_dev, tcp_read, mqtt_dev->in_waitting);
+			}
+		}
+		else if(mqtt_dev->in_waitting > 750)
+		{
+			printf("%s: mqtt_dev->in_waitting=%d ERROR!\r\n", __func__, mqtt_dev->in_waitting);
+			mqtt_reset_status( mqtt_dev );
+		}
+	}
+}
+
+static void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	//+MIPOPEN=1,1
+	DevStatus *dev = ( DevStatus* ) priv;		
+	int i, socketId = str2int(tok[0].p+9, tok[0].end);
+
+	//printf("[%s: socketId = %d]\r\n", __func__, socketId);
+	switch( socketId )
+	{
+		case 1:
+		case 2:
+		case 3:
+		case 4: 
+			i = socketId - 1; 
+			break;
+			
+		default: 
+			return;
+	}
+	
+	dev->socket_open[i] = socketId;
+	dev->tcp_connect_status = 1;
+	printf("%s:TCP connect success! socket id=%d\r\n", __func__, socketId);
+	atcmd_set_ack( dev, ATMIPOPEN );
+	dev->mqtt_dev->parse_packet_flag = 1;
+}
+
+static void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer)
+{
+	//+MIP:ERROR
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	printf("[%s, TCP connect error.]\r\n", __func__);
+	dev->tcp_connect_status = 0;
+	atcmd_set_ack( dev, ATMIPOPEN);
+}
+
+static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	//+MIPCLOSE:2
+	int socketId = str2int(tok[0].p+10, tok[0].end);	
+	DevStatus *dev = ( DevStatus* ) priv;		
+
+	printf("%s: +MIPCLOSE !!!!! success. socket id = %d\r\n", __func__, socketId);
+	dev->socket_open[ socketId - 1 ] = -1;
+	dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
+	dev->mqtt_dev->in_pos = 0;
+	dev->mqtt_dev->in_waitting = 0;	
+	dev->mqtt_dev->fixhead = 1;
+	
+	dev->tcp_connect_status = 0;
+	cmd_mqtt_set_clean( dev );
+	//printf("[tcp connect close...socketId=%d]\r\n", socketId);
+	//printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
+	//	, devStatus->socket_open[2], devStatus->socket_open[3]);
+	//dev->connect_flag = 0;
+}
+
+/*******************************************
++CSQ: 7,99
+********************************************/
+static void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	int signal[2];
+	DevStatus *dev = ( DevStatus* ) priv;	
+	
+	signal[0] = str2int(tok[0].p+6, tok[0].end);
+	signal[1] = str2int(tok[1].p, tok[1].end);
+	dev->rcsq++;
+	dev->singal[0] = signal[0];
+	dev->singal[1] = signal[1];
+}
+
+static void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	//printf("%s!\r\n", __func__);
+	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
+	//print_line_1(UART4, tok[0].p, tok[0].end - tok[0].p);
+	
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	memset(dev->at_sending, '\0', sizeof(dev->at_sending));
+	if(strlen(tok[0].p) > sizeof(dev->at_sending)) return;
+	
+	if( tzer->count == 1 ) 
+	{
+		memcpy(dev->at_sending, tok[0].p, tok[0].end - tok[0].p);
+	} 
+	else 
+	{
+	  strcat(dev->at_sending, tok[0].p);
+	}
+	
+	//printf("at_sending=%s, len=%d\r\n", at_sending, strlen(at_sending));
+}
+
+static void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
+{
+	//printf("%s!\r\n", __func__);
+	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	if( !memcmp(dev->at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) 
+	{
+		//printf("----------------------------------\r\n");
+		//printf("[result: OK] %s\r\n", dev[0].at_sending);
+		
+	} 
+	else if( !memcmp(dev->at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) 
+	{
+		if( !memcmp(dev->at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
+		/*此命令是短信查询，不处理*/
+		printf("[result: OK] %s\r\n", dev->at_sending);		
+
+		/*删除短信成功之后才能读取下一条短信，如果不成功
+		，可能永远都不会再读取，在at fail中也处理fix it.*/
+		if(dev->sm_num > 0) 
+		{
+			int i, delflag = 0;
+			for(i=0; i< dev->sm_num; i++) 
+			{
+				if(dev->sm_index[i] == dev->sm_index_delete) 
+				{
+					delflag = 1;
+					break;
+				}
+			}
+			/*如果数组中有删除的序列号，才进行删除。*/
+			if(delflag) 
+			{
+				for(; i<dev->sm_num-1; i++) 
+				{
+					dev->sm_index[i] = dev->sm_index[i+1];
+				}
+				dev->sm_index[i] = -1;
+				dev->sm_num--;
+			}
+			
+			printf("UPDATE sm_num=%d, sm_index={ ", dev->sm_num);
+			for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++) 
+			{
+				if(dev->sm_index[i] != -1)
+					printf("%d, ", dev->sm_index[i]);
+			}
+			printf("}\r\n");				
+		}
+		/*删除短信成功，读取下一条短信*/
+
+		dev->sm_index_delete = -1;
+		dev->sm_delete_flag = 1;
+		dev->sm_read_flag = 1;		
+	}
+	else if( !memcmp(dev->at_sending, "AT+MIPHEX=1", strlen("AT+MIPHEX=1")))
+	{
+		printf("%s: success to cmd AT+MIPHEX=1\r\n", __func__);
+		atcmd_set_ack( dev, ATMIPHEX );
+	}
+}
+
+static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
+{
+	//printf("%s!\r\n", __func__);
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	if( !memcmp(dev->at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) 
+	{
+		if( dev->socket_num > 0 )
+		{
+			dev->socket_close_flag = 1;
+		}
+		else if( dev->socket_num == 0 && dev->tcp_connect_status )
+		{
+			dev->tcp_connect_status = 0;
+			if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
+			{
+				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
+			}
+			printf("%s: catch bug#####\r\n", __func__);
+		}
+		printf("[%s: ERROR AT:%s\r\n", __func__, dev->at_sending);
+	} 
+	else if(!memcmp(dev->at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) 
+	{
+		//AT+MIPOPEN=1,0,"
+		printf("[TCP CONNECT FAIL! AT: %s", dev->at_sending);
+		if( dev->socket_num > 0 )
+		{
+			dev->socket_open[0] = 1;
+			dev->socket_open[1] = 2;
+			dev->socket_open[2] = 3;
+			dev->socket_open[3] = 4;
+		}
+		dev->tcp_connect_status = 0;
+	} 
+	else if( !memcmp(dev->at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) 
+	{
+		if( !memcmp(dev->at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
+		printf("[AT:%s, result: ERROR]\r\n", dev->at_sending);
+		dev->sm_delete_flag = 1;
+		/*重新执行删除短信工作*/
+		dev->sm_read_flag = 1;
+	} 
+	else if( !memcmp(dev->at_sending, "AT+CMGR=", strlen("AT+CMGR=")) ) 
+	{
+		/*读失败，重新读*/
+		dev->sm_read_flag = 1;
+	}
+	else if( !memcmp(dev->at_sending, "AT+MIPCLOSE=", strlen("AT+MIPCLOSE=")) )
+	{
+		int socketId = str2int(dev->at_sending+12, dev->at_sending+13);
+		
+		printf("%s: close socketid[%d] error! AT:%s\r\n", __func__, socketId, dev->at_sending);
+		
+		dev->socket_open[ socketId - 1 ] = -1;  //bug???? jzyang need to check later
+	}
+	else if( !memcmp(dev->at_sending, "AT+MIPHEX=", strlen("AT+MIPHEX=")))
+	{
+		printf("%s: fail to cmd AT+MIPHEX\r\n", __func__);
+	}
+}
+
+static void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	/*+SIMTEST:3; 3
+	AT+SIMTEST?
+	+SIMTEST:0
+	+SIMTEST:0*/
+	DevStatus *dev = ( DevStatus* ) priv;
+
+	dev->simcard_type = str2int(tok[0].p+9, tok[0].p+10);
+	dev->boot_status = 1;
+	printf("%s: simcard_type(%d)\r\n", __func__, dev->simcard_type);
+}
+
+static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	int i;
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	if(tzer->count == 2) 
+	{
+		/*+CMGD: (),(0-4)*/
+		/*+CMGD: (0),(0-4)*/
+		if(!memcmp(tok[0].p, "+CMGD: ()", strlen("+CMGD: ()"))) 
+		{
+			i = 0;
+			dev->sm_num = 0;
+		} 
+		else 
+		{
+			i = 1;
+			dev->sm_num = 1;
+			dev->sm_index[0] = str2int(tok[0].p+8, tok[0].end-1);
+		}
+		for(; i < SIZE_ARRAY( dev->sm_index ); i++) 
+		{
+			dev->sm_index[i] = -1;
+		}
+	} 
+	else if(tzer->count > 2) 
+	{
+		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
+		dev->sm_num = tzer->count - 1;
+		if(dev->sm_num > sizeof(dev->sm_index)/sizeof(dev->sm_index[0])) 
+		{
+			dev->sm_num = sizeof(dev->sm_index)/sizeof(dev->sm_index[0]);
+		}
+		
+		for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++) 
+		{
+			if( i < dev->sm_num ) 
+			{
+				if( i==0 ) 
+					dev->sm_index[i] = str2int(tok[i].p+8, tok[i].end);
+				else if( i== (dev->sm_num -1) )
+					dev->sm_index[i] = str2int(tok[i].p, tok[i].end-1);
+				else 
+					dev->sm_index[i] = str2int(tok[i].p, tok[i].end);
+			} 
+			else 
+			{
+				dev->sm_index[i] = -1;
+			}
+		}
+	}
+	
+	printf("sm_num=%d, sm_index={ ", dev->sm_num);
+	for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
+	{
+		if(dev->sm_index[i] != -1)
+			printf("%d, ", dev->sm_index[i]);
+	}
+	printf("}\r\n");
+}
+
+static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	printf("SM read, index=%d\r\n", dev->sm_index_read);
+	dev->sm_data_flag = 1;
+}
+
+static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
+{
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	printf("SM data, index=%d\r\n", index);
+	printf("DATA:%s", tok[0].p);
+	/*只可读出一行，因此，短信内容不能有\n分行！*/
+	dev->sm_index_delete = index;
+	dev->sm_delete_flag = 1;
+	/*读取到短信内容，删除之*/
+}
+
+static void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	/*+CMTI: "SM",1*/
+	int i, index, addflag = 1;
+	DevStatus *dev = ( DevStatus* ) priv;	
+	index = str2int(tok[1].p, tok[1].end);
+	printf("SM notify: index=%d\r\n", index);
+	
+	if( index != -1 ) 
+	{
+		if( dev->sm_num >= sizeof(dev->sm_index)/sizeof(dev->sm_index[0]) )
+			return;
+
+		for( i=0; i<dev->sm_num; i++ ) 
+		{
+			if(index == dev->sm_index[i]) 
+				addflag = 0;
+		}
+		
+		if( addflag ) 
+		{
+			dev->sm_index[dev->sm_num] = index;
+			dev->sm_num++;
+			select_sort(dev->sm_index, dev->sm_num);
+			/*重新排序*/
+		}
+		
+		printf("sm_num=%d, sm_index={ ", dev->sm_num);
+		for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
+		{
+			if( dev->sm_index[i] != -1 )
+				printf("%d, ", dev->sm_index[i]);
+		}
+		printf("}\r\n");		
+	}
+}
+
+/*******************************************
++MIPCALL:1,10.154.27.94		
+********************************************/
+static void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	DevStatus *dev = ( DevStatus* ) priv;
+	
+	if( tok[1].end - tok[1].p < sizeof(dev->ip) )
+	{
+		memset(dev->ip, 0, sizeof(dev->ip));
+		memcpy(dev->ip, tok[1].p, tok[1].end - tok[1].p);
+		dev->ip[tok[1].end - tok[1].p] = '\0';
+	}
+	printf("%s: dev->ip(%s)\r\n", __func__, dev->ip);		
+	dev->ppp_status = PPP_CONNECTED;
+}
+
+static void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer)
+{
+	DevStatus *dev = ( DevStatus* ) priv;	
+
+	printf("warnning->%s.\r\n", __func__);
+	memcpy(dev->ip, "null", strlen("null"));
+	dev->ppp_status = PPP_DISCONNECT;
+	/*获取IP失败，重新获取*/		
+}
+
+static void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
+{
+	/*******************************
+		当发送了错误的短信index时发生
+		AT+CMGR=1
+
+		+CMS ERROR: 321
+	********************************/
+	DevStatus *dev = ( DevStatus* ) priv;	
+	printf("SM read index error\r\n");
+	dev->sm_read_flag = 1;	
+}
+
 /*
 * author:	yangjianzhou
-* function: 	list_sm_event,  poll sm event.
+* function: 	module_reader_parse,  parse one line.
 */
-static void longsung_read_sm( DevStatus *dev )
+static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 {
-	/*读取sim卡中的短信*/
-	if( dev->sm_num > 0 && dev->sm_read_flag ) 
+	int i;	
+	Token tok[MAX_TOKENS];
+	RemoteTokenizer tzer[1];
+	DevStatus *dev = ( DevStatus * )( instance->p_dev );
+	
+	if( !dev )
 	{
-		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
-		make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list( dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);					
-		dev->sm_read_flag = 0;
-	}	
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}
+	
+	print_line( UART4, r->in, r->pos );
+	module_tokenizer_init( tzer, r->in, r->in + r->pos );
+	
+	if( tzer->count == 0 )
+	{
+		return;
+	}
+	if( tzer->count > SIZE_ARRAY( tok ) )
+	{
+		printf("%s: tzer->count(%d) error!\r\n", __func__, tzer->count);
+		return;
+	}
+	
+	for( i = 0; i < tzer->count; i++ ) 
+	{
+		tok[i] = module_tokenizer_get( tzer, i );
+	}
+
+	if( dev->sm_data_flag ) 
+	{
+		dev->sm_data_flag = 0;
+		instance->c_ops->sm_data_callback( dev, tzer, tok, dev->sm_index_read );
+	}
+	
+	if( !memcmp( tok[0].p, "AT+", strlen("AT+") ) ) 
+	{
+		instance->c_ops->at_command_callback( dev, tzer, tok );
+		
+	} 
+	else if(!memcmp(tok[0].p, "OK", strlen("OK"))) 
+	{
+		instance->c_ops->at_command_success_callback( dev, tzer);
+		
+	} 
+	else if(!memcmp(tok[0].p, "ERROR", strlen("ERROR"))) 
+	{
+		instance->c_ops->at_command_fail_callback( dev, tzer);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+MIPRTCP=", strlen("+MIPRTCP="))&&(tzer->count>2)) 
+	{
+		instance->c_ops->tcp_data_callback( dev, tzer, tok);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+MIPCALL:0", strlen("+MIPCALL:0"))) 
+	{
+		instance->c_ops->get_ip_fail_callback( dev, tzer);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+MIPCALL:1", strlen("+MIPCALL:1"))&&(tzer->count>1)) 
+	{
+		instance->c_ops->get_ip_success_callback( dev, tzer, tok);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+CSQ:", strlen("+CSQ:"))&&(tzer->count>1)) 
+	{
+		instance->c_ops->signal_strength_callback( dev, tzer, tok);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+MIP:ERROR", strlen("+MIP:ERROR"))) 
+	{
+		instance->c_ops->connect_err_callback( dev, tzer);
+		
+	} 
+	else if(!memcmp(tok[0].p, "+MIPOPEN=", strlen("+MIPOPEN="))&&(tzer->count>1)) 
+	{
+		if( str2int(tok[1].p, tok[1].end) == 1 ) 
+		{
+			instance->c_ops->connect_success_callback( dev, tzer, tok);
+		}
+
+	} 
+	else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) 
+	{//4
+		instance->c_ops->disconnect_callback( dev, tzer, tok);
+
+	} 
+	else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) 
+	{
+		instance->c_ops->check_simcard_type_callback( dev, tzer, tok);
+
+	} 
+	else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) 
+	{
+		instance->c_ops->check_sm_callback( dev, tzer, tok);
+
+	} 
+	else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
+		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) 
+	{
+		instance->c_ops->read_sm_callback( dev, tzer, tok);
+
+	} 
+	else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) 
+	{
+		instance->c_ops->sm_notify_callback( dev, tzer, tok);
+
+	} 
+	else if(!memcmp(tok[0].p, "+CMS ERROR: 321", strlen("+CMS ERROR: 321"))) 
+	{
+		instance->c_ops->sm_read_err_callback( dev, tzer, tok);
+		
+	}
 }
 
 
-struct device_operations longsung_dops =
+struct device_operations ls_dops =
 {
 	initialise_longsung_module,
 	poll_longsung_signal,
@@ -314,14 +1273,18 @@ struct device_operations longsung_dops =
 	longsung_request_ip,
 	longsung_close_socket,
 	longsung_connect_server,
+	longsung_load_mqtt_connect,
+	longsung_load_mqtt_disconnect,
+	
+	longsung_load_mqtt_ping,
 	longsung_push_socket_data,
 	longsung_delete_sm,
 	longsung_read_sm,
-	send_command_to_device,
+	send_command_to_longsung,
+	longsung_at_get_name,
 };
 
-
-struct callback_operations longsung_cops =
+struct callback_operations ls_cops =
 {
 	on_tcp_data_callback,
 	on_connect_service_fail_callback,
@@ -346,10 +1309,17 @@ void init_module_instance( DevStatus *dev, ComModule *instance )
 	memcpy(instance->name, "longsung", strlen("longsung"));
 	instance->p_dev = dev;
 	instance->next = NULL;
-	instance->d_ops = &longsung_dops;
-	instance->c_ops = &longsung_cops;
+	instance->d_ops = &ls_dops;
+	instance->c_ops = &ls_cops;
 	instance->module_reader_parse = longsung_reader_parse;
 }
+
+
+
+
+
+
+
 
 
 /***************************************core codes***************************************/
@@ -596,277 +1566,6 @@ static void dealloc_command( AtCommand* command )
 	}
 }
 
-void print_char(USART_TypeDef* USARTx, char ch)
-{
-		USART_ClearFlag(USARTx, USART_FLAG_TC); 
-		USART_SendData(USARTx, ch);
-		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
-}
-
-void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
-{
-
-	int t;
-	for(t=0;t<len;t++) 
-	{
-		USART_ClearFlag(USARTx, USART_FLAG_TC); 
-		USART_SendData(USARTx, data[t]);
-		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
-	}		
-	
-	//add \r\n for new line
-	USART_ClearFlag(USARTx, USART_FLAG_TC); 
-	USART_SendData(USARTx, 0x0d);	
-	while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);	
-
-	USART_ClearFlag(USARTx, USART_FLAG_TC); 
-	USART_SendData(USARTx, 0x0a);	
-	while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);		
-	
-}
-
-static void select_sort(int a[], int len)  
-{  
-    int i,j,x,l;  
-    for(i=0;i<len;i++)  
-    {  
-        x=a[i];  
-        l=i;  
-        for(j=i;j<len;j++)  
-        {  
-            if(a[j]<x)  
-            {  
-                x=a[j];  
-                l=j;  
-            }  
-        }  
-        a[l]=a[i];  
-        a[i]=x;  
-    }  
-}  
-
-static int is_little_endian()
-{
-	int wTest = 0x12345678;
-	short *pTest=(short*)&wTest;
-	//printf("%s:%04x\r\n", __func__, pTest[0]);
-	return !(0x1234 == pTest[0]);
-}
-
-/*网络字节是大端*/
-unsigned int htonl(uint32_t hostlong)
-{
-	int value;
-	char *p, *q;
-	
-	if(is_little_endian()) 
-	{
-		p = (char*)&value;
-		q = (char*)&hostlong;
-		*p = *(q+3);
-		*(p+1) = *(q+2);
-		*(p+2) = *(q+1);
-		*(p+3) = *q;
-	} 
-	else 
-	{
-		value = hostlong;
-	}
-	
-	//printf("value=%04x, hostlong=%04x\r\n", value, hostlong);
-	return value;
-}
-
-unsigned int ntohl(uint32_t netlong)
-{
-	int value;
-	char *p, *q;
-	
-	if(is_little_endian()) 
-	{
-		p = (char*)&value;
-		q = (char*)&netlong;
-		*p = *(q+3);
-		*(p+1) = *(q+2);
-		*(p+2) = *(q+1);
-		*(p+3) = *q;
-	} 
-	else 
-	{
-		value = netlong;
-	}
-	
-	//printf("value=%04x, netlong=%04x\r\n", value, netlong);
-	return value;	
-}
-
-/*send AT commnad to 4G*/
-static void send_at_command(const char* ack, int ack_len)
-{
-	int t;
-	for(t=0; t<ack_len; t++) 
-	{
-		USART_ClearFlag(USART3, USART_FLAG_TC); 
-		USART_SendData(USART3, ack[t]);
-		while(USART_GetFlagStatus(USART3,USART_FLAG_TC)!=SET);
-	}		
-	
-	/*add \r for AT command*/
-	USART_ClearFlag(USART3, USART_FLAG_TC); 
-	USART_SendData(USART3, 0x0d);	
-	while(USART_GetFlagStatus(USART3,USART_FLAG_TC)!=SET);	
-}
-
-static void at(char *at)
-{
-	int len;
-	
-	len = strlen(at);
-	send_at_command(at, len);
-}
-
-void *memchr_x(const void *s, int c, int count)
-{
-	const unsigned char *p = s;
-
-	while (count--)
-		if ((unsigned char)c == *p++)
-			return (void *)(p - 1);
-		
-	return NULL;
-}
-
-int memcmp_x(const void *cs, const void *ct, int count)
-{
-	const unsigned char *su1 = cs, *su2 = ct, *end = su1 + count;
-	int res = 0;
-
-	while (su1 < end) 
-	{
-		res = *su1++ - *su2++;
-		if (res)
-			break;
-	}
-	
-	return res;
-}
-
-static int str2int(const char* p, const char* end)
-{
-	int   result = 0;
-	int   len    = end - p;
-
-	for ( ; len > 0; len--, p++ )
-	{
-			int  c;
-
-			if (p >= end)
-					goto Fail;
-
-			c = *p - '0';
-			if ((unsigned)c >= 10)
-					goto Fail;
-
-			result = result*10 + c;
-	}
-	return  result;
-
-Fail:
-	return -1;
-}
-
-/*
-* author:	yangjianzhou
-* function: 	module_tokenizer_init,  format data to Token.
-*/
-static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end )
-{
-	int count = 0;
-
-	// remove trailing newline
-	if (end > p && end[-1] == '\n') 
-	{
-			end -= 1;
-			if (end > p && end[-1] == '\r')
-					end -= 1;
-	}	
-
-	while (p < end) 
-	{
-			const char*  q = p;
-
-			q = memchr(p, ',', end-p);
-			if (q == NULL)
-					q = end;
-
-			if (q >= p) 
-			{
-					if (count < MAX_TOKENS) 
-					{
-							t->tokens[count].p   = p;
-							t->tokens[count].end = q;
-							count += 1;
-					}
-			}
-			if (q < end)
-					q += 1;
-
-			p = q;
-	}
-
-	t->count = count;
-
-	return count;		
-}
-
-/*
-* author:	yangjianzhou
-* function: 	module_tokenizer_get,  get a Token.
-*/
-static Token module_tokenizer_get( RemoteTokenizer* t, int index )
-{
-	Token  tok;
-	static const char*  dummy = "";
-
-	if (index < 0 || index >= t->count) 
-	{
-			tok.p = tok.end = dummy;
-	} 
-	else 
-	{
-			tok = t->tokens[index];
-	}
-
-	return tok;
-}
-
-/*******************************************
-+MIPCALL:1,10.154.27.94		
-********************************************/
-static void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	DevStatus *dev = ( DevStatus* ) priv;
-	
-	if( tok[1].end - tok[1].p < sizeof(dev->ip) )
-	{
-		memset(dev->ip, 0, sizeof(dev->ip));
-		memcpy(dev->ip, tok[1].p, tok[1].end - tok[1].p);
-		dev->ip[tok[1].end - tok[1].p] = '\0';
-	}
-	printf("%s: dev->ip(%s)\r\n", __func__, dev->ip);		
-	dev->ppp_status = PPP_CONNECTED;
-}
-
-static void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer)
-{
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	printf("warnning->%s.\r\n", __func__);
-	memcpy(dev->ip, "null", strlen("null"));
-	dev->ppp_status = PPP_DISCONNECT;
-	/*获取IP失败，重新获取*/		
-}
-
 static char *mqtt_get_name(int type)
 {
 	switch(type)
@@ -900,51 +1599,6 @@ static char *mqtt_get_name(int type)
 		case MQTT_MSG_TYPE_UNSUBACK:
 			return "UNSUBACK";
 
-		default: return "MSG UNKNOW";
-	}
-}
-
-static char *at_get_name(int index)
-{
-	switch(index)
-	{
-		case ATCSQ:
-			return "ATCSQ";
-		case ATSIMTEST:
-			return "ATSIMTEST";
-		case ATCPMS:
-			return "ATCPMS";
-		case ATCMGD_:
-			return "ATCMGD_";
-		case ATMIPCALL_:
-			return "ATMIPCALL_";	
-		case ATMIPCALL0:
-			return "ATMIPCALL0";	
-		case ATMIPPROFILE:
-			return "ATMIPPROFILE";
-		case ATMIPCALL1:
-			return "ATMIPCALL1";
-		case ATMIPOPEN:
-			return "ATMIPOPEN";
-		case ATMIPSEND:
-			return "ATMIPSEND";
-		case ATMIPPUSH:
-			return "ATMIPPUSH";
-		case ATCMGF:
-			return "ATCMGF";
-		case ATMIPCLOSE:
-			return "ATMIPCLOSE";
-		case ATCMGR:
-			return "ATCMGR";
-		case ATCMGD:
-			return "ATCMGD";
-		case ATMIPHEX:
-			return "ATMIPHEX";
-		case ATRESET:
-			return "ATRESET";
-		case ATMQTT:
-			return "ATMQTT";
-			
 		default: return "MSG UNKNOW";
 	}
 }
@@ -1000,13 +1654,12 @@ static int deliver_publish( mqtt_dev_status *mqtt_dev, uint8_t* message, int len
 		char json_buff[300];
 		DevStatus *dev = ( DevStatus *)(mqtt_dev->p_dev);
 		if( !dev ) return 0;
-		sprintf(json_buff, "time:[%u(s)],mqtt_bytes=%u,lostbytes=%d,MQTT:reset_count=%d,in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
-		"4G: malloc=%d,free=%d,simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d,at_head=%d,atcmd_head=%d\n", 
-					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt_dev->recv_bytes, dev->uart_fifo->lostBytes, mqtt_dev->reset_count, mqtt_dev->pub_in_num, 
-					get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
+		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes(%u),lostbytes(%d),MQTT:reset_count=%d,in_publish=%d,mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
+			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),atcmd_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
+					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt_dev->recv_bytes, dev->uart_fifo->lostBytes, mqtt_dev->reset_count, mqtt_dev->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt_dev->fixhead, 
 					mqtt_dev->in_waitting, mqtt_dev->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
-					get_at_command_count(&dev->atcmd_head));		
+					get_at_command_count(&dev->atcmd_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt_dev, 1, "/xp/publish", json_buff );
 	}
@@ -1063,7 +1716,7 @@ static void mqtt_subscribe( mqtt_dev_status *mqtt_dev )
 
 	state->pending_msg_type = MQTT_MSG_TYPE_SUBSCRIBE;
 	make_command_to_list( dev, ATMQTT, ONE_SECOND/5, MQTT_MSG_TYPE_SUBSCRIBE );
-	make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );	
+	make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/35, MQTT_MSG_TYPE_NULL );	
 }
 
 /*
@@ -1277,7 +1930,8 @@ static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes )
 		  if( check_mqtt_packet( mqtt_dev, 2 ) ) return;
 		
 			make_command_to_list(dev, ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
-			make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL);	
+			//make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL);
+			dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/50 );
 		
 			break;
 		
@@ -1303,19 +1957,6 @@ static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes )
 			break;
 	}
 		
-}
-
-static uint8_t str_to_hex( char *src )
-{
-	uint8_t s1,s2;
-
-	s1 = toupper(src[0]) - 0x30;
-	if (s1 > 9) s1 -= 7;
-
-	s2 = toupper(src[1]) - 0x30;
-	if (s2 > 9) s2 -= 7;
-
-	return (s1*16 + s2);
 }
 
 /*
@@ -1376,473 +2017,14 @@ static void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * re
 	}
 }
 
-/* TCP 消息处理函数 */
-static void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	int i, nbytes;
 
-	static unsigned char tcp_read[750];
-	DevStatus *dev = ( DevStatus* ) priv;	
-	mqtt_dev_status *mqtt_dev = dev->mqtt_dev;
-	
-	memset( tcp_read, '\0', sizeof( tcp_read ) );
-	nbytes = str2int( tok[1].p, tok[1].end );//nbytes <= 750
 
-	mqtt_dev->recv_bytes += nbytes;
-	/* 如果解析包错误， 结束解析数据 */
-	if( !mqtt_dev->parse_packet_flag )
-	{
-		printf("%s: drop %d bytes. waitting mqtt reset finish...\r\n", __func__, nbytes);
-		return;
-	}
-	//printf("%s:--->", __func__);
-	for( i = 0; i < nbytes; i++ )
-	{
-		tcp_read[i] = str_to_hex( ( char* ) tok[2].p + 2  * i );
-		//printf("0X%02x ", dev->tcp_read[i]);
-	}	
-	//printf("##### ##### nbytes(%d)\r\n", nbytes);
-	
-	if( mqtt_dev->fixhead )
-	{
-		check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes );
-	}
-	else 
-	{
-		if(mqtt_dev->in_waitting > 0 && mqtt_dev->in_waitting <= 750)
-		{
-			if(mqtt_dev->in_waitting == nbytes)
-			{
-				printf("%s: in_waitting == nbytes = %d\r\n", __func__, nbytes);
-				memcpy( mqtt_dev->in_buffer + mqtt_dev->in_pos, tcp_read, nbytes);
-				parse_mqtt_packet( mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
-				mqtt_dev->fixhead = 1;
-				mqtt_dev->in_waitting = 0;
-				mqtt_dev->in_pos = 0;
-			}
-			else if(mqtt_dev->in_waitting < nbytes)
-			{
-				printf("%s: [%d] in_waitting < nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
-				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, mqtt_dev->in_waitting);
-				parse_mqtt_packet(mqtt_dev, mqtt_dev->in_pos+mqtt_dev->in_waitting);
-				memmove( tcp_read, tcp_read + mqtt_dev->in_waitting, nbytes-mqtt_dev->in_waitting);
-				mqtt_dev->fixhead = 1;
-				mqtt_dev->in_waitting = 0;
-				mqtt_dev->in_pos = 0;				
-				check_packet_from_fixhead( mqtt_dev, tcp_read, nbytes-mqtt_dev->in_waitting);
-			}
-			else if(mqtt_dev->in_waitting > nbytes)
-			{
-				printf("%s: [%d] in_waitting > nbytes [%d]\r\n", __func__, mqtt_dev->in_waitting, nbytes);
-				memcpy(mqtt_dev->in_buffer+mqtt_dev->in_pos, tcp_read, nbytes);
-				mqtt_dev->in_pos += nbytes;
-				mqtt_dev->in_waitting -= nbytes;
-			}				
-		}
-		else if(mqtt_dev->in_waitting < 0)//-752
-		{
-			mqtt_dev->in_waitting += nbytes;
-			
-			if(mqtt_dev->in_waitting < 0) 
-			{
-				printf("%s: Drop packet! in_waitting = %d\r\n", __func__, mqtt_dev->in_waitting);
-			}
-			else if(mqtt_dev->in_waitting == 0)
-			{
-				mqtt_dev->fixhead = 1;
-				mqtt_dev->in_pos = 0;
-				printf("%s: Drop packet! in_waitting = %d\r\n", __func__, mqtt_dev->in_waitting);
-			}
-			else if(mqtt_dev->in_waitting > 0)//in_waitting=-4 + nbytes=20 = in_waitting=16
-			{
-				int len;
-				
-				len = mqtt_dev->in_waitting;
-				mqtt_dev->in_waitting = 0;
-				mqtt_dev->in_pos = 0;
-				mqtt_dev->fixhead = 1;
-				memmove( tcp_read, tcp_read + ( nbytes - len ), len );
-				printf("%s: Drop some char in packet! len = %d, nbytes=%d\r\n", __func__, len, nbytes);
-				check_packet_from_fixhead( mqtt_dev, tcp_read, mqtt_dev->in_waitting);
-			}
-		}
-		else if(mqtt_dev->in_waitting > 750)
-		{
-			printf("%s: mqtt_dev->in_waitting=%d ERROR!\r\n", __func__, mqtt_dev->in_waitting);
-			mqtt_reset_status( mqtt_dev );
-		}
-	}
-}
 
-static void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	//+MIPOPEN=1,1
-	DevStatus *dev = ( DevStatus* ) priv;		
-	int i, socketId = str2int(tok[0].p+9, tok[0].end);
-
-	//printf("[%s: socketId = %d]\r\n", __func__, socketId);
-	switch( socketId )
-	{
-		case 1:
-		case 2:
-		case 3:
-		case 4: 
-			i = socketId - 1; 
-			break;
-			
-		default: 
-			return;
-	}
-	
-	dev->socket_open[i] = socketId;
-	dev->tcp_connect_status = 1;
-	printf("%s:TCP connect success! socket id=%d\r\n", __func__, socketId);
-	atcmd_set_ack( dev, ATMIPOPEN );
-	dev->mqtt_dev->parse_packet_flag = 1;
-}
-
-static void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer)
-{
-	//+MIP:ERROR
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	printf("[%s, TCP connect error.]\r\n", __func__);
-	dev->tcp_connect_status = 0;
-	atcmd_set_ack( dev, ATMIPOPEN);
-}
-
-static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	//+MIPCLOSE:2
-	int socketId = str2int(tok[0].p+10, tok[0].end);	
-	DevStatus *dev = ( DevStatus* ) priv;		
-
-	printf("%s: +MIPCLOSE !!!!! success. socket id = %d\r\n", __func__, socketId);
-	dev->socket_open[ socketId - 1 ] = -1;
-	dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
-	dev->mqtt_dev->in_pos = 0;
-	dev->mqtt_dev->in_waitting = 0;	
-	dev->mqtt_dev->fixhead = 1;
-	
-	dev->tcp_connect_status = 0;
-	mqtt_msg_set_clean( dev );
-	//printf("[tcp connect close...socketId=%d]\r\n", socketId);
-	//printf("%d, %d, %d, %d\r\n", devStatus->socket_open[0], devStatus->socket_open[1]
-	//	, devStatus->socket_open[2], devStatus->socket_open[3]);
-	//dev->connect_flag = 0;
-}
-
-/*******************************************
-+CSQ: 7,99
-********************************************/
-static void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	int signal[2];
-	DevStatus *dev = ( DevStatus* ) priv;	
-	
-	signal[0] = str2int(tok[0].p+6, tok[0].end);
-	signal[1] = str2int(tok[1].p, tok[1].end);
-	dev->rcsq++;
-	dev->singal[0] = signal[0];
-	dev->singal[1] = signal[1];
-}
-
-static void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	//printf("%s!\r\n", __func__);
-	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
-	//print_line_1(UART4, tok[0].p, tok[0].end - tok[0].p);
-	
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	memset(dev->at_sending, '\0', sizeof(dev->at_sending));
-	if(strlen(tok[0].p) > sizeof(dev->at_sending)) return;
-	
-	if( tzer->count == 1 ) 
-	{
-		memcpy(dev->at_sending, tok[0].p, tok[0].end - tok[0].p);
-	} 
-	else 
-	{
-	  strcat(dev->at_sending, tok[0].p);
-	}
-	
-	//printf("at_sending=%s, len=%d\r\n", at_sending, strlen(at_sending));
-}
-
-static void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
-{
-	//printf("%s!\r\n", __func__);
-	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	if( !memcmp(dev->at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) 
-	{
-		//printf("----------------------------------\r\n");
-		//printf("[result: OK] %s\r\n", dev[0].at_sending);
-		
-	} 
-	else if( !memcmp(dev->at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) 
-	{
-		if( !memcmp(dev->at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
-		/*此命令是短信查询，不处理*/
-		printf("[result: OK] %s\r\n", dev->at_sending);		
-
-		/*删除短信成功之后才能读取下一条短信，如果不成功
-		，可能永远都不会再读取，在at fail中也处理fix it.*/
-		if(dev->sm_num > 0) 
-		{
-			int i, delflag = 0;
-			for(i=0; i< dev->sm_num; i++) 
-			{
-				if(dev->sm_index[i] == dev->sm_index_delete) 
-				{
-					delflag = 1;
-					break;
-				}
-			}
-			/*如果数组中有删除的序列号，才进行删除。*/
-			if(delflag) 
-			{
-				for(; i<dev->sm_num-1; i++) 
-				{
-					dev->sm_index[i] = dev->sm_index[i+1];
-				}
-				dev->sm_index[i] = -1;
-				dev->sm_num--;
-			}
-			
-			printf("UPDATE sm_num=%d, sm_index={ ", dev->sm_num);
-			for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++) 
-			{
-				if(dev->sm_index[i] != -1)
-					printf("%d, ", dev->sm_index[i]);
-			}
-			printf("}\r\n");				
-		}
-		/*删除短信成功，读取下一条短信*/
-
-		dev->sm_index_delete = -1;
-		dev->sm_delete_flag = 1;
-		dev->sm_read_flag = 1;		
-	}
-	else if( !memcmp(dev->at_sending, "AT+MIPHEX=1", strlen("AT+MIPHEX=1")))
-	{
-		printf("%s: success to cmd AT+MIPHEX=1\r\n", __func__);
-		atcmd_set_ack( dev, ATMIPHEX );
-	}
-}
-
-static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
-{
-	//printf("%s!\r\n", __func__);
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	if( !memcmp(dev->at_sending, "AT+MIPPUSH=1", strlen("AT+MIPPUSH=1")) ) 
-	{
-		if( dev->socket_num > 0 )
-		{
-			dev->socket_close_flag = 1;
-		}
-		else if( dev->socket_num == 0 && dev->tcp_connect_status )
-		{
-			dev->tcp_connect_status = 0;
-			if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT )
-			{
-				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
-			}
-			printf("%s: catch bug#####\r\n", __func__);
-		}
-		printf("[%s: result: ERROR AT:%s\r\n", __func__, dev->at_sending);
-	} 
-	else if(!memcmp(dev->at_sending, "AT+MIPOPEN=1,0,\"", strlen("AT+MIPOPEN=1,0,\""))) 
-	{
-		//AT+MIPOPEN=1,0,"
-		printf("[TCP CONNECT FAIL! AT: %s", dev->at_sending);
-		if( dev->socket_num > 0 )
-		{
-			dev->socket_open[0] = 1;
-			dev->socket_open[1] = 2;
-			dev->socket_open[2] = 3;
-			dev->socket_open[3] = 4;
-		}
-		dev->tcp_connect_status = 0;
-	} 
-	else if( !memcmp(dev->at_sending, "AT+CMGD=", strlen("AT+CMGD=")) ) 
-	{
-		if( !memcmp(dev->at_sending, "AT+CMGD=?", strlen("AT+CMGD=?")) ) return;
-		printf("[AT:%s, result: ERROR]\r\n", dev->at_sending);
-		dev->sm_delete_flag = 1;
-		/*重新执行删除短信工作*/
-		dev->sm_read_flag = 1;
-	} 
-	else if( !memcmp(dev->at_sending, "AT+CMGR=", strlen("AT+CMGR=")) ) 
-	{
-		/*读失败，重新读*/
-		dev->sm_read_flag = 1;
-	}
-	else if( !memcmp(dev->at_sending, "AT+MIPCLOSE=", strlen("AT+MIPCLOSE=")) )
-	{
-		int socketId = str2int(dev->at_sending+12, dev->at_sending+13);
-		
-		printf("%s: close socketid[%d] error! AT:%s\r\n", __func__, socketId, dev->at_sending);
-		
-		dev->socket_open[ socketId - 1 ] = -1;  //bug???? jzyang need to check later
-	}
-	else if( !memcmp(dev->at_sending, "AT+MIPHEX=", strlen("AT+MIPHEX=")))
-	{
-		printf("%s: fail to cmd AT+MIPHEX\r\n", __func__);
-	}
-}
-
-static void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	/*+SIMTEST:3; 3
-	AT+SIMTEST?
-	+SIMTEST:0
-	+SIMTEST:0*/
-	DevStatus *dev = ( DevStatus* ) priv;
-
-	dev->simcard_type = str2int(tok[0].p+9, tok[0].p+10);
-	dev->boot_status = 1;
-	printf("%s: simcard_type(%d)\r\n", __func__, dev->simcard_type);
-}
-
-static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	int i;
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	if(tzer->count == 2) 
-	{
-		/*+CMGD: (),(0-4)*/
-		/*+CMGD: (0),(0-4)*/
-		if(!memcmp(tok[0].p, "+CMGD: ()", strlen("+CMGD: ()"))) 
-		{
-			i = 0;
-			dev->sm_num = 0;
-		} 
-		else 
-		{
-			i = 1;
-			dev->sm_num = 1;
-			dev->sm_index[0] = str2int(tok[0].p+8, tok[0].end-1);
-		}
-		for(; i < SIZE_ARRAY( dev->sm_index ); i++) 
-		{
-			dev->sm_index[i] = -1;
-		}
-	} 
-	else if(tzer->count > 2) 
-	{
-		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
-		dev->sm_num = tzer->count - 1;
-		if(dev->sm_num > sizeof(dev->sm_index)/sizeof(dev->sm_index[0])) 
-		{
-			dev->sm_num = sizeof(dev->sm_index)/sizeof(dev->sm_index[0]);
-		}
-		
-		for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++) 
-		{
-			if( i < dev->sm_num ) 
-			{
-				if( i==0 ) 
-					dev->sm_index[i] = str2int(tok[i].p+8, tok[i].end);
-				else if( i== (dev->sm_num -1) )
-					dev->sm_index[i] = str2int(tok[i].p, tok[i].end-1);
-				else 
-					dev->sm_index[i] = str2int(tok[i].p, tok[i].end);
-			} 
-			else 
-			{
-				dev->sm_index[i] = -1;
-			}
-		}
-	}
-	
-	printf("sm_num=%d, sm_index={ ", dev->sm_num);
-	for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
-	{
-		if(dev->sm_index[i] != -1)
-			printf("%d, ", dev->sm_index[i]);
-	}
-	printf("}\r\n");
-}
-
-static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	printf("SM read, index=%d\r\n", dev->sm_index_read);
-	dev->sm_data_flag = 1;
-}
-
-static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
-{
-	DevStatus *dev = ( DevStatus* ) priv;	
-
-	printf("SM data, index=%d\r\n", index);
-	printf("DATA:%s", tok[0].p);
-	/*只可读出一行，因此，短信内容不能有\n分行！*/
-	dev->sm_index_delete = index;
-	dev->sm_delete_flag = 1;
-	/*读取到短信内容，删除之*/
-}
-
-static void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	/*+CMTI: "SM",1*/
-	int i, index, addflag = 1;
-	DevStatus *dev = ( DevStatus* ) priv;	
-	index = str2int(tok[1].p, tok[1].end);
-	printf("SM notify: index=%d\r\n", index);
-	
-	if( index != -1 ) 
-	{
-		if( dev->sm_num >= sizeof(dev->sm_index)/sizeof(dev->sm_index[0]) )
-			return;
-
-		for( i=0; i<dev->sm_num; i++ ) 
-		{
-			if(index == dev->sm_index[i]) 
-				addflag = 0;
-		}
-		
-		if( addflag ) 
-		{
-			dev->sm_index[dev->sm_num] = index;
-			dev->sm_num++;
-			select_sort(dev->sm_index, dev->sm_num);
-			/*重新排序*/
-		}
-		
-		printf("sm_num=%d, sm_index={ ", dev->sm_num);
-		for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
-		{
-			if( dev->sm_index[i] != -1 )
-				printf("%d, ", dev->sm_index[i]);
-		}
-		printf("}\r\n");		
-	}
-}
-
-static void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
-{
-	/*******************************
-		当发送了错误的短信index时发生
-		AT+CMGR=1
-
-		+CMS ERROR: 321
-	********************************/
-	DevStatus *dev = ( DevStatus* ) priv;	
-	printf("SM read index error\r\n");
-	dev->sm_read_flag = 1;	
-}
 
 /*
 * author:	yangjianzhou
 * function: 	module_reader_parse,  parse one line.
-*/
+
 static void module_reader_parse( UartReader* r )
 {
 	int i;	
@@ -1931,12 +2113,15 @@ static void module_reader_parse( UartReader* r )
 		
 	}
 }
+*/
+
+
 
 /*
 * author:	yangjianzhou
 * function: 	module_reader_addc,  deal with an charactor.
 */
-static void module_reader_addc( UartReader* r, int c )
+static void module_reader_addc(   DevStatus* dev, UartReader* r, int c )
 {
 	if ( r->overflow ) 
 	{
@@ -1958,7 +2143,8 @@ static void module_reader_addc( UartReader* r, int c )
 
 	if( c == '\n' /*|| c == '\0'*/ ) 
 	{
-		module_reader_parse( r );
+		//module_reader_parse( r );
+		dev->module->module_reader_parse( dev->module, r );
 		r->pos = 0;
 		/*for fix bug. must memset r->in*/
 		memset( r->in, '\0', sizeof( r->in ) );
@@ -1981,7 +2167,7 @@ static void handle_module_uart_msg(  DevStatus* dev )
 	while( rfifo_len( dev->uart_fifo ) > 0 ) 
 	{
 		rfifo_get( dev->uart_fifo, &ch, 1 );
-		module_reader_addc( dev->reader, ch );
+		module_reader_addc( dev, dev->reader, ch );
 	}	
 }
 
@@ -2036,12 +2222,12 @@ void test_mqtt_publish( void *data )
 		memset(json_buff, '\0', sizeof(json_buff));
 		/*start to protect all thing*/
 		xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
-		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes=%u, lostbytes=%d, MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n\
-		4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head=%d, atcmd_head=%d, tcp_connect_status(%d)", 
+		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes(%u),lostbytes(%d),MQTT:reset_count=%d, in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
+			"4G: malloc=%d, free=%d, simcard=%d,reset=%d,ppp_status=%d,socket_num=%d,sm_num=%d,scsq=%d,rcsq=%d,at_count=%d, at_head(%d),atcmd_head(%d),mqtt_head(%d),tcp_connect_status(%d)", 
 					(portTICK_PERIOD_MS * NOW_TICK) / 1000, mqtt->recv_bytes, dev->uart_fifo->lostBytes, mqtt->reset_count, mqtt->pub_in_num, get_at_command_count(&dev->mqtt_head), mqtt->fixhead, 
 					mqtt->in_waitting, mqtt->in_pos, dev->malloc_count, dev->free_count, dev->simcard_type, 
 					dev->reset_request, dev->ppp_status, dev->socket_num, dev->sm_num, dev->scsq, dev->rcsq, dev->at_count, get_at_command_count(&dev->at_head),  
-					get_at_command_count(&dev->atcmd_head), dev->tcp_connect_status);		
+					get_at_command_count(&dev->atcmd_head), get_at_command_count(&dev->mqtt_head), dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt, i, "/xp/publish", json_buff );
 		xSemaphoreGive( dev->os_mutex );
@@ -2070,7 +2256,8 @@ static void init_module_reader( void *priv, UartReader *reader )
 	reader->pos = 0;
 	reader->overflow = 0;
 	reader->p_dev = priv;
-	
+
+	/*
 	reader->on_simcard_type = on_simcard_type_callback;	
 	reader->on_signal_strength	= on_signal_strength_callback;
 	
@@ -2091,6 +2278,7 @@ static void init_module_reader( void *priv, UartReader *reader )
 	reader->on_sm_data = on_sm_data_callback;
 	reader->on_sm_notify = on_sm_notify_callback;
 	reader->on_sm_read_err = on_sm_read_err_callback;
+	*/
 }
 
 static void reset_mqtt_dev( DevStatus *dev, mqtt_dev_status* mqtt )
@@ -2183,43 +2371,6 @@ static void reset_module_status( DevStatus* dev, char flag )
 	{
 		dev->sm_index[i] = -1;
 	}
-}
-
-static void do_read_sm( DevStatus *dev , int index)
-{
-	char cmd[15];
-
-	if( !dev )
-	{
-		printf("%s: dev null pointer error!\r\n", __func__);
-		return;
-	}
-	dev->sm_index_read = index;
-	
-	memset(cmd, '\0', sizeof(cmd));
-	sprintf(cmd, "AT+CMGR=%d", index);
-	
-	at(cmd);
-}
-
-static void do_delete_sm(int index)
-{
-	char cmd[15];
-	
-	memset(cmd, '\0', sizeof(cmd));
-	sprintf(cmd, "AT+CMGD=%d", index);
-	
-	at(cmd);
-}
-
-static void do_close_socket(int index)
-{
-	char cmd[15];
-	
-	memset(cmd, '\0', sizeof(cmd));
-	sprintf(cmd, "AT+MIPCLOSE=%d", index);
-	
-	at( cmd );
 }
 
 /***************************************************************
@@ -2430,11 +2581,49 @@ static void prepare_mqtt_packet( mqtt_dev_status *mqtt_dev, AtCommand* cmd )
 }
 
 /*
+
+static void do_read_sm( DevStatus *dev , int index)
+{
+	char cmd[15];
+
+	if( !dev )
+	{
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}
+	dev->sm_index_read = index;
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+CMGR=%d", index);
+	
+	at(cmd);
+}
+
+static void do_delete_sm(int index)
+{
+	char cmd[15];
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+CMGD=%d", index);
+	
+	at(cmd);
+}
+
+static void do_close_socket(int index)
+{
+	char cmd[15];
+	
+	memset(cmd, '\0', sizeof(cmd));
+	sprintf(cmd, "AT+MIPCLOSE=%d", index);
+	
+	at( cmd );
+}
+
 case ATMIPOPEN: at("AT+MIPOPEN=1,0,\"198.41.30.241\",1883,0"); break;
 case ATMIPOPEN: at("AT+MIPOPEN=1,0,\"iot.eclipse.org\",1883,0"); break;
 at("AT+MIPOPEN=1,0,\"112.124.102.62\",13334,0");
 iot.eclipse.org   198.41.30.241
-*/
+
 static void send_command_to_device( DevStatus *dev, AtCommand* cmd )
 {
 	if( !cmd || !dev )
@@ -2464,7 +2653,7 @@ static void send_command_to_device( DevStatus *dev, AtCommand* cmd )
 			break;
 		case ATMIPPROFILE: 
 			at( "AT+MIPPROFILE=1,\"3GNET\"" ); 
-			break;//3GNET
+			break;
 		case ATMIPCALL1: 
 			at( "AT+MIPCALL=1" );
 			break;
@@ -2479,7 +2668,6 @@ static void send_command_to_device( DevStatus *dev, AtCommand* cmd )
 			}
 		break;
 		case ATMIPSEND: 
-			//prepare_tick_packet();  delete
 			break;
 		case ATMIPPUSH: 
 			at( "AT+MIPPUSH=1" ); 
@@ -2510,6 +2698,8 @@ static void send_command_to_device( DevStatus *dev, AtCommand* cmd )
 			break;
 	}
 }
+*/
+
 
 static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 {
@@ -2558,7 +2748,8 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 			cmd->msgid = mqtt_get_id( dev->mqtt_dev->mqtt_state->outbound_message->data, cmd->mqttdata_len );
 			add_cmd_to_list( cmd, &( dev->at_head ) );					
 			/*when all alloc, add ATMIPPUSH command*/
-			make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );
+			//make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );
+			dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/50 );
 			if( cmd->mqtype == MQTT_MSG_TYPE_PUBLISH ) 
 			{
 				dev->mqtt_dev->pub_out_num++;
@@ -2625,7 +2816,7 @@ static void atcmd_set_ack( DevStatus *dev, int index )
 	AtCommand *cmd = NULL;
 	struct list_head *pos, *n;
 	
-	printf("%s: target %s\r\n", __func__, at_get_name(index));
+	printf("%s: target %s\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, index ) );
 	if( !dev )
 	{
 		printf("%s: dev null pointer error!\r\n", __func__);
@@ -2635,7 +2826,7 @@ static void atcmd_set_ack( DevStatus *dev, int index )
 	{
 		del_done = 1;
 		dev->atcmd->atack = 1;
-		printf("%s: [%s] is ACK, REMOVE it!\r\n", __func__, at_get_name(index));
+		printf("%s: [%s] is ACK, REMOVE it!\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, index ));
 	}
 	else
 	{		
@@ -2647,7 +2838,7 @@ static void atcmd_set_ack( DevStatus *dev, int index )
 			{
 				del_done = 1;
 				cmd->atack = 1;
-				printf("%s:[%s] is ACK, REMOVE it!\r\n", __func__,at_get_name(index));
+				printf("%s:[%s] is ACK, REMOVE it!\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, index ));
 				break;
 			}
 		}
@@ -2655,7 +2846,7 @@ static void atcmd_set_ack( DevStatus *dev, int index )
 	
 	if( del_done == 0 )
 	{
-		printf("%s: set [%s] fail!\r\n", __func__, at_get_name(index));
+		printf("%s: set [%s] fail!\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, index ));
 	}		
 }
 
@@ -2777,7 +2968,7 @@ static void atcmd_list_cmd( DevStatus *dev )
 		
 		if( cmd->atack == 1 )
 		{	
-			printf("%s: releas command %s!\r\n", __func__, at_get_name( cmd->index ));
+			printf("%s: releas command %s!\r\n", __func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ));
 			release_command( cmd, &dev->atcmd_head, NULL );
 		}	
 		else if( cmd->tick_sum >= cmd->interval )
@@ -2791,7 +2982,7 @@ static void atcmd_list_cmd( DevStatus *dev )
 				xTaskNotifyGive( dev->pxModuleTask );
 				cmd->tick_sum = 0;
 				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
-					__func__, at_get_name( cmd->index ), NOW_TICK);					
+					__func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);					
 			}
 			else if( cmd->index == ATMIPHEX )
 			{
@@ -2800,13 +2991,13 @@ static void atcmd_list_cmd( DevStatus *dev )
 				xTaskNotifyGive( dev->pxModuleTask );
 				cmd->tick_sum = 0;
 				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
-					__func__, at_get_name( cmd->index ), NOW_TICK);					
+					__func__, dev->module->d_ops->at_get_name( dev->module, cmd->index ), NOW_TICK);					
 			}
 			else
 			{
 				release_command( cmd, NULL, NULL );
 				printf("%s: warnning->release command whatevet! ip(%s), command(%s)\r\n", 
-					__func__, dev->ip, at_get_name( cmd->index ));
+					__func__, dev->ip, dev->module->d_ops->at_get_name( dev->module, cmd->index ));
 			}		
 		}
 		else 
@@ -2866,8 +3057,10 @@ static void mqtt_list_cmd( DevStatus *dev )
 				printf("ERROR: [%s mqtt_try > 2 ], type=%d,id=0X%04X,len=%d,p=0x%p\r\n", mqtt_get_name( cmd->mqtype ), 
 									cmd->mqtype, cmd->msgid, cmd->mqttdata_len, cmd->mqttdata );
 				/*只要发送DISCONNECT包就可以了, 然后再断开TCP连接*/
-				make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
-				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
+				//make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
+				//make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
+				dev->module->d_ops->load_mqtt_disconnect( dev->module ); 
+				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/2 );
 				dev->close_tcp_interval = 3 * ONE_SECOND;
 				dev->tick_sum = 0;
 				dev->tick_tag = NOW_TICK;
@@ -2886,7 +3079,8 @@ static void mqtt_list_cmd( DevStatus *dev )
 					mqtt_set_dup( cmd->mqttdata );
 				}
 				add_cmd_to_list( cmd, &dev->at_head );
-				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );
+				//make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );
+				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/40 );
 				xTaskNotifyGive( dev->pxModuleTask );
 				printf("%s: add [%s] to AT LIST HEAD again! type=%d, msgid=0x%04x!\r\n", 
 								__func__, mqtt_get_name( cmd->mqtype ), cmd->mqtype, cmd->msgid);			
@@ -2918,7 +3112,8 @@ static void at_list_cmd( DevStatus *dev )
 		} 
 		else if( dev->atcmd ) 
 		{
-			send_command_to_device( dev, dev->atcmd );
+			//send_command_to_device( dev, dev->atcmd );
+			dev->module->d_ops->send_command_to_module( dev->module, dev->atcmd );
 			dev->atcmd->tick_tag = NOW_TICK;
 			dev->atcmd->tick_sum = 0;
 			if( dev->timer_tick > dev->atcmd->interval )
@@ -2980,18 +3175,21 @@ static void at_list_cmd( DevStatus *dev )
 				}
 				dev->atcmd->tick_sum = 0;
 				add_cmd_to_list( dev->atcmd, &dev->atcmd_head );
-				printf("ADD [%s] to atcmd_head to wait ACK! tick(%u)\r\n", at_get_name( dev->atcmd->index ), NOW_TICK);				
+				printf("ADD [%s] to atcmd_head to wait ACK! tick(%u)\r\n", 
+					dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ), NOW_TICK);				
 			}
 			else 
 			{
 				/*just print ATMIPOPEN and ATMIPHEX for debug.*/
 				if( ( dev->atcmd->index == ATMIPOPEN || dev->atcmd->index == ATMIPHEX ) )
 				{
-					printf("%s: release command (%s)\r\n", __func__, at_get_name( dev->atcmd->index ));
+					printf("%s: release command (%s)\r\n", __func__, 
+						dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ));
 				}
 				if( dev->atcmd->index == ATMQTT )
 				{
-					printf("%s: release command (%s)\r\n", __func__, at_get_name( dev->atcmd->index ));
+					printf("%s: release command (%s)\r\n", __func__, 
+						dev->module->d_ops->at_get_name( dev->module, dev->atcmd->index ));
 					if( dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBLISH && 
 						dev->atcmd->mqttdata != NULL )
 					{
@@ -3016,7 +3214,7 @@ static void at_list_cmd( DevStatus *dev )
 	}		
 }
 
-static void mqtt_msg_set_clean( DevStatus *dev )
+static void cmd_mqtt_set_clean( DevStatus *dev )
 {
 	int total = 0;
 	AtCommand *cmd = NULL;
@@ -3069,17 +3267,9 @@ static void check_socket_number( DevStatus *dev )
 	/*若发现socket大于1，关闭所有socket,重新建立连接*/
 	if( ( dev->socket_num > 1 || dev->socket_close_flag ) ) 
 	{
-		/*检查是否已经发过ATMIPCLOSE*/
-		if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
-		{ 
-			for( i = 0; i < SIZE_ARRAY( dev->socket_open ); i++ ) 
-			{
-				if( dev->socket_open[i] != -1 ) 
-				{
-					make_command_to_list( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
-				}
-			}
-		}
+
+		//make_command_to_list( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
+		dev->module->d_ops->close_module_socket( dev->module ); 					
 		
 		if( dev->socket_close_flag == 1 )
 		{
@@ -3109,8 +3299,10 @@ static void mqtt_send_connect_or_tick( DevStatus *dev )
 			{//二级状态
 				/*连接前把  mqtt_list at_list 的mqtt消息清空！在+MIPCLOSE:清空*/			
 				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_CONNECTING;
-				make_command_to_list(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
-				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/25, MQTT_MSG_TYPE_NULL );	
+				//make_command_to_list(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
+				//make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/25, MQTT_MSG_TYPE_NULL );
+				dev->module->d_ops->load_mqtt_connect( dev->module );
+				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/25 );
 			}		
 			/*发送心跳包给服务 50s每个tick*/				
 			if( dev->heartbeat_tick >= 3 ) 
@@ -3122,8 +3314,10 @@ static void mqtt_send_connect_or_tick( DevStatus *dev )
 					if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT ) 
 					{
 						//有可能是其它的状态MQTT_DEV_STATUS_CONNACK  MQTT_DEV_STATUS_SUBACK
-						make_command_to_list( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );
-						make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );			
+						//make_command_to_list( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );
+						//make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );
+						dev->module->d_ops->load_mqtt_ping( dev->module );
+						dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/50 );
 					}
 				}									
 			} 
@@ -3138,21 +3332,21 @@ static void tcp_connect_server( DevStatus *dev )
 	{//触发条件
 		if( dev->ppp_status == PPP_CONNECTED && dev->simcard_type > 0 ) 
 		{//状态
-			if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
-					!check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
-			{
+			//if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
+			//		!check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
+			//{
 				/*取消上一次要关闭tcp的请求*/
-				if( dev->close_tcp_interval ) 
-				{
-					dev->close_tcp_interval = 0;//动作
-				}
+				//if( dev->close_tcp_interval ) 
+				//{
+				//	dev->close_tcp_interval = 0;//动作
+				//}
 				/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
-				make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
-				make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );			
-				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
-				printf("%s: start tcp connect remote server.\r\n", __func__);
-				dev->heartbeat_tick = 6;
-			}
+				//make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
+				//make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );			
+			dev->module->d_ops->tcp_connect_server( dev->module ); 
+			
+			dev->heartbeat_tick = 6;
+			//}
 		}
 	}	
 }
@@ -3162,12 +3356,16 @@ static void check_sm_and_ppp( DevStatus *dev )
 	if( dev->simcard_type > 0 ) 
 	{
 		/*查询SM短信未读index*/
-		make_command_to_list(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
-		make_command_to_list(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
+		//make_command_to_list(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
+		//make_command_to_list(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
 		/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
+		
+		dev->module->d_ops->check_module_sm( dev->module );	
 
 		/*查询IP*/
-		make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);							
+		//make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);			
+		dev->module->d_ops->check_module_ip( dev->module );	
+		
 	}
 
 	/*PPP连接获取IP*/		
@@ -3177,9 +3375,10 @@ static void check_sm_and_ppp( DevStatus *dev )
 		{ //状态
 			dev->ppp_status = PPP_CONNECTING;//修改状态
 			/*ppp for get ip*/
-			make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);//动作	
-			make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
-			make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
+			//make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);//动作	
+			//make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
+			//make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
+			dev->module->d_ops->module_request_ip( dev->module ); 
 		}						
 	}	
 }
@@ -3217,24 +3416,7 @@ static void check_reset_condition( DevStatus *dev )
 */
 static void initialise_module( DevStatus *dev )
 {
-	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
-		
-	/*为了第一时间连接上服务器*/
-	make_command_to_list(dev, ATSIMTEST, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);
-	make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);
-	make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
-	make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
-	make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
-	/*ATMIPHEX有时没成功，注意原因*/
-	make_command_to_list(dev, ATMIPHEX, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);						
-    make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
-
-	/*****************************************************************************
-	ATMIPHEX不成功，导致返回1438 而不是1469， 1500为buffer长度。
-	AT+MIPSEND=1,"101d00064d5149736470030400780003594a5a00036d637500056465617468"
-	+MIPSEND:1,1438
-	*****************************************************************************/
-	make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);		
+	dev->module->d_ops->initialise_module( dev->module );	
 	dev->heartbeat_tick = 6;				
 }
 
@@ -3244,7 +3426,8 @@ static void initialise_module( DevStatus *dev )
 */
 static void poll_module_signal( DevStatus *dev )
 {
-	make_command_to_list( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
+	dev->module->d_ops->poll_module_signal( dev->module );	
+	//make_command_to_list( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
 	dev->scsq++;
 }
 
@@ -3257,17 +3440,19 @@ static void list_sm_event( DevStatus *dev )
 	/*删除sim卡中的短信, 短信相关的AT指令时间要长些NE_SECOND/5~ONE_SECOND/2*/
 	if( dev->sm_index_delete != -1 && dev->sm_delete_flag ) 
 	{
-		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list( dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete );					
+		//make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		//make_command_to_list( dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete );
+		dev->module->d_ops->delete_module_sm( dev->module, dev->sm_index_delete );	
 		dev->sm_delete_flag = 0;
 	}
 
 	/*读取sim卡中的短信*/
 	if( dev->sm_num > 0 && dev->sm_read_flag ) 
 	{
-		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
-		make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list( dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);					
+		//make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
+		//make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		//make_command_to_list( dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);	
+		dev->module->d_ops->read_module_sm( dev->module, dev->sm_index[0] );	
 		dev->sm_read_flag = 0;
 	}	
 }
@@ -3408,7 +3593,7 @@ static void handle_module_setting(  DevStatus* dev )
 	
 	if( dev->timer_tick != portMAX_DELAY )
 	{
-		if( pdFAIL == xTimerChangePeriod( dev->wake_timer, dev->timer_tick + 1, 2 ) )
+		if( pdFAIL == xTimerChangePeriod( dev->wake_timer, dev->timer_tick, 2 ) )
 		{
 			printf("%s fail to xTimerChangePeriod wake_timer!\r\n", __func__);
 		}	
@@ -3448,7 +3633,7 @@ static void module_system_init( DevStatus* dev )
 	init_command_buffer( &( dev->p_atcommand ), 60 );
 	init_mqtt_buffer( dev->p_mqttbuff, 3 );
 
-	//init_module_instance( dev, dev->module );
+	init_module_instance( dev, dev->module );
 	init_module_reader( dev, dev->reader );
 	reset_mqtt_dev( dev, dev->mqtt_dev );	
 	reset_module_status( dev, 1 );
@@ -3554,607 +3739,7 @@ void HandleModuleTask( void * pvParameters )
 }
 
 //+STIN:20
-
 /*
-Sytem times from boot is 8100 (s), system tick = 8100116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 17,79
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #ls
-
-root@2:/ #ps
-Name       Status  Priority  WaterMark  Num  Loglevel
-
-Usmart          R       03      533        06   00
-Module          R       02      501        01   03
-IDLE            R       00      113        09   04
-Wdg             B       14      074        07   04
-RTC             B       04      076        08   01
-sysTr           B       13      180        10   04
-CanStream       S       08      319        03   03
-DownStream      S       08      303        05   03
-UpStream        S       09      254        04   03
-CanCommand      S       10      198        02   03
-
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #ps
-Name       Status  Priority  WaterMark  Num  Loglevel
-
-Usmart          R       03      533        06   00
-Module          R       02      501        01   03
-IDLE            R       00      113        09   04
-Wdg             B       14      074        07   04
-RTC             B       04      076        08   01
-sysTr           B       13      180        10   04
-DownStream      S       08      303        05   03
-UpStream        S       09      254        04   03
-CanCommand      S       10      198        02   03
-CanStream       S       08      319        03   03
-
-root@2:/ #Sytem times from boot is 8150 (s), system tick = 8150116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8200 (s), system tick = 8200116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8250 (s), system tick = 8250116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 8300 (s), system tick = 8300116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8350 (s), system tick = 8350116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8400 (s), system tick = 8400116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 8450 (s), system tick = 8450116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8500 (s), system tick = 8500116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-
-root@2:/ #
-root@2:/ #
-root@2:/ #
-root@2:/ #ps
-Name       Status  Priority  WaterMark  Num  Loglevel
-
-Usmart          R       03      533        06   00
-Module          R       02      501        01   03
-IDLE            R       00      113        09   04
-Wdg             B       14      074        07   04
-RTC             B       04      076        08   01
-sysTr           B       13      180        10   04
-UpStream        S       09      254        04   03
-CanCommand      S       10      198        02   03
-CanStream       S       08      319        03   03
-DownStream      S       08      303        05   03
-
-root@2:/ #
-root@2:/ #
-root@2:/ #mqqtp xiaopeng
-Error command!
-root@2:/ #mqttp xiaopeng
-process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
-fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(23)
-root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
-AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
-+MIPSEND:1,1477
-
-OK
-at_list_cmd: release command (ATMQTT)
-release [PUBLISH]! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-Sytem times from boot is 8550 (s), system tick = 8550116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,77
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 8600 (s), system tick = 8600116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8650 (s), system tick = 8650116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-
-root@2:/ #\
-Error command!
-root@2:/ #
-root@2:/ #ps
-Name       Status  Priority  WaterMark  Num  Loglevel
-
-Usmart          R       03      518        06   00
-Module          R       02      501        01   03
-IDLE            R       00      113        09   04
-Wdg             B       14      074        07   04
-RTC             B       04      076        08   01
-sysTr           B       13      180        10   04
-CanCommand      S       10      198        02   03
-CanStream       S       08      319        03   03
-DownStream      S       08      303        05   03
-UpStream        S       09      254        04   03
-
-root@2:/ #
-root@2:/ #
-root@2:/ #Sytem times from boot is 8700 (s), system tick = 8700116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 8750 (s), system tick = 8750116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 17,79
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8800 (s), system tick = 8800116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 17,79
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8850 (s), system tick = 8850116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 17,79
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 8900 (s), system tick = 8900116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 8950 (s), system tick = 8950116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-Sytem times from boot is 9000 (s), system tick = 9000116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 18,78
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-sending [PINGREQ]! mqtype=12,id=0x0000
-AT+MIPSEND=1,"c000"
-+MIPSEND:1,1498
-
-OK
-ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
-AT+MIPPUSH=1
-+MIP:OK
-OK
-
-+MIPRTCP=1,2,D000
-check_packet_from_fixhead: msg_len = nbytes = 2
-received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
-mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
-Sytem times from boot is 9050 (s), system tick = 9050116 (ms).
-*********************************
-AT+CSQ
-+CSQ: 17,80
-
-OK
-AT+CPMS="SM"
-+CPMS: 0,50,2,90,0,50
-
-OK
-AT+CMGD=?
-+CMGD: (),(0-4)
-sm_num=0, sm_index={ }
-
-OK
-AT+MIPCALL?
-+MIPCALL:1,10.14.147.127
-on_request_ip_success_callback: dev->ip(10.14.147.127)
-
-OK
-
 
 root@2:/ #
 root@2:/ #

@@ -171,6 +171,16 @@ typedef struct mqtt_state_t
 	//char jsonbuff[750];
 } mqtt_state_t;
 
+//static void prepare_mqtt_packet( mqtt_dev_status *mqtt_dev, AtCommand* cmd )
+//static void mqtt_protocol_parse( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
+//static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes )
+//static void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
+//static void mqtt_subscribe( mqtt_dev_status *mqtt_dev )
+//static int check_mqtt_packet( mqtt_dev_status *mqtt_dev, int protocol_len )
+//static int mqtt_publish(mqtt_dev_status *mqtt_dev, const char* topic, char* data, int qos, int retain)
+//static int deliver_publish( mqtt_dev_status *mqtt_dev, uint8_t* message, int length )
+//static void mqtt_reset_status( mqtt_dev_status * mqtt )
+
 typedef struct mqtt_dev_status
 {
 	enum mqtt_dev_statu connect_status;
