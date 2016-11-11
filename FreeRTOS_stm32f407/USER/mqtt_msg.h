@@ -171,15 +171,17 @@ typedef struct mqtt_state_t
 	//char jsonbuff[750];
 } mqtt_state_t;
 
-//static void prepare_mqtt_packet( mqtt_dev_status *mqtt_dev, AtCommand* cmd )
-//static void mqtt_protocol_parse( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
-//static void parse_mqtt_packet( mqtt_dev_status *mqtt_dev, int nbytes )
-//static void check_packet_from_fixhead( mqtt_dev_status *mqtt, unsigned char * read, int nbytes )
-//static void mqtt_subscribe( mqtt_dev_status *mqtt_dev )
-//static int check_mqtt_packet( mqtt_dev_status *mqtt_dev, int protocol_len )
-//static int mqtt_publish(mqtt_dev_status *mqtt_dev, const char* topic, char* data, int qos, int retain)
-//static int deliver_publish( mqtt_dev_status *mqtt_dev, uint8_t* message, int length )
-//static void mqtt_reset_status( mqtt_dev_status * mqtt )
+struct mqtt_dev_operations {
+	void (* prepare_mqtt_packet )( void *mqtt_dev, void* cmd );
+	void (* mqtt_protocol_parse )( void *mqtt, unsigned char * read, int nbytes );
+	//void (* parse_mqtt_packet )( void *mqtt_dev, int nbytes );
+	//void (* check_packet_from_fixhead )( void *mqtt, unsigned char * read, int nbytes );
+	void (* mqtt_subscribe )( void *mqtt_dev );
+	//int (* check_mqtt_packet )( void *mqtt_dev, int protocol_len );
+	int (* mqtt_publish )(void *mqtt_dev, const char* topic, char* data, int qos, int retain);
+	//int (* deliver_publish )( void *mqtt_dev, uint8_t* message, int length );
+	//void (* mqtt_reset_status )( void * mqtt );
+};
 
 typedef struct mqtt_dev_status
 {
@@ -200,6 +202,7 @@ typedef struct mqtt_dev_status
 	uint32_t reset_count;
 	unsigned int recv_bytes;
  	char iot;
+	struct mqtt_dev_operations *ops;
 	void *p_dev;
 } mqtt_dev_status;
 

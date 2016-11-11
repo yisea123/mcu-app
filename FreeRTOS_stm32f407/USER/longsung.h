@@ -111,10 +111,15 @@ struct device_operations {
 	void (* module_request_ip )( void *instance ) ;	
 	void (* close_module_socket )( void *instance ) ;
 	void (* tcp_connect_server )( void *instance ) ;
-	void (* load_mqtt_connect )( void *instance ) ;
-	void (* load_mqtt_disconnect )( void *instance ) ;
-	
-	void (* load_mqtt_ping )( void *instance ) ;
+
+	//void (* load_mqtt_connect )( void *instance ) ;
+	//void (* load_mqtt_disconnect )( void *instance ) ;
+	//void (* load_mqtt_pingresp)( void *instance );
+	//make_command_to_list(dev, ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
+	//void (* load_mqtt_pubcomp)( void *instance );	
+	//make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBCOMP);
+	//void (* load_mqtt_ping )( void *instance ) ;
+
 	void (* push_socket_data )( void *instance, unsigned int tick ) ;
 	void (* delete_module_sm )( void *instance, int index ) ;
 	void (* read_module_sm )( void *instance, int index ) ;
@@ -154,7 +159,7 @@ struct callback_operations {
 的操作即可，对模块的具体操作抽象
 成对所有通讯模块操作的最大集合
 */
-typedef struct ComModule{
+typedef struct ComModule {
 	void *p_dev;	
 	char name[20];
 	struct ComModule * next;
@@ -162,6 +167,14 @@ typedef struct ComModule{
 	struct callback_operations* c_ops;
 	void (* module_reader_parse )( struct ComModule* instance, UartReader *reader );
 }ComModule;
+
+//int check_command_exist( int index, struct list_head *head )
+struct status_operations {
+	int (* check_command_exist )( int index, struct list_head *head );	
+	void (* make_command )( void *dev, char index, unsigned int interval, int para );
+ 	void (* atcmd_set_ack )( void *dev, int index );
+	void (* set_mqtt_cmd_clean )( void *dev );
+};
 
 typedef struct {
 	int simcard_type;						/*indicate sim care type,  0 is no card*/
@@ -217,6 +230,7 @@ typedef struct {
 	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		
 	UartReader *reader;						/*UartReader instance*/
 	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
+	struct status_operations *ops;
 	ComModule *module;	
 }DevStatus;
 
