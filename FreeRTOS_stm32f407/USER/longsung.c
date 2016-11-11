@@ -14,6 +14,345 @@ static void atcmd_set_ack( DevStatus *dev, int index );
 static void mqtt_msg_set_clean( DevStatus *dev );
 static int mqtt_publish(mqtt_dev_status *mqtt_dev, const char* topic, char* data, int qos, int retain);
 static int get_at_command_count(struct list_head *head);
+static int module_tokenizer_init( RemoteTokenizer* t, const char* p, const char* end );
+static Token module_tokenizer_get( RemoteTokenizer* t, int index );
+static int str2int(const char* p, const char* end);
+static void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_connect_service_fail_callback( void *priv, RemoteTokenizer *tzer);
+static void on_connect_service_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_signal_strength_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_request_ip_success_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_request_ip_fail_callback( void *priv, RemoteTokenizer *tzer);
+static void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer);
+static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer);
+static void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index);
+static void on_sm_notify_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void on_sm_read_err_callback( void *priv, RemoteTokenizer *tzer, Token* tok);
+static void send_command_to_device( DevStatus *dev, AtCommand* cmd );
+
+/***************************************instance codes***************************************/
+
+static void print_line(USART_TypeDef* USARTx, const char* data, int len)
+{
+	int t;
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+	if( ucGetTaskLogLevel( NULL ) > 4 )
+	{
+		return;
+	}
+#endif
+
+	/*for fix bug, t must be int type*/
+	for( t = 0; t < len; t++ ) 
+	{
+		USART_ClearFlag(USARTx, USART_FLAG_TC); 
+		USART_SendData(USARTx, data[t]);
+		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
+	}		
+	
+}
+
+
+/*
+* author:	yangjianzhou
+* function: 	module_reader_parse,  parse one line.
+*/
+static void longsung_reader_parse( UartReader* r )
+{
+	int i;	
+	Token tok[MAX_TOKENS];
+	RemoteTokenizer tzer[1];
+	DevStatus *dev = ( DevStatus * )( r->p_dev );
+	
+	if( !dev )
+	{
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return;
+	}
+	
+	print_line( UART4, r->in, r->pos );
+	//+CMGD: (),(0-4)
+	module_tokenizer_init( tzer, r->in, r->in + r->pos );
+	
+	if( tzer->count == 0 )
+	{
+		return;
+	}
+	if( tzer->count > SIZE_ARRAY( tok ) )
+	{
+		printf("%s: tzer->count(%d) error!\r\n", __func__, tzer->count);
+		return;
+	}
+	
+	for( i = 0; i < tzer->count; i++ ) 
+	{
+		tok[i] = module_tokenizer_get( tzer, i );
+	}
+	
+	if( dev->sm_data_flag ) 
+	{
+		dev->sm_data_flag = 0;
+		r->on_sm_data( dev, tzer, tok, dev->sm_index_read );
+	}
+	
+	if( !memcmp( tok[0].p, "AT+", strlen("AT+") ) ) {
+		r->on_at_command( dev, tzer, tok );
+		
+	} else if(!memcmp(tok[0].p, "OK", strlen("OK"))) {
+		r->on_at_success( dev, tzer);
+		
+	} else if(!memcmp(tok[0].p, "ERROR", strlen("ERROR"))) {
+		r->on_at_fail( dev, tzer);
+		
+	} else if(!memcmp(tok[0].p, "+MIPRTCP=", strlen("+MIPRTCP="))&&(tzer->count>2)) {
+		r->on_tcp_data( dev, tzer, tok);
+		
+	} else if(!memcmp(tok[0].p, "+MIPCALL:0", strlen("+MIPCALL:0"))) {
+		r->on_ip_fail( dev, tzer);
+		
+	} else if(!memcmp(tok[0].p, "+MIPCALL:1", strlen("+MIPCALL:1"))&&(tzer->count>1)) {
+		r->on_ip_success( dev, tzer, tok);
+		
+	} else if(!memcmp(tok[0].p, "+CSQ:", strlen("+CSQ:"))&&(tzer->count>1)) {
+		r->on_signal_strength( dev, tzer, tok);
+		
+	} else if(!memcmp(tok[0].p, "+MIP:ERROR", strlen("+MIP:ERROR"))) {
+		r->on_connect_fail( dev, tzer);
+		
+	} else if(!memcmp(tok[0].p, "+MIPOPEN=", strlen("+MIPOPEN="))&&(tzer->count>1)) {
+		if(str2int(tok[1].p, tok[1].end)==1) {
+			r->on_connect_success( dev, tzer, tok);
+		}
+
+	} else if(!memcmp(tok[0].p, "+MIPCLOSE:", strlen("+MIPCLOSE:"))&&(tzer->count>=3)) {//4
+		r->on_disconnect( dev, tzer, tok);
+
+	} else if(!memcmp(tok[0].p, "+SIMTEST:", strlen("+SIMTEST:"))) {
+		r->on_simcard_type( dev, tzer, tok);
+
+	} else if (!memcmp(tok[0].p, "+CMGD: (", strlen("+CMGD: ("))) {
+		r->on_sm_check( dev, tzer, tok);
+
+	} else if (!memcmp(tok[0].p, "+CMGR: \"REC READ\"", strlen("+CMGR: \"REC READ\"")) ||
+		!memcmp(tok[0].p, "+CMGR: \"REC UNREAD\"", strlen("+CMGR: \"REC UNREAD\""))) {
+		r->on_sm_read( dev, tzer, tok);
+
+	} else if (!memcmp(tok[0].p, "+CMTI: \"SM\",", strlen("+CMTI: \"SM\","))) {
+		r->on_sm_notify( dev, tzer, tok);
+
+	} else if(!memcmp(tok[0].p, "+CMS ERROR: 321", strlen("+CMS ERROR: 321"))) {
+		r->on_sm_read_err( dev, tzer, tok);
+		
+	}
+}
+
+/*
+* author:	yangjianzhou
+* function: 	initialise_longsung_module,  init module by AT command.
+*/
+static void initialise_longsung_module( DevStatus *dev )
+{
+	/*查询SIM卡是否插入, -1为初始化状态，0为无卡*/
+		
+	/*为了第一时间连接上服务器*/
+	make_command_to_list(dev, ATSIMTEST, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);
+	make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);
+	make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
+	make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/10, MQTT_MSG_TYPE_NULL);	
+	make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
+	/*ATMIPHEX有时没成功，注意原因*/
+	make_command_to_list(dev, ATMIPHEX, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);						
+	make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);
+
+	/*****************************************************************************
+	ATMIPHEX不成功，导致返回1438 而不是1469， 1500为buffer长度。
+	AT+MIPSEND=1,"101d00064d5149736470030400780003594a5a00036d637500056465617468"
+	+MIPSEND:1,1438
+	*****************************************************************************/
+	make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);		
+	dev->heartbeat_tick = 6;				
+}
+
+/*
+* author:	yangjianzhou
+* function: 	poll_module_signal,  poll signal data.
+*/
+static void poll_longsung_signal( DevStatus *dev )
+{
+	make_command_to_list( dev, ATCSQ, ONE_SECOND/10, MQTT_MSG_TYPE_NULL );
+	dev->scsq++;
+}
+
+static void check_longsung_sm( DevStatus *dev )
+{
+	if( dev->simcard_type > 0 ) 
+	{
+		/*查询SM短信未读index*/
+		make_command_to_list(dev, ATCPMS, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);				
+		make_command_to_list(dev, ATCMGD_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
+		/*查询SM短信未读index,查询到有短信，就会马上进入读模块代码*/
+	}
+}
+
+static void check_longsung_ip( DevStatus *dev )
+{
+	/*PPP连接获取IP*/		
+	if( dev->simcard_type > 0 ) 
+	{
+			/*查询IP*/
+		make_command_to_list(dev, ATMIPCALL_, ONE_SECOND/20, MQTT_MSG_TYPE_NULL);
+	}	
+}
+
+static void longsung_close_socket( DevStatus *dev )
+{
+	/*PPP连接获取IP*/		
+	if( dev->simcard_type > 0 ) 
+	{//出发条件
+		if( dev->ppp_status == PPP_DISCONNECT ) 
+		{ //状态
+			dev->ppp_status = PPP_CONNECTING;//修改状态
+			/*ppp for get ip*/
+			make_command_to_list(dev, ATMIPCALL0, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);//动作	
+			make_command_to_list(dev, ATMIPPROFILE, ONE_SECOND/5, MQTT_MSG_TYPE_NULL);	
+			make_command_to_list(dev, ATMIPCALL1, ONE_SECOND, MQTT_MSG_TYPE_NULL);
+		}						
+	}	
+}
+
+static void longsung_request_ip( DevStatus *dev )
+{
+	int i;
+	/*检查是否已经发过ATMIPCLOSE*/
+	if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
+	{ 
+		for( i = 0; i < SIZE_ARRAY( dev->socket_open ); i++ ) 
+		{
+			if( dev->socket_open[i] != -1 ) 
+			{
+				make_command_to_list( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
+			}
+		}
+	}
+}
+
+static void longsung_connect_server( DevStatus *dev )
+{
+	/*连接上远程服务端*/
+	if( dev->socket_num == 0 ) 
+	{//触发条件
+		if( dev->ppp_status == PPP_CONNECTED && dev->simcard_type > 0 ) 
+		{//状态
+			if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
+					!check_command_exist( ATMIPOPEN, &dev->atcmd_head ) )
+			{
+				/*取消上一次要关闭tcp的请求*/
+				if( dev->close_tcp_interval ) 
+				{
+					dev->close_tcp_interval = 0;//动作
+				}
+				/*发ATMIPOPEN ONE_SECOND/2 后才可发ATMIPHEX， 否则ATMIPHEX失败*/
+				make_command_to_list(dev, ATMIPHEX, ONE_SECOND/30, MQTT_MSG_TYPE_NULL );							
+				make_command_to_list(dev, ATMIPOPEN, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );			
+				//make_command_to_list(ATMIPHEX, ONE_SECOND/2, MQTT_MSG_TYPE_NULL);					
+				dev->heartbeat_tick = 6;
+			}
+		}
+	}	
+}
+
+
+static void longsung_push_socket_data( DevStatus *dev )
+{
+	make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );
+}
+
+/*
+* author:	yangjianzhou
+* function: 	list_sm_event,  poll sm event.
+*/
+static void longsung_delete_sm( DevStatus *dev )
+{
+	/*删除sim卡中的短信, 短信相关的AT指令时间要长些NE_SECOND/5~ONE_SECOND/2*/
+	if( dev->sm_index_delete != -1 && dev->sm_delete_flag ) 
+	{
+		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		make_command_to_list( dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete );					
+		dev->sm_delete_flag = 0;
+	}
+}
+
+/*
+* author:	yangjianzhou
+* function: 	list_sm_event,  poll sm event.
+*/
+static void longsung_read_sm( DevStatus *dev )
+{
+	/*读取sim卡中的短信*/
+	if( dev->sm_num > 0 && dev->sm_read_flag ) 
+	{
+		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
+		make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		make_command_to_list( dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);					
+		dev->sm_read_flag = 0;
+	}	
+}
+
+
+struct device_operations longsung_dops =
+{
+	initialise_longsung_module,
+	poll_longsung_signal,
+	check_longsung_sm,
+	check_longsung_ip,
+	longsung_request_ip,
+	longsung_close_socket,
+	longsung_connect_server,
+	longsung_push_socket_data,
+	longsung_delete_sm,
+	longsung_read_sm,
+	send_command_to_device,
+};
+
+
+struct callback_operations longsung_cops =
+{
+	on_tcp_data_callback,
+	on_connect_service_fail_callback,
+	on_connect_service_success_callback,
+	on_disconnect_service_callback,
+	on_signal_strength_callback,
+	on_request_ip_success_callback,
+	on_request_ip_fail_callback,
+	on_at_command_callback,
+	on_at_cmd_success_callback,
+	on_at_cmd_fail_callback,
+	on_simcard_type_callback,
+	on_sm_check_callback,
+	on_sm_read_callback,
+	on_sm_data_callback,
+	on_sm_notify_callback,
+	on_sm_read_err_callback,
+};
+
+void init_module_instance( DevStatus *dev, ComModule *instance )
+{
+	memcpy(instance->name, "longsung", strlen("longsung"));
+	instance->p_dev = dev;
+	instance->next = NULL;
+	instance->d_ops = &longsung_dops;
+	instance->c_ops = &longsung_cops;
+	instance->module_reader_parse = longsung_reader_parse;
+}
+
+
+/***************************************core codes***************************************/
 
 static MqttBuffer * do_init_mqtt_buffer( int num, int capacity )
 {
@@ -262,27 +601,6 @@ void print_char(USART_TypeDef* USARTx, char ch)
 		USART_ClearFlag(USARTx, USART_FLAG_TC); 
 		USART_SendData(USARTx, ch);
 		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
-}
-
-static void print_line(USART_TypeDef* USARTx, const char* data, int len)
-{
-	int t;
-
-#if( INCLUDE_xTaskLogLevel == 1 )
-	if( ucGetTaskLogLevel( NULL ) > 4 )
-	{
-		return;
-	}
-#endif
-
-	/*for fix bug, t must be int type*/
-	for( t = 0; t < len; t++ ) 
-	{
-		USART_ClearFlag(USARTx, USART_FLAG_TC); 
-		USART_SendData(USARTx, data[t]);
-		while(USART_GetFlagStatus(USARTx,USART_FLAG_TC)!=SET);
-	}		
-	
 }
 
 void print_line_1(USART_TypeDef* USARTx, const char* data, int len)
@@ -1930,16 +2248,16 @@ static AtCommand* get_cmd_from_list(struct list_head *head)
 	return command;
 }
 
-static int check_command_exist(int index, struct list_head *head)
+static int check_command_exist( int index, struct list_head *head )
 {
 	int ret = 0;
 	AtCommand *command = NULL;
 	struct list_head *pos=NULL, *n=NULL;
 	
-	list_for_each_safe(pos, n, head)
+	list_for_each_safe( pos, n, head )
 	{
-		command = (AtCommand *)list_entry(pos, AtCommand, list);
-		if(index == command->index) 
+		command = ( AtCommand * ) list_entry( pos, AtCommand, list );
+		if( index == command->index ) 
 		{
 			ret = 1;
 			break;
@@ -2209,9 +2527,7 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 		
 		if( !( cmd->mqttdata ) ) 
 		{
-			printf("\r\n");
 			printf("ERROR: malloc for MQTT [%s] fail!\r\n", mqtt_get_name(cmd->mqtype));
-			printf("\r\n");
 			cmd->mqttdata = NULL;
 			dealloc_command( cmd );
 			return;
@@ -2455,22 +2771,25 @@ static void atcmd_list_cmd( DevStatus *dev )
 				cmd->interval = ONE_SECOND / 3;
 				add_cmd_to_list( cmd, &dev->at_head );
 				xTaskNotifyGive( dev->pxModuleTask );
+				cmd->tick_sum = 0;
+				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
+					__func__, at_get_name( cmd->index ), NOW_TICK);					
 			}
 			else if( cmd->index == ATMIPHEX )
 			{
 				cmd->interval = ONE_SECOND / 20;
 				add_cmd_to_list( cmd, &dev->at_head );
 				xTaskNotifyGive( dev->pxModuleTask );
+				cmd->tick_sum = 0;
+				printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", 
+					__func__, at_get_name( cmd->index ), NOW_TICK);					
 			}
 			else
 			{
 				release_command( cmd, NULL, NULL );
-				printf("%s: warnning->release command whatevet! ip(%s)\r\n", __func__, dev->ip);
-				return;
-			}
-			cmd->tick_sum = 0;
-			printf("%s: add [%s] to AT LIST HEAD again! tick(%u)\r\n", __func__, at_get_name( cmd->index ),
-				NOW_TICK);			
+				printf("%s: warnning->release command whatevet! ip(%s), command(%s)\r\n", 
+					__func__, dev->ip, at_get_name( cmd->index ));
+			}		
 		}
 		else 
 		{
@@ -2516,47 +2835,44 @@ static void mqtt_list_cmd( DevStatus *dev )
 			cmd->tick_sum = 0;
 			
 			/*目前只有MQTT_OUTDATA_PUBLISH才需要检查 mqttdata*/
-			if( cmd->mqttdata == NULL && ( cmd->mqtype==MQTT_MSG_TYPE_PUBLISH ) &&
-					( cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREL ) &&
-					( cmd->mqtype==dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREC ) ) 
+			if( cmd->mqttdata == NULL && ( cmd->mqtype == MQTT_MSG_TYPE_PUBLISH ) &&
+					( cmd->mqtype == dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREL ) &&
+					( cmd->mqtype == dev->atcmd->mqtype == MQTT_MSG_TYPE_PUBREC ) ) 
 			{
 				dealloc_command( cmd );
 				printf("ERROR: [%s] mqttdata is NULL remote it from mqtt_head.\r\n", mqtt_get_name( cmd->mqtype ));
-				continue;
 			}
-			
-			/*超过3次, 断开MQTT的连接*/
-			if( ++( cmd->mqtt_try ) > 2 )
+			else if( ++( cmd->mqtt_try ) > 2 )
 			{
+				/*超过3次, 断开MQTT的连接*/
 				printf("ERROR: [%s mqtt_try > 2 ], type=%d,id=0X%04X,len=%d,p=0x%p\r\n", mqtt_get_name( cmd->mqtype ), 
 									cmd->mqtype, cmd->msgid, cmd->mqttdata_len, cmd->mqttdata );
-				/*只要发送DISCONNECT包就可以了*/
-				/*然后再断开TCP连接*/
+				/*只要发送DISCONNECT包就可以了, 然后再断开TCP连接*/
 				make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_DISCONNECT );
 				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/2, MQTT_MSG_TYPE_NULL );
 				dev->close_tcp_interval = 3 * ONE_SECOND;
 				dev->tick_sum = 0;
 				dev->tick_tag = NOW_TICK;
-				/*只释放CMD*/
 				release_command( cmd, NULL, NULL );
 				if( dev->timer_tick > dev->close_tcp_interval )
 				{
 					dev->timer_tick = dev->close_tcp_interval;
 				}				
-				continue;
 			}
-			
-			/*目前根据协议只有PUBLISH、SUBSCRIBE用得到，后续添加*/
-			if( mqtt_get_qos( cmd->mqttdata ) && ( cmd->mqtype == MQTT_MSG_TYPE_PUBLISH ||
-						cmd->mqtype == MQTT_MSG_TYPE_SUBSCRIBE ) )
+			else
 			{
-				mqtt_set_dup( cmd->mqttdata );
+				/*目前根据协议只有PUBLISH、SUBSCRIBE用得到，后续添加*/
+				if( mqtt_get_qos( cmd->mqttdata ) && ( cmd->mqtype == MQTT_MSG_TYPE_PUBLISH ||
+							cmd->mqtype == MQTT_MSG_TYPE_SUBSCRIBE ) )
+				{
+					mqtt_set_dup( cmd->mqttdata );
+				}
+				add_cmd_to_list( cmd, &dev->at_head );
+				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );
+				xTaskNotifyGive( dev->pxModuleTask );
+				printf("%s: add [%s] to AT LIST HEAD again! type=%d, msgid=0x%04x!\r\n", 
+								__func__, mqtt_get_name( cmd->mqtype ), cmd->mqtype, cmd->msgid);			
 			}
-			add_cmd_to_list( cmd, &dev->at_head );
-			make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/40, MQTT_MSG_TYPE_NULL );
-			xTaskNotifyGive( dev->pxModuleTask );
-			printf("%s: add [%s] to AT LIST HEAD again! type=%d, msgid=0x%04x!\r\n", 
-							__func__, mqtt_get_name( cmd->mqtype ), cmd->mqtype, cmd->msgid);			
 		} 	
 		else 
 		{
@@ -2651,7 +2967,7 @@ static void at_list_cmd( DevStatus *dev )
 			else 
 			{
 				/*just print ATMIPOPEN and ATMIPHEX for debug.*/
-				if( ( dev->atcmd->index == ATMIPOPEN || dev->atcmd->index == ATMIPHEX) )
+				if( ( dev->atcmd->index == ATMIPOPEN || dev->atcmd->index == ATMIPHEX ) )
 				{
 					printf("%s: release command (%s)\r\n", __func__, at_get_name( dev->atcmd->index ));
 				}
@@ -2662,8 +2978,8 @@ static void at_list_cmd( DevStatus *dev )
 						dev->atcmd->mqttdata != NULL )
 					{
 						printf("release [%s]! msgid(0x%04x), qos(%d)\r\n", 
-							mqtt_get_name(dev->atcmd->mqtype), dev->atcmd->msgid, 
-							mqtt_get_qos( dev->atcmd->mqttdata ));
+							mqtt_get_name( dev->atcmd->mqtype ), dev->atcmd->msgid, 
+							mqtt_get_qos( dev->atcmd->mqttdata ) );
 					}
 				}
 				release_command( dev->atcmd, NULL, NULL );
@@ -2738,12 +3054,11 @@ static void check_socket_number( DevStatus *dev )
 		/*检查是否已经发过ATMIPCLOSE*/
 		if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
 		{ 
-			//for( i=0; i < sizeof(dev->socket_open)/sizeof(dev->socket_open[0]); i++ ) 
 			for( i = 0; i < SIZE_ARRAY( dev->socket_open ); i++ ) 
 			{
 				if( dev->socket_open[i] != -1 ) 
 				{
-					make_command_to_list(dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
+					make_command_to_list( dev, ATMIPCLOSE, ONE_SECOND/5, dev->socket_open[i] );
 				}
 			}
 		}
@@ -2757,7 +3072,7 @@ static void check_socket_number( DevStatus *dev )
 
 static void mqtt_send_connect_or_tick( DevStatus *dev )
 {
-	if( dev->socket_num == 1) 
+	if( dev->socket_num == 1 ) 
 	{//触发条件
 		if( dev->ppp_status == PPP_CONNECTED && dev->tcp_connect_status ) 
 		{//状态
@@ -2767,21 +3082,21 @@ static void mqtt_send_connect_or_tick( DevStatus *dev )
 			{//二级状态
 				/*连接前把  mqtt_list at_list 的mqtt消息清空！在+MIPCLOSE:清空*/			
 				dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_CONNECTING;
-				make_command_to_list(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT);
-				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/25, MQTT_MSG_TYPE_NULL);	
+				make_command_to_list(dev, ATMQTT, ONE_SECOND/20, MQTT_MSG_TYPE_CONNECT );
+				make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/25, MQTT_MSG_TYPE_NULL );	
 			}		
 			/*发送心跳包给服务 50s每个tick*/				
 			if( dev->heartbeat_tick >= 3 ) 
 			{//触发条件
 				if(dev->mqtt_dev->connect_status != MQTT_DEV_STATUS_NULL
-						&& dev->mqtt_dev->connect_status != MQTT_DEV_STATUS_CONNECTING) 
+						&& dev->mqtt_dev->connect_status != MQTT_DEV_STATUS_CONNECTING ) 
 				{//二级状态
 					dev->heartbeat_tick = 0;
-					if(dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT) 
+					if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT ) 
 					{
 						//有可能是其它的状态MQTT_DEV_STATUS_CONNACK  MQTT_DEV_STATUS_SUBACK
-						make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ);
-						make_command_to_list(dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL);			
+						make_command_to_list( dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PINGREQ );
+						make_command_to_list( dev, ATMIPPUSH, ONE_SECOND/50, MQTT_MSG_TYPE_NULL );			
 					}
 				}									
 			} 
@@ -2911,17 +3226,17 @@ static void list_sm_event( DevStatus *dev )
 	/*删除sim卡中的短信, 短信相关的AT指令时间要长些NE_SECOND/5~ONE_SECOND/2*/
 	if( dev->sm_index_delete != -1 && dev->sm_delete_flag ) 
 	{
-		make_command_to_list(dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list(dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete);					
+		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		make_command_to_list( dev, ATCMGD, ONE_SECOND/2, dev->sm_index_delete );					
 		dev->sm_delete_flag = 0;
 	}
 
 	/*读取sim卡中的短信*/
 	if( dev->sm_num > 0 && dev->sm_read_flag ) 
 	{
-		make_command_to_list(dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
-		make_command_to_list(dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
-		make_command_to_list(dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);					
+		make_command_to_list( dev, ATCPMS, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );	
+		make_command_to_list( dev, ATCMGF, ONE_SECOND/5, MQTT_MSG_TYPE_NULL );
+		make_command_to_list( dev, ATCMGR, ONE_SECOND/5, dev->sm_index[0]);					
 		dev->sm_read_flag = 0;
 	}	
 }
@@ -3101,7 +3416,8 @@ static void module_system_init( DevStatus* dev )
 {	
 	init_command_buffer( &( dev->p_atcommand ), 60 );
 	init_mqtt_buffer( dev->p_mqttbuff, 3 );
-	
+
+	//init_module_instance( dev, dev->module );
 	init_module_reader( dev, dev->reader );
 	reset_mqtt_dev( dev, dev->mqtt_dev );	
 	reset_module_status( dev, 1 );
@@ -3160,6 +3476,7 @@ void notifyAndroidPowerOff( void )
 */
 void HandleModuleTask( void * pvParameters )
 {	
+	static ComModule module[1];
 	static DevStatus dev[1];
 	static UartReader reader[1];
 	static mqtt_dev_status mqtt_dev[1];
@@ -3168,10 +3485,12 @@ void HandleModuleTask( void * pvParameters )
 	dev->pxModuleTask = pxModuleTask;
 	dev->mqtt_dev = mqtt_dev;
 	dev->reader = reader;
+	dev->module = module;
 	dev->android_power_status = 0;
 	
 	rfifo_init( dev->uart_fifo, 1024 * 2 );	
 	uart3_init( 115200 );
+	
 	module_system_init( dev );
 	
 	vTaskSetThreadLocalStoragePointer( pxModuleTask, 0, dev );
@@ -3188,6 +3507,7 @@ void HandleModuleTask( void * pvParameters )
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 		}
 		printf("%s: android power off, go to work.\r\n", __func__);
+		xTaskNotifyGive( dev->pxModuleTask );
 		while( !dev->android_power_status )
 		{
 			ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
@@ -3201,6 +3521,1012 @@ void HandleModuleTask( void * pvParameters )
 		xSemaphoreGive( dev->os_mutex );
 	}
 }
+
+
+
+/*
+Sytem times from boot is 8100 (s), system tick = 8100116 (ms).
+*********************************
+AT+CSQ
++CSQ: 17,79
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ls
+
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      533        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+CanStream       S       08      319        03   03
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      533        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+
+root@2:/ #Sytem times from boot is 8150 (s), system tick = 8150116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8200 (s), system tick = 8200116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8250 (s), system tick = 8250116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 8300 (s), system tick = 8300116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8350 (s), system tick = 8350116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8400 (s), system tick = 8400116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 8450 (s), system tick = 8450116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8500 (s), system tick = 8500116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      533        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+DownStream      S       08      303        05   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #mqqtp xiaopeng
+Error command!
+root@2:/ #mqttp xiaopeng
+process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(23)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
+AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
++MIPSEND:1,1477
+
+OK
+at_list_cmd: release command (ATMQTT)
+release [PUBLISH]! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+Sytem times from boot is 8550 (s), system tick = 8550116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,77
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 8600 (s), system tick = 8600116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8650 (s), system tick = 8650116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+
+root@2:/ #\
+Error command!
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      518        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #Sytem times from boot is 8700 (s), system tick = 8700116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 8750 (s), system tick = 8750116 (ms).
+*********************************
+AT+CSQ
++CSQ: 17,79
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8800 (s), system tick = 8800116 (ms).
+*********************************
+AT+CSQ
++CSQ: 17,79
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8850 (s), system tick = 8850116 (ms).
+*********************************
+AT+CSQ
++CSQ: 17,79
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 8900 (s), system tick = 8900116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 8950 (s), system tick = 8950116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+Sytem times from boot is 9000 (s), system tick = 9000116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+sending [PINGREQ]! mqtype=12,id=0x0000
+AT+MIPSEND=1,"c000"
++MIPSEND:1,1498
+
+OK
+ADD [PINGREQ] to mqtt_head to wait ACK! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
++MIP:OK
+OK
+
++MIPRTCP=1,2,D000
+check_packet_from_fixhead: msg_len = nbytes = 2
+received (PINGRESP)! msg_type(13), QOS=0, msg_id=0X00, mesg_len=2, nbytes=2
+mqtt_set_mesg_ack: msgid=0x0000, [PINGREQ] is ACK, REMOVE it!
+Sytem times from boot is 9050 (s), system tick = 9050116 (ms).
+*********************************
+AT+CSQ
++CSQ: 17,80
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.14.147.127
+on_request_ip_success_callback: dev->ip(10.14.147.127)
+
+OK
+
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #jiffies
+Sytem times from boot is 50755 (s), system tick = 50755026 (ms).
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #jiffies
+Sytem times from boot is 50762 (s), system tick = 50762090 (ms).
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #Sytem times from boot is 50800 (s), system tick = 50800116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      518        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+CanStream       S       08      319        03   03
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+
+root@2:/ #Sytem times from boot is 50850 (s), system tick = 50850116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+
+root@2:/ #AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+root@2:/ #
+root@2:/ #
+root@2:/ #mqttp xiaopeng
+process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=0
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(23)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
+AT+MIPSEND=1,"3015000b2f78702f7075626c6973687869616f70656e67"
+ERROR
+at_list_cmd: release command (ATMQTT)
+release [PUBLISH]! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #
+root@2:/ #Sytem times from boot is 50900 (s), system tick = 50900116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+root@2:/ #
+root@2:/ #mqttp xiaopengeng_ffmeg 
+process_test_mqtt_publish: topic=/xp/publish, payload=xiaopengeng_ffmeg, qos=0
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(32)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
+AT+MIPSEND=1,"301e000b2f78702f7075626c6973687869616f70656e67656e675f66666d6567"
+ERROR
+at_list_cmd: release command (ATMQTT)
+release [PUBLISH]! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #mqttpSytem times from boot is 50950 (s), system tick = 50950116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+process_test_mqtt_publish: topic=/xp/publish, payload=time:[50951(s)]. mqtt_bytes=708, lostbytes=0, MQTT:reset_count=0, in_publish=3, mq_head=0,fixhead=1,in_waitting=0,in_pos=0
+                4G: malloc=4747, free=4747, simcard=3,reset=0,ppp_status=2,socket_num=0,sm_num=0,scsq=253,rcsq=253,at_count=0, at_head=0, atcmd_head=0, qos=0
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(276)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0000
+AT+MIPSEND=1,"309102000b2f78702f7075626c69736874696d653a5b35303935312873295d2e206d7174745f62797465733d3730382c206c6f737462797465733d302c204d5154543a72657365745f636f756e743d302c20696e5f7075626c6973683d332c206d715f686561643d302c666978686561643d312c696e5f7761697474696e673d302c696e5f706f733d300d0a090934473a206d616c6c6f633d343734372c20667265653d343734372c2073696d636172643d332c72657365743d302c7070705f7374617475733d322c736f636b65745f6e756d3d302c736d5f6e756d3d302c736373713d3235332c726373713d3235332c61745f636f756e743d302c2061745f686561643d302c206174636d645f686561643d30"
+ERROR
+at_list_cmd: release command (ATMQTT)
+release [PUBLISH]! msgid(0x0000), qos(0)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #mqttp xiaopeng
+process_test_mqtt_publish: topic=/xp/publish, payload=xiaopeng, qos=1
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(25)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0005
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800057869616f70656e67"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0005), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+Sytem times from boot is 51000 (s), system tick = 51000116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0005!
+sending [PUBLISH]! mqtype=3,id=0x0005
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800057869616f70656e67"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0005), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0005!
+sending [PUBLISH]! mqtype=3,id=0x0005
+AT+MIPSEND=1,"3217000b2f78702f7075626c69736800057869616f70656e67"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0005), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #ERROR: [PUBLISH mqtt_try > 2 ], type=3,id=0X0005,len=25,p=0x2000e2b0
+sending [DISCONNECT]! mqtype=14,id=0x0001
+AT+MIPSEND=1,"e000"
+ERROR
+at_list_cmd: release command (ATMQTT)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #handle_module_setting: set socket_close_flag to 1
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #jiffies
+Sytem times from boot is 51046 (s), system tick = 51046424 (ms).
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      499        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+DownStream      S       08      303        05   03
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #memory
+Memory1 used 75.305176%, Free Size = 16184, Total = 65536.
+Memory1 used (0).
+root@2:/ #Sytem times from boot is 51050 (s), system tick = 51050116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+root@2:/ #
+root@2:/ #Sytem times from boot is 51100 (s), system tick = 51100116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+
+root@2:/ #
+
+
+
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #ps    
+Name       Status  Priority  WaterMark  Num  Loglevel
+
+Usmart          R       03      499        06   00
+Module          R       02      501        01   03
+IDLE            R       00      113        09   04
+Wdg             B       14      074        07   04
+RTC             B       04      076        08   01
+sysTr           B       13      180        10   04
+UpStream        S       09      254        04   03
+CanCommand      S       10      198        02   03
+CanStream       S       08      319        03   03
+DownStream      S       08      303        05   03
+
+root@2:/ #
+root@2:/ #
+root@2:/ #jiffies
+Sytem times from boot is 51635 (s), system tick = 51635740 (ms).
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #mqttp
+process_test_mqtt_publish: topic=/xp/publish, payload=time:[51638(s)]. mqtt_bytes=708, lostbytes=0, MQTT:reset_count=0, in_publish=3, mq_head=0,fixhead=1,in_waitting=0,in_pos=0
+                4G: malloc=4809, free=4809, simcard=3,reset=0,ppp_status=2,socket_num=0,sm_num=0,scsq=10,rcsq=10,at_count=0, at_head=0, atcmd_head=0, qos=1
+fill_cmd_mqtt_part: alloc mqtt buffer ok, mqttdata_len(276)
+root@2:/ #sending [PUBLISH]! mqtype=3,id=0x0006
+AT+MIPSEND=1,"329102000b2f78702f7075626c697368000674696d653a5b35313633382873295d2e206d7174745f62797465733d3730382c206c6f737462797465733d302c204d5154543a72657365745f636f756e743d302c20696e5f7075626c6973683d332c206d715f686561643d302c666978686561643d312c696e5f7761697474696e673d302c696e5f706f733d300d0a090934473a206d616c6c6f633d343830392c20667265653d343830392c2073696d636172643d332c72657365743d302c7070705f7374617475733d322c736f636b65745f6e756d3d302c736d5f6e756d3d302c736373713d31302c726373713d31302c61745f636f756e743d302c2061745f686561643d302c206174636d645f686561643d30"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0006), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+
+root@2:/ #
+root@2:/ #
+root@2:/ #
+root@2:/ #mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0006!
+sending [PUBLISH]! mqtype=3,id=0x0006
+AT+MIPSEND=1,"329102000b2f78702f7075626c697368000674696d653a5b35313633382873295d2e206d7174745f62797465733d3730382c206c6f737462797465733d302c204d5154543a72657365745f636f756e743d302c20696e5f7075626c6973683d332c206d715f686561643d302c666978686561643d312c696e5f7761697474696e673d302c696e5f706f733d300d0a090934473a206d616c6c6f633d343830392c20667265653d343830392c2073696d636172643d332c72657365743d302c7070705f7374617475733d322c736f636b65745f6e756d3d302c736d5f6e756d3d302c736373713d31302c726373713d31302c61745f636f756e743d302c2061745f686561643d302c206174636d645f686561643d30"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0006), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+Sytem times from boot is 51650 (s), system tick = 51650116 (ms).
+*********************************
+AT+CSQ
++CSQ: 18,78
+
+OK
+AT+CPMS="SM"
++CPMS: 0,50,2,90,0,50
+
+OK
+AT+CMGD=?
++CMGD: (),(0-4)
+sm_num=0, sm_index={ }
+
+OK
+AT+MIPCALL?
++MIPCALL:1,10.6.237.253
+on_request_ip_success_callback: dev->ip(10.6.237.253)
+
+OK
+mqtt_list_cmd: add [PUBLISH] to AT LIST HEAD again! type=3, msgid=0x0006!
+sending [PUBLISH]! mqtype=3,id=0x0006
+AT+MIPSEND=1,"329102000b2f78702f7075626c697368000674696d653a5b35313633382873295d2e206d7174745f62797465733d3730382c206c6f737462797465733d302c204d5154543a72657365745f636f756e743d302c20696e5f7075626c6973683d332c206d715f686561643d302c666978686561643d312c696e5f7761697474696e673d302c696e5f706f733d300d0a090934473a206d616c6c6f633d343830392c20667265653d343830392c2073696d636172643d332c72657365743d302c7070705f7374617475733d322c736f636b65745f6e756d3d302c736d5f6e756d3d302c736373713d31302c726373713d31302c61745f636f756e743d302c2061745f686561643d302c206174636d645f686561643d30"
+ERROR
+ADD [PUBLISH] to mqtt_head to wait ACK! msgid(0x0006), qos(1)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+ERROR: [PUBLISH mqtt_try > 2 ], type=3,id=0X0006,len=276,p=0x2000ece8
+sending [DISCONNECT]! mqtype=14,id=0x0001
+AT+MIPSEND=1,"e000"
+ERROR
+at_list_cmd: release command (ATMQTT)
+AT+MIPPUSH=1
+ERROR
+[on_at_cmd_fail_callback: result: ERROR AT:AT+MIPPUSH=1
+handle_module_setting: set socket_close_flag to 1
+
+root@2:/ #
+
+*/
+
 
 
 

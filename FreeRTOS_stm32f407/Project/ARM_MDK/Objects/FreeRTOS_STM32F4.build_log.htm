@@ -9,20 +9,39 @@ Project File Date:  11/04/2016
 <h2>Output:</h2>
 Build target 'FreeRTOS_STM32F4'
 compiling longsung.c...
+..\..\USER\longsung.c(233): warning:  #223-D: function "check_command_exist" declared implicitly
+        if( !check_command_exist( ATMIPCLOSE, &dev->at_head ) ) 
+..\..\USER\longsung.c(252): warning:  #223-D: function "check_command_exist" declared implicitly
+                        if( !check_command_exist( ATMIPOPEN, &dev->at_head ) &&
+..\..\USER\longsung.c(310): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        initialise_longsung_module,
+..\..\USER\longsung.c(311): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        poll_longsung_signal,
+..\..\USER\longsung.c(312): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        check_longsung_sm,
+..\..\USER\longsung.c(313): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        check_longsung_ip,
+..\..\USER\longsung.c(314): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_request_ip,
+..\..\USER\longsung.c(315): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_close_socket,
+..\..\USER\longsung.c(316): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_connect_server,
+..\..\USER\longsung.c(317): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_push_socket_data,
+..\..\USER\longsung.c(318): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_delete_sm,
+..\..\USER\longsung.c(319): warning:  #144-D: a value of type "void (*)(DevStatus *)" cannot be used to initialize an entity of type "void (*)(void *)"
+        longsung_read_sm,
+..\..\USER\longsung.c(320): warning:  #144-D: a value of type "void (*)(DevStatus *, AtCommand *)" cannot be used to initialize an entity of type "void (*)(AtCommand *)"
+        send_command_to_device,
+..\..\USER\longsung.c: 13 warnings, 0 errors
 linking...
-Program Size: Code=113546 RO-data=8286 RW-data=2720 ZI-data=110276  
+Program Size: Code=114190 RO-data=8310 RW-data=2828 ZI-data=110336  
 FromELF: creating hex file...
 After Build - User command #1: C:\Keil_v5\ARM\ARMCC\bin\fromelf.exe --bin --output=C:\mcu\mcu-app\FreeRTOS_stm32f407\stm32f407.bin C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\Objects\FreeRTOS_STM32F4.axf
-".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 0 Warning(s).
-or(s), 0 Warning(s).
-\\FreeRTOS_stm32f407\\Project\\ARM_MDK\\Objects\\FreeRTOS_STM32F4.axf" 
-Set JLink Project File to "C:\mcu\mcu-app\FreeRTOS_stm32f407\Project\ARM_MDK\JLinkSettings.ini"
-* JLink Info: Device "STM32F407VE" selected (512 KB flash, 128 KB RAM).
- 
-JLink info:
-------------
-DLL: V4.80g, compiled Feb 13 2014 20:50:02
-Firmware: J-Link ARM V8 compiled Nov 25 2013 19:20:08
+".\Objects\FreeRTOS_STM32F4.axf" - 0 Error(s), 13 Warning(s).
+Nov 25 2013 19:20:08
 Hardware: V8.00
 S/N : 308622870 
 Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 

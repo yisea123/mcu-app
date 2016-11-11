@@ -143,13 +143,13 @@ typedef struct {
 	unsigned char *mqttdata;				/*for pointer malloc mqtt data*/
 	int mqttdata_len;						/*for store mqtt data length*/
 	char mqtt_try;							/*for store mqtt message send times*/		
-	char mqtt_clean;							/*clean for mqtt command*/
+	char mqtt_clean;						/*clean for mqtt command*/
 	struct list_head list;					/*node for list*/
 	//void *priv;								/*private data pointer*/
 }AtCommand;
 
 struct device_operations {
-	void (* init_module )( void *dev );	
+	void (* initialise_module )( void *dev );	
 	void (* poll_module_signal )( void *dev );
 	void (* check_module_sm )( void *dev ) ;
 	void (* check_module_ip )( void *dev ) ;
@@ -195,7 +195,7 @@ struct callback_operations {
 成对所有通讯模块操作的最大集合
 */
 typedef struct ComModule{
-	void *dev;	
+	void *p_dev;	
 	char name[20];
 	struct ComModule * next;
 	struct device_operations *d_ops;	
