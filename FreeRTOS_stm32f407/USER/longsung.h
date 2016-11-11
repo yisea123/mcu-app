@@ -100,7 +100,6 @@ typedef struct {
 	char mqtt_try;							/*for store mqtt message send times*/		
 	char mqtt_clean;						/*clean for mqtt command*/
 	struct list_head list;					/*node for list*/
-	//void *priv;								/*private data pointer*/
 }AtCommand;
 
 struct device_operations {
@@ -111,20 +110,14 @@ struct device_operations {
 	void (* module_request_ip )( void *instance ) ;	
 	void (* close_module_socket )( void *instance ) ;
 	void (* tcp_connect_server )( void *instance ) ;
-
-	//void (* load_mqtt_connect )( void *instance ) ;
-	//void (* load_mqtt_disconnect )( void *instance ) ;
-	//void (* load_mqtt_pingresp)( void *instance );
-	//make_command_to_list(dev, ATMQTT, ONE_SECOND/45, MQTT_MSG_TYPE_PINGRESP);
-	//void (* load_mqtt_pubcomp)( void *instance );	
-	//make_command_to_list(dev, ATMQTT, ONE_SECOND/40, MQTT_MSG_TYPE_PUBCOMP);
-	//void (* load_mqtt_ping )( void *instance ) ;
-
 	void (* push_socket_data )( void *instance, unsigned int tick ) ;
 	void (* delete_module_sm )( void *instance, int index ) ;
 	void (* read_module_sm )( void *instance, int index ) ;
 	void (* send_command_to_module )( void *instance, AtCommand* cmd );
-	char*(* at_get_name )( void *instance, int index );
+	char* (* at_get_name )( void *instance, int index );
+	char* (* make_tcp_packet )( char* buff, unsigned char* data, int len );
+	void (* send_push_data_directly )( void *instance );
+	void (* close_module_socket_directly )( void *instance, int index ) ;	
 };
 
 struct callback_operations {
@@ -158,6 +151,7 @@ struct callback_operations {
 代码的情况下，只需实现对具体模块
 的操作即可，对模块的具体操作抽象
 成对所有通讯模块操作的最大集合
+目前已实现longsung模块的ComModule的功能集合
 */
 typedef struct ComModule {
 	void *p_dev;	
@@ -174,6 +168,7 @@ struct status_operations {
 	void (* make_command )( void *dev, char index, unsigned int interval, int para );
  	void (* atcmd_set_ack )( void *dev, int index );
 	void (* set_mqtt_cmd_clean )( void *dev );
+	void (* mqtt_set_mesg_ack ) ( void *mqtt_dev, int type, uint16_t msg_id );	
 };
 
 typedef struct {
@@ -230,8 +225,8 @@ typedef struct {
 	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		
 	UartReader *reader;						/*UartReader instance*/
 	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
-	struct status_operations *ops;
-	ComModule *module;	
+	struct status_operations *ops;			/*core operations*/
+	ComModule *module;						/*pointer to the instance of ComModule*/
 }DevStatus;
 
 extern void HandleModuleTask( void * pvParameters );
