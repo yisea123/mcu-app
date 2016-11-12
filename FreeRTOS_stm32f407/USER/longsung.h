@@ -18,11 +18,11 @@
 #include "xlist.h"
 #include "mqtt_msg.h"
 
-#define NOW_TICK		xTaskGetTickCount()
-#define SIZE_ARRAY(a) 	(sizeof(a) / sizeof((a)[0]))
+#define NOW_TICK			xTaskGetTickCount()
+#define SIZE_ARRAY(a) 		(sizeof(a) / sizeof((a)[0]))
 
-#define ONE_SECOND		( 1000/portTICK_RATE_MS )
-#define MAX_TOKENS		20
+#define ONE_SECOND			( 1000/portTICK_RATE_MS )
+#define MAX_TOKENS			20
 
 /*可使用的JSON长度小于二分之一MAX_LINE_LEN, 
 由于4G模块每包最多1500， hex就750个！*/
@@ -52,6 +52,12 @@
 #define WAIT					1
 #define WAIT_NOT				0
 
+typedef enum  {
+	 CHECK_EXIST = 1,
+	 CHECK_EXIST_NOT = 0,
+	 CHECK_ERROR = -1,
+}CheckResult;
+
 
 typedef enum {
 	 PPP_DISCONNECT = 0,
@@ -74,7 +80,7 @@ typedef struct {
 	int pos;
 	int overflow;
 	void *p_dev;
-	char in[MAX_LINE_LEN];
+	char in[ MAX_LINE_LEN ];
 }UartReader;
 
 typedef struct {
@@ -123,6 +129,8 @@ struct device_operations {
 	void (* send_command_to_module )( void *instance, AtCommand* cmd );
 	char* (* at_get_name )( void *instance, int index );
 	char* (* make_tcp_packet )( char* buff, unsigned char* data, int len );
+	void (* send_tcp_packet )( char* buff );
+	
 	void (* send_push_data_directly )( void *instance );
 	void (* close_module_socket_directly )( void *instance, int index ) ;
 	int (* is_tcp_connect_server )( void *instance, int index );
@@ -137,8 +145,8 @@ struct callback_operations {
 
 	void (* signal_strength_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
 
-	void (* get_ip_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
-	void (* get_ip_fail_callback)( void *dev, RemoteTokenizer *tzer );
+	void (* request_ip_success_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
+	void (* request_ip_fail_callback)( void *dev, RemoteTokenizer *tzer );
 
 	void (* at_command_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
 	void (* at_command_success_callback)( void *dev, RemoteTokenizer *tzer );
@@ -162,20 +170,21 @@ struct callback_operations {
 目前已实现longsung模块的ComModule的功能集合
 */
 typedef struct ComModule {
-	void *p_dev;	
+	void *p_dev;
+	void *priv;
 	char name[20];
 	struct ComModule * next;
 	struct device_operations *d_ops;	
 	struct callback_operations* c_ops;
 	void (* module_reader_parse )( struct ComModule* instance, UartReader *reader );
+	void (* module_power_reset )( void *argc );
 }ComModule;
 
-//int check_command_exist( int index, struct list_head *head )
-struct status_operations {
-	int (* check_command_exist )( int index, struct list_head *head );	
-	void (* make_at_command )( void *argc, char index, char wait_falg, unsigned int interval_a, unsigned int interval_b, int para );
+struct core_operations {
+	CheckResult (* check_at_command_exist )( void  *argc, int index );	
+	void (* make_at_command )( void *argc, char index, char wait_falg, unsigned 
+				int interval_a, unsigned int interval_b, int para );
 	void (* make_mqtt_command )( void *argc, char index, unsigned int interval, int para );
-
  	void (* atcmd_set_ack )( void *dev, int index );
 	void (* set_mqtt_cmd_clean )( void *dev );
 	void (* mqtt_set_mesg_ack ) ( void *mqtt_dev, int type, uint16_t msg_id );	
@@ -185,11 +194,13 @@ typedef struct {
 	int simcard_type;						/*indicate sim care type,  0 is no card*/
 	
 	char reset_request;						/*request to power reset module*/
+	unsigned int reset_times;
 	char boot_status;						/*indicate if cmodule boot finish*/
 	
 	int singal[2];
 	
 	char tcp_connect_status;				/*indicate tcp status*/
+	unsigned int tcp_connect_times;			/*tcp connect service total times*/
 	char ip[30];							/*store ip from china mobile*/
 	module_ppp_status ppp_status;			/*indicate the net status*/
 	char socket_close_flag;					/*close all socket flag, if it is 1, close socket*/
@@ -210,7 +221,7 @@ typedef struct {
 	char heartbeat_tick;					/*mqtt tick times (heartbeat_tick*peroid) */
 	char period_flag;						/*peroid flag*/
 	
-	int at_count;
+	int at_count;							/* AT total count have send*/
 	char at_sending[64];					/*store sending at command*/
 	unsigned int close_tcp_interval;		/*for waitting someting times then close tcp*/
 	unsigned int tick_sum;					/*relate to close_tcp_interval and clean_interval*/
@@ -235,7 +246,7 @@ typedef struct {
 	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		
 	UartReader *reader;						/*UartReader instance*/
 	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
-	struct status_operations *ops;			/*core operations*/
+	struct core_operations *ops;			/*core operations*/
 	ComModule *module;						/*pointer to the instance of ComModule*/
 }DevStatus;
 
