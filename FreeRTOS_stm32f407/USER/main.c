@@ -90,12 +90,12 @@ int main(void)
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 #if( BOARD_NUM == 3)	
 	xTaskCreate( HandleModuleTask, (const char *)"Module", configMINIMAL_STACK_SIZE*7, NULL, tskIDLE_PRIORITY + 7, &pxModuleTask );
-	xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
-	xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
+	//xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
+	//xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
 #endif
 	//xTaskCreate( TransportTask, (const char *)"Transport", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 6, &pxTransportTask );
-	xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 9, &pxUpStreamTask );
-	xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 8, &pxDownStreamTask );
+	//xTaskCreate( HandleUpstreamTask, (const char *)"UpStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 9, &pxUpStreamTask );
+	//xTaskCreate( HandleDownStreamTask, (const char *)"DownStream", configMINIMAL_STACK_SIZE*4, NULL, tskIDLE_PRIORITY + 8, &pxDownStreamTask );
 #if( BOARD_NUM != 3)	
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 #endif

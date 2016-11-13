@@ -29,24 +29,8 @@
 #define MAX_LINE_LEN		1555//1024 1500
 
 /******************************/
-#define ATCSQ					1
-#define ATSIMTEST				2
-#define ATCPMS					3
-#define ATCMGD_					4
-#define ATMIPCALL_				5
-#define ATMIPCALL0				6
-#define ATMIPPROFILE			7
-#define ATMIPCALL1				8
-#define ATMIPOPEN				9
-#define ATMIPSEND				10
-#define ATMIPPUSH				11
-#define ATCMGF					12
-#define ATMIPCLOSE				13
-#define ATCMGR					14
-#define ATCMGD					15
-#define ATMIPHEX				16
-#define ATRESET         		17
-#define ATMQTT					18
+#define ATMQTT					1
+
 /******************************/
 
 #define WAIT					1
@@ -117,6 +101,8 @@ typedef struct {
 
 struct device_operations {
 	void (* initialise_module )( void *instance );	
+	void (* hardware_reset_callback )( void *instance );	
+	
 	void (* poll_module_signal )( void *instance );
 	void (* check_module_sm )( void *instance ) ;
 	void (* check_module_ip )( void *instance ) ;
@@ -129,7 +115,7 @@ struct device_operations {
 	void (* send_command_to_module )( void *instance, AtCommand* cmd );
 	char* (* at_get_name )( void *instance, int index );
 	char* (* make_tcp_packet )( char* buff, unsigned char* data, int len );
-	void (* send_tcp_packet )( char* buff );
+	void (* send_tcp_packet )( char* buff, int len );
 	
 	void (* send_push_data_directly )( void *instance );
 	void (* close_module_socket_directly )( void *instance, int index ) ;
@@ -173,6 +159,7 @@ typedef struct ComModule {
 	void *p_dev;
 	void *priv;
 	char name[20];
+	char is_initialise;
 	struct ComModule * next;
 	struct device_operations *d_ops;	
 	struct callback_operations* c_ops;
