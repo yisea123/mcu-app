@@ -13,9 +13,9 @@ extern void Printf_System_Jiffies( void );
 
 void print_char( USART_TypeDef* USARTx, char ch )
 {
-		USART_ClearFlag( USARTx, USART_FLAG_TC ); 
-		USART_SendData( USARTx, ch );
-		while( USART_GetFlagStatus( USARTx, USART_FLAG_TC ) != SET );
+	USART_ClearFlag( USARTx, USART_FLAG_TC ); 
+	USART_SendData( USARTx, ch );
+	while( USART_GetFlagStatus( USARTx, USART_FLAG_TC ) != SET );
 }
 
 static void select_sort( int a[], int len )  
@@ -196,40 +196,33 @@ static uint8_t str_to_hex( char *src )
 	return ( s1*16 + s2 );
 }
 
-static int is_ip_valid( char *ip )
+static int is_ip_valid( RemoteTokenizer *tzer )
 {
-	int p[4] ={ 0, 0, 0, 0 };
-	int len = strlen( ip );
-	int j = 0, i;
-	
-	for( i = 0; i < len; i++ )
+	int i = 0;
+	int ipaddr[4];
+
+	for( i = 0; i< 4; i++)
 	{
-        if( ip[i] == '.' || i == len - 1 )
+		ipaddr[i] = str_2_int( tzer->tokens[i].p, tzer->tokens[i].end );
+		if( ipaddr[i] == -1 || tzer->tokens[i].p == tzer->tokens[i].end )
 		{
-            /*·Ö¸î·û*/
-            if( p[j] >= 0 && p[j] <= 255 )
-			{
-                j ++;
-            }
-			else
-			{
-                return 0;
-            }
-        }
-		else
-		{
-            int d = ip[i] - '0';
-            if(d > 9 || d < 0)
-			{
-               return 0;
-            }
-			else
-            {
-                p[j] = p[j] * 10 + d;
-            }
-        }
+			printf("%s: is invalid ip!\r\n", __func__);
+			return 0;
+		}
 	}
-	return 1;
+
+    if ( ( ipaddr[0] >= 0 && ipaddr[0] <= 255 ) && ( ipaddr[1] >= 0 && ipaddr[1] <= 255 )
+			&&( ipaddr[2] >= 0 && ipaddr[2] <= 255 ) && ( ipaddr[3] >= 0 && ipaddr[3] <= 255 ) )
+    {   
+		printf("%s: is valid ip!\r\n", __func__);    
+        return 1;       
+    }
+    else
+    {
+		printf("%s: is invalid ip!\r\n", __func__);
+        return 0;
+    }
+
 }
 
 /*
@@ -921,17 +914,14 @@ static void on_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* to
 	DevStatus *dev = ( DevStatus* ) priv;	
 
 	memset(dev->at_sending, '\0', sizeof(dev->at_sending));
-	if(strlen(tok[0].p) > sizeof(dev->at_sending)) return;
-	
-	if( tzer->count == 1 ) 
+	if( strlen( tok[0].p ) > sizeof( dev->at_sending ) ) 
 	{
-		memcpy(dev->at_sending, tok[0].p, tok[0].end - tok[0].p);
-	} 
-	else 
-	{
-	  strcat(dev->at_sending, tok[0].p);
+	 	memcpy( dev->at_sending, tok[0].p, sizeof( dev->at_sending ) );
 	}
-	
+	else
+	{
+		memcpy(dev->at_sending, tok[0].p, strlen(tok[0].p) );
+	}
 	//printf("at_sending=%s, len=%d\r\n", at_sending, strlen(at_sending));
 }
 
@@ -1295,6 +1285,7 @@ static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 	{
 		p->sm_data_flag = 0;
 		instance->c_ops->sm_data_callback( dev, tzer, tok, dev->sm_index_read );
+		return;
 	}
 	
 	if( !memcmp( tok[0].p, "AT+", strlen("AT+") ) ) 
@@ -1378,8 +1369,10 @@ static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 	}
 }
 
-void load_longsung_instance( DevStatus *dev, ComModule *instance )
+void load_longsung_instance( )
 {
+	static ComModule instance[1];
+
 	static struct LongSungPriv longsung_priv;
 	
 	static struct device_operations ls_dops =
@@ -1425,14 +1418,16 @@ void load_longsung_instance( DevStatus *dev, ComModule *instance )
 	};
 
 	memcpy( instance->name, "longsung", strlen("longsung") );
-	instance->p_dev = dev;
 	instance->next = NULL;
+	instance->p_dev = NULL;
 	instance->d_ops = &ls_dops;
 	instance->c_ops = &ls_cops;
 	instance->priv = &longsung_priv;
 	instance->is_initialise = 0;	
 	instance->module_reader_parse = longsung_reader_parse;
 	instance->module_power_reset = longsung_power_reset;
+
+	register_communication_module( instance );
 }
 
 
@@ -1504,7 +1499,7 @@ static void init_mqtt_buffer( MqttBuffer **p_mqttbuff, int size )
 		else if( i == 1 )
 		{
 			num = 3;
-			capacity = 300;
+			capacity = 370;
 		} 
 		else if( i == 2 )
 		{
@@ -1779,7 +1774,7 @@ static void complete_pending( mqtt_dev_status *mqtt_dev, int event_type, uint16_
 static void process_test_mqtt_publish( mqtt_dev_status *mqtt_dev, int qos, char *topic, char *payload )
 {
 	//mqtt_state_t* state = mqtt_dev->mqtt_state;
-	//printf("%s: topic=%s, payload=%s, qos=%d\r\n", __func__, topic, payload, qos);
+	printf("%s: topic=%s, payload=%s, qos=%d\r\n", __func__, topic, payload, qos);
 	
 	if( qos > 2 || qos < 0 )
 	{
@@ -2337,8 +2332,8 @@ static void module_reader_addc(   DevStatus* dev, UartReader* r, int c )
 	/*we just need charactor for fix some bug.*/
 	if( c < 0x20 &&  c != 0x0d && c != 0x0a  )
 	{
-		r->overflow = 1;
-		r->pos = 0;
+		//r->overflow = 1;
+		//r->pos = 0;
 		return;
 	}
 
@@ -3802,7 +3797,7 @@ static void module_clean_work( DevStatus* dev )
 	dev->module->module_power_reset( dev->module ); 	
 }
 
-void load_sim900_instance( DevStatus *dev, ComModule *instance );
+void load_sim900a_instance( void );
 
 /*
 * author:	yangjianzhou
@@ -3820,8 +3815,9 @@ static void module_system_init( DevStatus* dev )
 		mqtt_set_mesg_ack,
 	};
 	dev->ops = &status_ops;
-	
+	dev->module_list = NULL;
 	dev->os_mutex = xSemaphoreCreateMutex();
+	dev->list_mutex = xSemaphoreCreateMutex();
 	
  	dev->hb_timer = xTimerCreate( "heartbeat", 50000 / portTICK_RATE_MS, 
 						pdTRUE, dev, notify_module_period_timer );
@@ -3832,8 +3828,6 @@ static void module_system_init( DevStatus* dev )
 	init_command_buffer( &( dev->p_atcommand ), 60 );
 	init_mqtt_buffer( dev->p_mqttbuff, 3 );
 
-	load_longsung_instance( dev, dev->module );
-	//load_sim900_instance( dev, dev->module );
 	reset_module_reader( dev, dev->reader );
 	reset_mqtt_dev( dev, dev->mqtt_dev );	
 	reset_module_status( dev, 1 );
@@ -3881,11 +3875,102 @@ void notifyAndroidPowerOff( void )
 
 /*
 * author:	yangjianzhou
+* function: 	find_communication_module.
+*/
+static ComModule **find_communication_module( DevStatus* dev, const char *name, unsigned len )
+{
+    ComModule **p;
+	
+    for ( p = &( dev->module_list ); *p; p = &( *p )->next )
+    {
+        if ( strlen( ( *p )->name ) == len && strncmp( ( *p )->name, name, len ) == 0 )
+        {
+        	break;
+        }
+    }
+	
+	return p;
+}
+
+/*
+* author:	yangjianzhou
+* function: 	register_communication_module, register a ComModule instance to core.
+*/
+int register_communication_module( ComModule * instance )
+{
+    int res = 0;
+    ComModule ** p;
+	DevStatus* dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
+
+	if( !dev )
+	{
+		printf("%s: dev null pointer error!\r\n", __func__);
+		return -1;
+	}
+	
+    if ( instance->next )
+    {
+        return -1;
+    }
+	xSemaphoreTake( dev->list_mutex, portMAX_DELAY );
+    p = find_communication_module( dev, instance->name, strlen( instance->name ) );
+    if ( *p )
+    {
+        res = -1;
+    }
+    else
+    {
+    	*p = instance;
+    }
+	xSemaphoreGive( dev->list_mutex );
+	
+    return res;
+}
+
+/*
+* author:	yangjianzhou
+* function: 	get_communication_module, get a ComModule by name.
+*/
+static ComModule *get_communication_module( DevStatus* dev, const char *name )
+{
+    ComModule *instance;
+    int len = strlen( name );
+
+	xSemaphoreTake( dev->list_mutex, portMAX_DELAY );
+    instance = *( find_communication_module( dev, name, len ) );
+	xSemaphoreGive( dev->list_mutex );
+
+    return instance;
+}
+
+/*
+* author:	yangjianzhou
+* function: 	find_module, find a ComModule by name, block until it has registered.
+*/
+static void find_module( DevStatus* dev , const char * name )
+{
+	while( !dev->module )
+	{
+		dev->module = get_communication_module( dev, name );
+		
+		if( !dev->module )
+		{
+			printf("%s: find communication module fail!\r\n", __func__);
+			vTaskDelay( 1000 );
+		}
+		else
+		{
+			dev->module->p_dev = dev;
+		}
+	}
+}
+
+/*
+* author:	yangjianzhou
 * function: 	HandleModuleTask  handle module system.
 */
 void HandleModuleTask( void * pvParameters )
 {	
-	static ComModule module[1];
 	static DevStatus dev[1];
 	static UartReader reader[1];
 	static mqtt_dev_status mqtt_dev[1];
@@ -3894,17 +3979,22 @@ void HandleModuleTask( void * pvParameters )
 	dev->pxModuleTask = pxModuleTask;
 	dev->mqtt_dev = mqtt_dev;
 	dev->reader = reader;
-	dev->module = module;
 	dev->android_power_status = 0;
+	vTaskSetThreadLocalStoragePointer( pxModuleTask, 0, dev );
+	
 	rfifo_init( dev->uart_fifo, 1024 * 2 );	
 	uart3_init( 115200 );
-	
 	module_system_init( dev );
+
+	/*we can instance communication module now*/
+	load_longsung_instance();
+	load_sim900a_instance();
 	
-	vTaskSetThreadLocalStoragePointer( pxModuleTask, 0, dev );
 	vTaskDelay( 1000 / portTICK_RATE_MS );
 	vSetTaskLogLevel( NULL, eLogLevel_3 );
 	printf("%s: start...\r\n", __func__);
+
+	find_module( dev, "longsung" );
 	
 	//notifyAndroidPowerOn();
 	while( 1 )
@@ -3976,24 +4066,19 @@ typedef struct Sim900Priv
 
 static void on_sim900_at_command_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
-	//printf("%s!\r\n", __func__);
-	//printf("[at command ok... tzer->count=%d]\r\n", tzer->count);
-	
 	DevStatus *dev = ( DevStatus* ) priv;	
 
 	memset( dev->at_sending, '\0', sizeof( dev->at_sending ) );
-	if( strlen( tok[0].p ) > sizeof( dev->at_sending ) ) return;
 	
-	if( tzer->count == 1 ) 
+	if( strlen( tok[0].p ) > sizeof( dev->at_sending ) ) 
 	{
-		memcpy( dev->at_sending, tok[0].p, tok[0].end - tok[0].p );
-	} 
-	else 
-	{
-		printf("%s: strcat ~~~~~~~~~~\r\n", __func__);
-	  	strcat( dev->at_sending, tok[0].p );
+	 	memcpy( dev->at_sending, tok[0].p, sizeof( dev->at_sending ) );
 	}
-	
+	else
+	{
+		memcpy(dev->at_sending, tok[0].p, strlen(tok[0].p) );
+	}
+
 	//printf("%s: at_sending(%s)\r\n", __func__, dev->at_sending);
 }
 
@@ -4389,7 +4474,7 @@ static void sim900_reader_parse(  struct ComModule* instance, UartReader* r )
 		//10.180.84.210
 		RemoteTokenizer ttzer[1];	
 		module_tokenizer_charactor( ttzer, '.', r->in, r->in + r->pos );
-		if( ttzer->count == 4 /*&& is_ip_valid( r->in )*/ )
+		if( ttzer->count == 4 && is_ip_valid( ttzer ) )
 		{
 			instance->c_ops->request_ip_success_callback( dev, tzer, tok);
 		}	
@@ -4830,8 +4915,9 @@ static void sim900_do_send_command( void *instance, AtCommand* cmd )
 	}
 }
 
-void load_sim900_instance( DevStatus *dev, ComModule *instance )
+void load_sim900a_instance( void )
 {
+	static ComModule instance[1];
 	static Sim900Priv sim900_priv;
 	
 	static struct device_operations s9_dops =
@@ -4875,8 +4961,8 @@ void load_sim900_instance( DevStatus *dev, ComModule *instance )
 		on_sim900_sm_read_err_callback,
 	};
 	
-	memcpy( instance->name, "sim900", strlen( "sim900" ) );
-	instance->p_dev = dev;
+	memcpy( instance->name, "sim900a", strlen( "sim900a" ) );
+	instance->p_dev = NULL;
 	instance->next = NULL;
 	instance->d_ops = &s9_dops;
 	instance->c_ops = &s9_cops;
@@ -4884,6 +4970,8 @@ void load_sim900_instance( DevStatus *dev, ComModule *instance )
 	instance->is_initialise = 0;
 	instance->module_reader_parse = sim900_reader_parse;
 	instance->module_power_reset = sim900_power_reset;
+
+	register_communication_module( instance );
 }
 
 /*		

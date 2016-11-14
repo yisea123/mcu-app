@@ -240,10 +240,14 @@ typedef struct {
 	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
 	struct core_operations *ops;			/*core operations*/
 	ComModule *module;						/*pointer to the instance of ComModule*/
+	
+	ComModule *module_list;
+	xSemaphoreHandle list_mutex;				/*for protect module_list */	
 }DevStatus;
 
 extern void HandleModuleTask( void * pvParameters );
 extern void test_mqtt_publish( void *data );
+extern int register_communication_module( struct ComModule * instance );
 #endif
 
 
