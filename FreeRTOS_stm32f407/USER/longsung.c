@@ -214,7 +214,7 @@ static int is_ip_valid( RemoteTokenizer *tzer )
     if ( ( ipaddr[0] >= 0 && ipaddr[0] <= 255 ) && ( ipaddr[1] >= 0 && ipaddr[1] <= 255 )
 			&&( ipaddr[2] >= 0 && ipaddr[2] <= 255 ) && ( ipaddr[3] >= 0 && ipaddr[3] <= 255 ) )
     {   
-		printf("%s: is valid ip!\r\n", __func__);    
+		//printf("%s: is valid ip!\r\n", __func__);    
         return 1;       
     }
     else
@@ -986,6 +986,8 @@ static void on_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer)
 		printf("%s: success to cmd AT+MIPHEX=1\r\n", __func__);
 		dev->ops->atcmd_set_ack( dev, ATMIPHEX );
 	}
+	
+	memset(dev->at_sending, '\0', sizeof(dev->at_sending));
 }
 
 static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
@@ -1052,6 +1054,7 @@ static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 	{
 		printf("%s: fail to cmd AT+MIPHEX\r\n", __func__);
 	}
+	memset(dev->at_sending, '\0', sizeof(dev->at_sending));	
 }
 
 static void on_simcard_type_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
@@ -3994,7 +3997,7 @@ void HandleModuleTask( void * pvParameters )
 	vSetTaskLogLevel( NULL, eLogLevel_3 );
 	printf("%s: start...\r\n", __func__);
 
-	find_module( dev, "longsung" );
+	find_module( dev, "sim900a" );
 	
 	//notifyAndroidPowerOn();
 	while( 1 )
@@ -4129,8 +4132,8 @@ static void on_sim900_signal_strength_callback( void *priv, RemoteTokenizer *tze
 	int signal[2];
 	DevStatus *dev = ( DevStatus* ) priv;	
 	
-	signal[0] = str_2_int(tok[0].p+6, tok[0].end);
-	signal[1] = str_2_int(tok[1].p, tok[1].end);
+	signal[0] = str_2_int( tok[0].p+6, tok[0].end );
+	signal[1] = str_2_int( tok[1].p, tok[1].end );
 	
 	dev->rcsq++;
 	dev->singal[0] = signal[0];
@@ -4222,7 +4225,8 @@ static void on_sim900_at_cmd_success_callback( void *priv, RemoteTokenizer *tzer
 		printf("%s: success to send AT+CPIN?, sim card insert!\r\n", __func__);
 		dev->simcard_type = 3;
 	}	
-	
+
+	memset(dev->at_sending, '\0', sizeof(dev->at_sending));	
 }
 
 static void on_sim900_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
@@ -4233,6 +4237,8 @@ static void on_sim900_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 	{
 		printf("%s: no sim card insert!\r\n", __func__);
 	}
+
+	memset(dev->at_sending, '\0', sizeof(dev->at_sending));	
 }
 
 
@@ -4468,6 +4474,10 @@ static void sim900_reader_parse(  struct ComModule* instance, UartReader* r )
 			}
 		}
 	}
+	else if(!memcmp(tok[0].p, "STATE: CONNECT OK", strlen("STATE: CONNECT OK")))
+	{
+		dev->tcp_connect_status = 1;
+	}
 	else
 	{
 		//AT+CIFSR
@@ -4505,6 +4515,7 @@ static void sim900_init_timer(  TimerHandle_t xTimer )
 	xSemaphoreTake( dev->os_mutex, portMAX_DELAY );
 	instance->d_ops->initialise_module( instance );
 	xSemaphoreGive( dev->os_mutex );
+	
 	/*notify to work*/
 	xTaskNotifyGive( dev->pxModuleTask );
 }
