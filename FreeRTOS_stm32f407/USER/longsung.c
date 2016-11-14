@@ -1,29 +1,15 @@
 #include "longsung.h"
 
 extern Ringfifo uart3fifo[1];
+extern eLogLevel ucOsLogLevel;
 extern TaskHandle_t pxModuleTask;
+
 extern void android_power_on( void );
 extern void android_power_off( void );
 extern void longsung_power_reset( void *argc );
 extern void Printf_System_Jiffies( void );
 
-#define ATSIMTEST				2
-#define ATCPMS					3
-#define ATCMGD_					4
-#define ATMIPCALL_				5
-#define ATMIPCALL0				6
-#define ATMIPPROFILE			7
-#define ATMIPCALL1				8
-#define ATMIPOPEN				9
-#define ATMIPSEND				10
-#define ATMIPPUSH				11
-#define ATCMGF					12
-#define ATMIPCLOSE				13
-#define ATCMGR					14
-#define ATCMGD					15
-#define ATMIPHEX				16
-#define ATRESET         		17
-#define ATCSQ					18
+/************************************tools codes************************************/
 
 void print_char( USART_TypeDef* USARTx, char ch )
 {
@@ -34,11 +20,13 @@ void print_char( USART_TypeDef* USARTx, char ch )
 
 static void select_sort( int a[], int len )  
 {  
-    int i,j,x,l;  
+    int i,j,x,l;
+	
     for( i = 0; i < len; i++ )  
     {  
         x = a[i];  
-        l = i;  
+        l = i;
+		
         for( j = i; j < len; j++ )  
         {  
             if( a[j] < x )  
@@ -156,7 +144,7 @@ int memcmp_x(const void *cs, const void *ct, int count)
 	while( su1 < end ) 
 	{
 		res = *su1++ - *su2++;
-		if (res)
+		if ( res )
 			break;
 	}
 	
@@ -170,15 +158,17 @@ static int str_2_int( const char* p, const char* end )
 
 	for( ; len > 0; len--, p++ )
 	{
-			int  c;
+		int  c;
 
-			if (p >= end)
-					goto Fail;
-
-			c = *p - '0';
-			if ((unsigned)c >= 10)
-					goto Fail;
-
+		if ( p >= end )
+		{
+			goto Fail;
+		}
+		c = *p - '0';
+		if ( ( unsigned int ) c >= 10 )
+		{
+			goto Fail;
+		}
 			result = result*10 + c;
 	}
 	return  result;
@@ -193,11 +183,16 @@ static uint8_t str_to_hex( char *src )
 	uint8_t s1,s2;
 
 	s1 = toupper( src[0] ) - 0x30;
-	if ( s1 > 9 ) s1 -= 7;
-
+	if ( s1 > 9 ) 
+	{
+		s1 -= 7;
+	}
 	s2 = toupper( src[1] ) - 0x30;
-	if ( s2 > 9 ) s2 -= 7;
-
+	if ( s2 > 9 )
+	{
+		s2 -= 7;
+	}
+	
 	return ( s1*16 + s2 );
 }
 
@@ -239,7 +234,7 @@ static int is_ip_valid( char *ip )
 
 /*
 * author:	yangjianzhou
-* function: 	module_tokenizer_init,  format data to Token.
+* function: 	module_tokenizer_charactor,  format data to Token according.
 */
 static int module_tokenizer_charactor( RemoteTokenizer* t, char c, const char* p, const char* end )
 {
@@ -364,6 +359,7 @@ static void print_line( USART_TypeDef* USARTx, const char* data, int len )
 	/*for fix bug, t must be int type*/
 	for( t = 0; t < len; t++ ) 
 	{
+		/*we just print charactor*/
 		if( data[t] >= 0x20 || ( data[t] == 0x0d || data[t] == 0x0a ) )
 		{
 			USART_ClearFlag( USARTx, USART_FLAG_TC ); 
@@ -376,14 +372,48 @@ static void print_line( USART_TypeDef* USARTx, const char* data, int len )
 
 /************************************instance codes************************************/
 
+//do not define 1 for AT command, used by MATT
+
+#define ATSIMTEST				2
+#define ATCPMS					3
+#define ATCMGD_					4
+#define ATMIPCALL_				5
+#define ATMIPCALL0				6
+#define ATMIPPROFILE			7
+#define ATMIPCALL1				8
+#define ATMIPOPEN				9
+#define ATMIPSEND				10
+#define ATMIPPUSH				11
+#define ATCMGF					12
+#define ATMIPCLOSE				13
+#define ATCMGR					14
+#define ATCMGD					15
+#define ATMIPHEX				16
+#define ATRESET         		17
+#define ATCSQ					18
+
+typedef struct LongSungPriv
+{
+	char rege_status;
+	char cgatt_status;
+
+	char sm_data_flag;	
+}LongSungPriv;
+
+
 /*
 * author:	yangjianzhou
-* function: 	longsung_hardware_reset,  power reset callback.
+* function: 	longsung_hardware_reset,  power reset callback, when reset the power
+* 			we need to clean module data, include private data.
 */
 static void longsung_hardware_reset_callback( void *instance )
 {
-	//DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+	LongSungPriv *p = ( LongSungPriv *) ( ( ComModule *) instance )->priv;	
+	( ( ComModule *) instance )->is_initialise = 0;	
+
+	memset( p, 0, sizeof( LongSungPriv ) );
 	
+	printf("%s:\r\n", __func__);
 }
 
 /*
@@ -417,7 +447,7 @@ static void initialise_longsung_module( void *instance )
 
 /*
 * author:	yangjianzhou
-* function: 	poll_module_signal,  poll signal data.
+* function: 	poll_longsung_signal,  poll signal data.
 */
 static void poll_longsung_signal( void *instance )
 {
@@ -775,6 +805,11 @@ static void on_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok 
 	
 	memset( tcp_read, '\0', sizeof( tcp_read ) );
 	nbytes = str_2_int( tok[1].p, tok[1].end );//nbytes <= 750
+	if( nbytes == -1 )
+	{
+		printf("%s: nbytes(%d) error!\r\n", __func__, nbytes);
+		return;
+	}
 
 	mqtt_dev->recv_bytes += nbytes;
 	/* 如果解析包错误， 结束解析数据 */
@@ -811,6 +846,10 @@ static void on_connect_service_success_callback( void *priv, RemoteTokenizer *tz
 			break;
 			
 		default: 
+			if( socketId == -1 )
+			{
+				printf("%s: socketId(%d) error!\r\n", __func__, socketId);
+			}			
 			return;
 	}
 	
@@ -839,6 +878,12 @@ static void on_disconnect_service_callback( void *priv, RemoteTokenizer *tzer, T
 	DevStatus *dev = ( DevStatus* ) priv;		
 
 	printf("%s: +MIPCLOSE !!!!! success. socket id = %d\r\n", __func__, socketId);
+	if( socketId < -1 || socketId > 3)
+	{
+		printf("%s: socketId(%d) error!\r\n", __func__, socketId);
+		return;
+	}
+
 	dev->socket_open[ socketId - 1 ] = -1;
 	dev->mqtt_dev->connect_status = MQTT_DEV_STATUS_NULL;
 	dev->mqtt_dev->in_pos = 0;
@@ -1006,7 +1051,11 @@ static void on_at_cmd_fail_callback( void *priv, RemoteTokenizer *tzer)
 		int socketId = str_2_int(dev->at_sending+12, dev->at_sending+13);
 		
 		printf("%s: close socketid[%d] error! AT:%s\r\n", __func__, socketId, dev->at_sending);
-		
+		if( socketId < 0 || socketId > 3 )
+		{
+			printf("%s: socketId(%d) error!\r\n", __func__, socketId);
+			return;
+		}		
 		dev->socket_open[ socketId - 1 ] = -1;  //bug???? jzyang need to check later
 	}
 	else if( !memcmp(dev->at_sending, "AT+MIPHEX=", strlen("AT+MIPHEX=")))
@@ -1033,11 +1082,11 @@ static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	int i;
 	DevStatus *dev = ( DevStatus* ) priv;	
 
-	if(tzer->count == 2) 
+	if( tzer->count == 2 ) 
 	{
 		/*+CMGD: (),(0-4)*/
 		/*+CMGD: (0),(0-4)*/
-		if(!memcmp(tok[0].p, "+CMGD: ()", strlen("+CMGD: ()"))) 
+		if( !memcmp(tok[0].p, "+CMGD: ()", strlen("+CMGD: ()")) ) 
 		{
 			i = 0;
 			dev->sm_num = 0;
@@ -1048,16 +1097,16 @@ static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 			dev->sm_num = 1;
 			dev->sm_index[0] = str_2_int(tok[0].p+8, tok[0].end-1);
 		}
-		for(; i < SIZE_ARRAY( dev->sm_index ); i++) 
+		for( ; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
 		{
 			dev->sm_index[i] = -1;
 		}
 	} 
-	else if(tzer->count > 2) 
+	else if( tzer->count > 2 ) 
 	{
 		/*+CMGD: (0,1,2,4,5,6),(0-4)*/
 		dev->sm_num = tzer->count - 1;
-		if(dev->sm_num > sizeof(dev->sm_index)/sizeof(dev->sm_index[0])) 
+		if( dev->sm_num > sizeof(dev->sm_index)/sizeof(dev->sm_index[0]) ) 
 		{
 			dev->sm_num = sizeof(dev->sm_index)/sizeof(dev->sm_index[0]);
 		}
@@ -1067,11 +1116,17 @@ static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 			if( i < dev->sm_num ) 
 			{
 				if( i==0 ) 
+				{
 					dev->sm_index[i] = str_2_int(tok[i].p+8, tok[i].end);
+				}
 				else if( i== (dev->sm_num -1) )
+				{
 					dev->sm_index[i] = str_2_int(tok[i].p, tok[i].end-1);
+				}
 				else 
+				{
 					dev->sm_index[i] = str_2_int(tok[i].p, tok[i].end);
+				}
 			} 
 			else 
 			{
@@ -1083,7 +1138,7 @@ static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 	printf("sm_num=%d, sm_index={ ", dev->sm_num);
 	for( i = 0; i < SIZE_ARRAY( dev->sm_index ); i++ ) 
 	{
-		if(dev->sm_index[i] != -1)
+		if( dev->sm_index[i] != -1 )
 		{
 			printf("%d, ", dev->sm_index[i]);
 		}
@@ -1094,9 +1149,10 @@ static void on_sm_check_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 static void on_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token* tok)
 {
 	DevStatus *dev = ( DevStatus* ) priv;	
+	LongSungPriv *p = ( LongSungPriv *) dev->module->priv;
 
 	printf("SM read, index=%d\r\n", dev->sm_index_read);
-	dev->sm_data_flag = 1;
+	p->sm_data_flag = 1;
 }
 
 static void on_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
@@ -1209,6 +1265,7 @@ static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 	Token tok[MAX_TOKENS];
 	RemoteTokenizer tzer[1];
 	DevStatus *dev = ( DevStatus * )( instance->p_dev );
+	LongSungPriv *p = ( LongSungPriv *) instance->priv;
 	
 	if( !dev )
 	{
@@ -1234,9 +1291,9 @@ static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 		tok[i] = module_tokenizer_get( tzer, i );
 	}
 
-	if( dev->sm_data_flag ) 
+	if( p->sm_data_flag ) 
 	{
-		dev->sm_data_flag = 0;
+		p->sm_data_flag = 0;
 		instance->c_ops->sm_data_callback( dev, tzer, tok, dev->sm_index_read );
 	}
 	
@@ -1320,12 +1377,6 @@ static void longsung_reader_parse(  struct ComModule* instance, UartReader* r )
 		
 	}
 }
-
-struct LongSungPriv
-{
-	char rege_status;
-	char cgatt_status;
-};
 
 void load_longsung_instance( DevStatus *dev, ComModule *instance )
 {
@@ -1728,7 +1779,7 @@ static void complete_pending( mqtt_dev_status *mqtt_dev, int event_type, uint16_
 static void process_test_mqtt_publish( mqtt_dev_status *mqtt_dev, int qos, char *topic, char *payload )
 {
 	//mqtt_state_t* state = mqtt_dev->mqtt_state;
-	printf("%s: topic=%s, payload=%s, qos=%d\r\n", __func__, topic, payload, qos);
+	//printf("%s: topic=%s, payload=%s, qos=%d\r\n", __func__, topic, payload, qos);
 	
 	if( qos > 2 || qos < 0 )
 	{
@@ -1785,9 +1836,22 @@ static int deliver_publish( void *argc, uint8_t* message, int length )
 	memcpy(topic, edata.topic, edata.topic_length);
 	topic[edata.topic_length] = '\0';
 
-	printf("topic.length = %d, topic=%s\r\n", edata.topic_length, topic);
-	printf("payload.length = %d, payload=%s\r\n", edata.data_length, edata.data);			
+	{
+		eLogLevel level = ucGetTaskLogLevel( pxModuleTask );
 
+		if( level <= ucOsLogLevel )
+		{
+			printf("topic.length = %d, topic=%s\r\n", edata.topic_length, topic);
+			printf("payload.length = %d, payload=%s\r\n", edata.data_length, edata.data);			
+		}
+		else
+		{
+			vSetTaskLogLevel( NULL, ucOsLogLevel );
+			printf("%s\r\n", edata.data);
+			vSetTaskLogLevel( NULL, level );
+		}
+	}
+	
 	if( !memcmp(edata.data, "report", strlen("report")))
 	{
 		char json_buff[300];
@@ -2253,6 +2317,12 @@ static void module_reader_addc(   DevStatus* dev, UartReader* r, int c )
 	if ( r->overflow ) 
 	{
 		r->overflow = ( c != '\n' );
+		
+		if( !r->overflow )
+		{
+			/*for fix bug. must memset r->in*/
+			memset( r->in, '\0', sizeof( r->in ) );
+		}
 		return;
 	}
 
@@ -2264,7 +2334,7 @@ static void module_reader_addc(   DevStatus* dev, UartReader* r, int c )
 		return;
 	}	
 
-	/*we just need charactor*/
+	/*we just need charactor for fix some bug.*/
 	if( c < 0x20 &&  c != 0x0d && c != 0x0a  )
 	{
 		r->overflow = 1;
@@ -2537,11 +2607,10 @@ static void reset_module_status( DevStatus* dev, char flag )
 	dev->socket_close_flag = 0;
 	dev->socket_num = 0;
 
-	dev->heartbeat_tick = 0;
+	dev->mqtt_heartbeat = 0;
 	dev->period_flag = 0;	
 	
 	dev->sm_num = 0;
-	dev->sm_data_flag = 0;
 	dev->sm_index_delete = -1;
 	
 	dev->sm_read_flag = 1;
@@ -2743,7 +2812,8 @@ static void fill_cmd_mqtt_part( DevStatus *dev, AtCommand *cmd )
 		} 
 		else 
 		{
-			printf("%s: alloc mqtt buffer ok, mqttdata_len(%d)\r\n", __func__, cmd->mqttdata_len);
+			//printf("%s: alloc mqtt buffer ok, mqttdata_len(%d)\r\n", __func__, cmd->mqttdata_len);
+
 			/*store the outbound_message->data, make cmd->mqttdata point to it. */
 			memcpy( cmd->mqttdata, dev->mqtt_dev->mqtt_state->outbound_message->data, cmd->mqttdata_len );
 			cmd->msgid = mqtt_get_id( dev->mqtt_dev->mqtt_state->outbound_message->data, cmd->mqttdata_len );
@@ -3277,6 +3347,32 @@ static void set_mqtt_cmd_clean( void *argc )
 
 /*
 * author:	yangjianzhou
+* function: 	check_tcp_close_interval,  for delay set socket_close_flag to 1.
+*/
+static void check_tcp_close_interval( DevStatus *dev )
+{
+	if( dev->close_tcp_interval > 0 ) 
+	{
+		unsigned int tick = NOW_TICK;
+		dev->tick_sum += tick - dev->tick_tag;
+		dev->tick_tag = tick;
+		
+		if( dev->wu_tick > dev->close_tcp_interval - dev->tick_sum )
+		{
+			dev->wu_tick = dev->close_tcp_interval - dev->tick_sum;
+		}				
+		if( dev->tick_sum >= dev->close_tcp_interval )
+		{
+			dev->close_tcp_interval = 0;
+			dev->socket_close_flag = 1;
+			printf("%s: set socket_close_flag to 1\r\n", __func__);
+		}
+	}
+}
+
+
+/*
+* author:	yangjianzhou
 * function: 	check_socket_number,  cacluate socket number.
 */
 static void check_socket_number( DevStatus *dev )
@@ -3335,12 +3431,12 @@ static void list_mqtt_event( DevStatus *dev )
 				dev->module->d_ops->push_socket_data( dev->module, ONE_SECOND/25 );
 			}		
 			/*发送心跳包给服务 50s每个tick*/				
-			if( dev->heartbeat_tick >= 3 ) 
+			if( dev->mqtt_heartbeat >= 3 ) 
 			{	//触发条件
 				if(dev->mqtt_dev->connect_status != MQTT_DEV_STATUS_NULL
 						&& dev->mqtt_dev->connect_status != MQTT_DEV_STATUS_CONNECTING ) 
 				{	//二级状态
-					dev->heartbeat_tick = 0;
+					dev->mqtt_heartbeat = 0;
 					if( dev->mqtt_dev->connect_status == MQTT_DEV_STATUS_CONNECT ) 
 					{
 						//有可能是其它的状态MQTT_DEV_STATUS_CONNACK  MQTT_DEV_STATUS_SUBACK
@@ -3365,7 +3461,7 @@ static void tcp_connect_server( DevStatus *dev )
 		if( dev->ppp_status == PPP_CONNECTED && dev->simcard_type > 0 ) 
 		{	//状态
 			dev->module->d_ops->tcp_connect_server( dev->module );
-			dev->heartbeat_tick = 6;
+			dev->mqtt_heartbeat = 6;
 		}
 	}	
 }
@@ -3435,16 +3531,16 @@ static void check_reset_condition( DevStatus *dev )
 static void initialise_module( DevStatus *dev )
 {
 	dev->module->d_ops->initialise_module( dev->module );	
-	dev->heartbeat_tick = 6;				
+	dev->mqtt_heartbeat = 6;				
 }
 
 /*
 * author:	yangjianzhou
-* function: 	poll_module_signal,  poll signal data.
+* function: 	poll_module_peroid,  poll module instance for peroid data.
 */
-static void poll_module_signal( DevStatus *dev )
+static void poll_module_peroid( DevStatus *dev )
 {
-	dev->module->d_ops->poll_module_signal( dev->module );	
+	dev->module->d_ops->poll_module_peroid( dev->module );	
 	dev->scsq++;
 }
 
@@ -3582,11 +3678,11 @@ static void handle_module_setting(  DevStatus* dev )
 	{
 		/*check at every hb_timer peroid*/
 		dev->period_flag = 0;
-		dev->heartbeat_tick++;		
+		dev->mqtt_heartbeat++;		
 		period_flag = 1;	
 		
 		printf("*********************************\r\n");
-		poll_module_signal( dev );
+		poll_module_peroid( dev );
 
 		if( !dev->module->is_initialise ) 
 		{				
@@ -3599,28 +3695,12 @@ static void handle_module_setting(  DevStatus* dev )
 		if( period_flag ) 
 		{
 			/*check at every hb_timer peroid*/
+			
 			check_reset_condition( dev );		
 			check_sm_and_ppp( dev );
 		}
 
-		/*for delay set socket_close_flag to 1*/
-		if( dev->close_tcp_interval > 0 ) 
-		{
-			unsigned int tick = NOW_TICK;
-			dev->tick_sum += tick - dev->tick_tag;
-			dev->tick_tag = tick;
-			
-			if( dev->wu_tick > dev->close_tcp_interval - dev->tick_sum )
-			{
-				dev->wu_tick = dev->close_tcp_interval - dev->tick_sum;
-			}				
-			if( dev->tick_sum >= dev->close_tcp_interval )
-			{
-				dev->close_tcp_interval = 0;
-				dev->socket_close_flag = 1;
-				printf("%s: set socket_close_flag to 1\r\n", __func__);
-			}
-		}
+		check_tcp_close_interval( dev );
 		check_socket_number( dev );
 			
 		if( !dev->tcp_connect_status ) 
@@ -3650,13 +3730,19 @@ static void handle_module_setting(  DevStatus* dev )
 */
 static void notify_module_period_timer( TimerHandle_t xTimer )
 {	
+	eLogLevel level = ucGetTaskLogLevel( pxModuleTask );
+
 	DevStatus * dev = ( DevStatus * ) pvTimerGetTimerID( xTimer );	
 	if( !dev )
 	{
 		printf("%s: dev null pointer error!\r\n", __func__);
 		return;
 	}
-	Printf_System_Jiffies();
+
+	if( level <= ucOsLogLevel )
+	{	
+		Printf_System_Jiffies();
+	}
 	dev->period_flag = 1;
 	xTaskNotifyGive( dev->pxModuleTask );
 }
@@ -3746,8 +3832,8 @@ static void module_system_init( DevStatus* dev )
 	init_command_buffer( &( dev->p_atcommand ), 60 );
 	init_mqtt_buffer( dev->p_mqttbuff, 3 );
 
-	//load_longsung_instance( dev, dev->module );
-	load_sim900_instance( dev, dev->module );
+	load_longsung_instance( dev, dev->module );
+	//load_sim900_instance( dev, dev->module );
 	reset_module_reader( dev, dev->reader );
 	reset_mqtt_dev( dev, dev->mqtt_dev );	
 	reset_module_status( dev, 1 );
@@ -3861,11 +3947,11 @@ typedef struct Sim900Priv
 
 //#define ATMQTT					1
 
-#define S9_ATCPIN					2 //detect sim card
-#define S9_ATIPR					3  //baud rate
+#define S9_ATCPIN					2 	//detect sim card
+#define S9_ATIPR					3  	//baud rate
 #define S9_AT						4 
 #define S9_ATCREG					5	//register net test
-#define S9_ATCGATT					6 // gprs support test
+#define S9_ATCGATT					6 	// gprs support test
 #define S9_ATCSTT					7
 #define S9_ATCIICR					8
 #define S9_ATCIFSR					9
@@ -4084,8 +4170,7 @@ static void on_sim900_tcp_data_callback( void *priv, RemoteTokenizer *tzer, Toke
 	{
 		nbytes = strlen( tok[0].p )/2 - 1;
 		printf("#@#@#@ %s: start read tcp data again\r\n", __func__);
-		dev->ops->make_at_command( dev, S9_CIPRXGET3, WAIT_NOT, ONE_SECOND/10, 0, 0 );
-			
+		//dev->ops->make_at_command( dev, S9_CIPRXGET3, WAIT_NOT, ONE_SECOND/10, 0, 0 );
 	}
 
 	mqtt_dev->recv_bytes += nbytes;
@@ -4140,7 +4225,6 @@ static void on_sim900_sm_read_callback( void *priv, RemoteTokenizer *tzer, Token
 	DevStatus *dev = ( DevStatus* ) priv;	
 
 	printf("SM read, index=%d\r\n", dev->sm_index_read);
-	dev->sm_data_flag = 1;
 }
 
 static void on_sim900_sm_data_callback( void *priv, RemoteTokenizer *tzer, Token* tok, int index)
@@ -4287,9 +4371,16 @@ static void sim900_reader_parse(  struct ComModule* instance, UartReader* r )
 		//+CIPRXGET: 3,4,0,"112.124.102.62:1883"
 		if( tzer->count == 4 )
 		{
-			sp->tcp_data_flag = 1;
 			sp->tcp_data_len = str_2_int( tok[1].p, tok[1].end );
-			printf("%s: set tcp_data_flag. tcp_data_len(%d)\r\n", __func__, sp->tcp_data_len);
+			if( sp->tcp_data_len > 0 )
+			{
+				sp->tcp_data_flag = 1;
+				printf("%s: set tcp_data_flag. tcp_data_len(%d)\r\n", __func__, sp->tcp_data_len);
+			}
+			else
+			{
+				printf("%s: tcp_data_len(%d) error!\r\n", __func__, sp->tcp_data_len);
+			}
 		}
 	}
 	else
@@ -4335,22 +4426,29 @@ static void sim900_init_timer(  TimerHandle_t xTimer )
 
 /*
 * author:	yangjianzhou
-* function: 	sim900_hardware_reset,  power reset callback.
+* function: 	sim900_hardware_reset,  ,  power reset callback, when reset the power
+* 			we need to clean module data, include private data
 */
 static void sim900_hardware_reset_callback( void *instance )
 {
 	TimerHandle_t timer;
+	
 	DevStatus *dev = ( ( ComModule *) instance )->p_dev;
+	Sim900Priv *p = ( Sim900Priv *) ( ( ComModule *) instance )->priv;
+	
+	( ( ComModule *) instance )->is_initialise = 0;
 
+	memset( p, 0, sizeof( Sim900Priv ) );
+	
 	printf("%s\r\n", __func__);	
 	
 	dev->ops->make_at_command( dev, S9_ATCSQ, WAIT, ONE_SECOND/4, ONE_SECOND*2, 0 );
 	timer = xTimerCreate( "sim900", 9000 / portTICK_RATE_MS, pdFALSE, instance, sim900_init_timer );
+
 	if( timer && pdFAIL == xTimerStart( timer, 0 ) )
 	{
 		printf("%s fail to start timer.\r\n", __func__);
 	}	
-
 }
 
 /*
@@ -4716,6 +4814,10 @@ static void sim900_do_send_command( void *instance, AtCommand* cmd )
 		case ATMQTT: 
 			if( cmd->mqtype == MQTT_MSG_TYPE_PUBLISH )
 			{
+				/*default set to ( data_length / 300 + 1 ) * ONE_SECOND / 25
+				we can change it in here depend on module instance situation
+				for sim900a we revalue to ( cmd->mqttdata_len / 200 + 1 ) * ONE_SECOND / 5;
+				*/
 				cmd->interval = ( cmd->mqttdata_len / 200 + 1 ) * ONE_SECOND / 5;
 			}
 			dev->mqtt_dev->ops->prepare_mqtt_packet( dev->mqtt_dev, cmd ); 
@@ -4779,8 +4881,6 @@ void load_sim900_instance( DevStatus *dev, ComModule *instance )
 	instance->d_ops = &s9_dops;
 	instance->c_ops = &s9_cops;
 	instance->priv = &sim900_priv;
-	sim900_priv.tcp_data_flag = 0;
-	sim900_priv.tcp_data_len = 0;
 	instance->is_initialise = 0;
 	instance->module_reader_parse = sim900_reader_parse;
 	instance->module_power_reset = sim900_power_reset;

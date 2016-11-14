@@ -103,7 +103,7 @@ struct device_operations {
 	void (* initialise_module )( void *instance );	
 	void (* hardware_reset_callback )( void *instance );	
 	
-	void (* poll_module_signal )( void *instance );
+	void (* poll_module_peroid )( void *instance );
 	void (* check_module_sm )( void *instance ) ;
 	void (* check_module_ip )( void *instance ) ;
 	void (* module_request_ip )( void *instance ) ;	
@@ -189,7 +189,8 @@ typedef struct {
 	char tcp_connect_status;				/*indicate tcp status*/
 	unsigned int tcp_connect_times;			/*tcp connect service total times*/
 	char ip[30];							/*store ip from china mobile*/
-	module_ppp_status ppp_status;			/*indicate the net status*/
+	module_ppp_status ppp_status;			/*indicate the net status */
+
 	char socket_close_flag;					/*close all socket flag, if it is 1, close socket*/
 	int socket_open[4];						/*store socket number*/
 	char socket_num;						/*socket number open in module*/
@@ -198,19 +199,23 @@ typedef struct {
 	char sm_num;
 	int sm_index_read;
 	int sm_index_delete;
-	char sm_data_flag;
+	//char sm_data_flag;
 	char sm_read_flag;
 	char sm_delete_flag;
 	
   	char scsq;								/*signal check AT command send count*/
 	char rcsq;								/*receive signal check AT command ack count*/
 	
-	char heartbeat_tick;					/*mqtt tick times (heartbeat_tick*peroid) */
+	char mqtt_heartbeat;					/*mqtt heartbeat times ( heartbeat_tick *  hb_timer's peroid ) */
 	char period_flag;						/*peroid flag*/
 	
 	int at_count;							/* AT total count have send*/
 	char at_sending[64];					/*store sending at command*/
-	unsigned int close_tcp_interval;		/*for waitting someting times then close tcp*/
+	
+	unsigned int close_tcp_interval;		/*for waitting someting times then close tcp
+												1. set by status machine
+												2. clean by module instane
+											*/										
 	unsigned int tick_sum;					/*relate to close_tcp_interval and clean_interval*/
 	unsigned int tick_tag;					/*relate to close_tcp_interval and clean_interval*/
 	unsigned int malloc_count;
@@ -222,7 +227,7 @@ typedef struct {
 	struct list_head at_wait_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
 	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
-	unsigned int wu_tick;					/*wake_timer's peroid tick*/
+	unsigned int wu_tick;					/*wake up timer peroid tick*/
 	TimerHandle_t wu_timer;					/*timer for wake up pxModuleTask*/	
 	TimerHandle_t hb_timer; 				/*heartbeat freeRTOS timer*/
 	TaskHandle_t pxModuleTask;				/*pointer module TCB*/
