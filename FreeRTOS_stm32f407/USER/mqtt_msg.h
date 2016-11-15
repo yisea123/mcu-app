@@ -172,7 +172,7 @@ typedef struct mqtt_state_t
 } mqtt_state_t;
 
 struct mqtt_dev_operations {
-	void (* prepare_mqtt_packet )( void *mqtt_dev, void* cmd );
+	void (* mqtt_prepare_packet )( void *mqtt_dev, void* cmd );
 	void (* mqtt_protocol_parse )( void *mqtt_dev, unsigned char *buffer, int nbytes );
 	//void (* parse_mqtt_packet )( void *mqtt_dev, int nbytes );
 	//void (* check_packet_from_fixhead )( void *mqtt, unsigned char * read, int nbytes );
@@ -180,7 +180,7 @@ struct mqtt_dev_operations {
 	//int (* check_mqtt_packet )( void *mqtt_dev, int protocol_len );
 	int (* mqtt_publish )(void *mqtt_dev, const char* topic, char* data, int qos, int retain);
 	//int (* deliver_publish )( void *mqtt_dev, uint8_t* message, int length );
-	//void (* mqtt_reset_status )( void * mqtt );
+	void (* mqtt_reset_status )( void * mqtt );
 };
 
 typedef struct mqtt_dev_status

@@ -19,7 +19,7 @@
 #include "mqtt_msg.h"
 
 #define NOW_TICK			xTaskGetTickCount()
-#define SIZE_ARRAY(a) 		(sizeof(a) / sizeof((a)[0]))
+#define SIZE_ARRAY(a) 		( sizeof( a ) / sizeof( ( a )[0]) )
 
 #define ONE_SECOND			( 1000/portTICK_RATE_MS )
 #define MAX_TOKENS			20
@@ -75,8 +75,10 @@ typedef struct {
 }MqttBuffer;
 
 typedef struct {
-	char be_used;							/*for indicate if itself be used*/
-	unsigned char num;						/*for store total AtCommand count, do not modify this value*/
+	char be_used;							/*for indicate if itself be used, app do not 
+												memset AtCommand, or change be_used*/
+	unsigned char num;						/*for store total AtCommand count, 
+												do not modify this value in app*/											
 	char index;								/*for store command type(AT or MQTT type)*/
 	int para;								/*para for nomal AT command*/
 	unsigned int interval;					/*wait for interval time to finish command*/
@@ -115,7 +117,7 @@ struct device_operations {
 	void (* send_command_to_module )( void *instance, AtCommand* cmd );
 	char* (* at_get_name )( void *instance, int index );
 	char* (* make_tcp_packet )( char* buff, unsigned char* data, int len );
-	void (* send_tcp_packet )( char* buff, int len );
+	void (* send_tcp_packet )( char* buff, unsigned char* data, int len );
 	
 	void (* send_push_data_directly )( void *instance );
 	void (* close_module_socket_directly )( void *instance, int index ) ;
@@ -145,15 +147,16 @@ struct callback_operations {
 	void (* sm_data_callback)( void *dev, RemoteTokenizer *tzer, Token* tok, int index );
 	void (* sm_notify_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );
 	void (* sm_read_err_callback)( void *dev, RemoteTokenizer *tzer, Token* tok );	
+	void (* mqtt_lack_data_callback)( void *mqtt_dev );
 };
 
 /*
-后续会对通讯模块进行抽象并实现
-在换其它的模块时，可以在不修改核心
-代码的情况下，只需实现对具体模块
-的操作即可，对模块的具体操作抽象
-成对所有通讯模块操作的最大集合
-目前已实现longsung模块的ComModule的功能集合
+	对通讯模块进行抽象并实现
+	在换其它的模块时，可以在不修改核心
+	代码的情况下，只需实现对具体模块
+	的操作即可，对模块的具体操作抽象
+	成对所有通讯模块操作的最大集合
+	目前已实现longsung模块的ComModule的功能集合
 */
 typedef struct ComModule {
 	void *p_dev;
@@ -243,6 +246,7 @@ typedef struct {
 	
 	ComModule *module_list;
 	xSemaphoreHandle list_mutex;				/*for protect module_list */	
+	char testtest;
 }DevStatus;
 
 extern void HandleModuleTask( void * pvParameters );
