@@ -2418,7 +2418,7 @@ void print_module_struct_info( void )
 	vTaskDelay( 10 );
 
 	
-	printf("module:   		name(%s)\r\n", module->name);
+	printf("\r\nmodule:   		name(%s)\r\n", module->name);
 
 	dev->ops->system_lock( dev, portMAX_DELAY );
 
@@ -2448,12 +2448,9 @@ void print_module_struct_info( void )
 */
 void test_mqtt_publish( char *data )
 {	
+	char json_buff[500];
 	static int qos = 0;
 	char *str = ( char* ) data;
-	char json_buff[500];
-	//it is important to make char json_buff[500] big!!!
-	//when set to char json_buff[300] , error happend !!!!!
-	//and it is difficult to debug it!!!! fuck fuck fuck!!!!
 	mqtt_dev_status *mqtt;	
 	DevStatus *dev = pvTaskGetThreadLocalStoragePointer( pxModuleTask, 0 );
 
@@ -2462,13 +2459,19 @@ void test_mqtt_publish( char *data )
 		printf("%s: StoragePointer fail!\r\n", __func__);
 		return;
 	}
-	
+
+	if( strlen( data ) > sizeof( json_buff ))
+	{
+		printf("%s: data len(%d) error!\r\n", __func__, strlen( data ));
+		return;
+	}
 	mqtt = dev->mqtt_dev;
 	if( strlen( str ) == 0 && mqtt->connect_status == MQTT_DEV_STATUS_CONNECT )
 	{
 		memset(json_buff, '\0', sizeof(json_buff));
 		/*start to protect all thing*/
 		dev->ops->system_lock( dev, portMAX_DELAY );
+		
 		sprintf(json_buff, "time:[%u(s)]. mqtt_bytes(%u),lostbytes(%d),MQTT:reset_count=%d,\r\n"
 				"in_publish=%d, mq_head=%d,fixhead=%d,in_waitting=%d,in_pos=%d\r\n"
 				"4G: malloc(%d),free(%d),simcard(%d),reset_times(%d),tcp_connect_times(%d),\r\n"
@@ -2483,6 +2486,7 @@ void test_mqtt_publish( char *data )
 				dev->tcp_connect_status);		
 
 		process_test_mqtt_publish( mqtt, qos, "/xp/publish", json_buff );
+
 		dev->ops->system_unlock( dev );
 
 		if( ++qos > 2 ) 
