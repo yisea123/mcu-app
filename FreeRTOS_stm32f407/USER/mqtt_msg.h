@@ -55,83 +55,83 @@
 
 enum mqtt_dev_statu
 {
-	MQTT_DEV_STATUS_NULL				= 0,
+	MQTT_DEV_STATUS_NULL		= 0,
 	MQTT_DEV_STATUS_CONNECTING	= 1,
-  MQTT_DEV_STATUS_CONNECT     = 2,
-  MQTT_DEV_STATUS_CONNACK     = 3,
-  MQTT_DEV_STATUS_PUBLISH     = 4,
-  MQTT_DEV_STATUS_PUBACK      = 5,
-  MQTT_DEV_STATUS_PUBREC      = 6,
-  MQTT_DEV_STATUS_PUBREL      = 7,
-  MQTT_DEV_STATUS_PUBCOMP     = 8,
-  MQTT_DEV_STATUS_SUBSCRIBE   = 9,
-  MQTT_DEV_STATUS_SUBACK      = 10,
-  MQTT_DEV_STATUS_UNSUBSCRIBE = 11,
-  MQTT_DEV_STATUS_UNSUBACK    = 12,
-  MQTT_DEV_STATUS_PINGREQ     = 13,
-  MQTT_DEV_STATUS_PINGRESP    = 14,
-  MQTT_DEV_STATUS_DISCONNECT  = 15
+	MQTT_DEV_STATUS_CONNECT     = 2,
+	MQTT_DEV_STATUS_CONNACK     = 3,
+	MQTT_DEV_STATUS_PUBLISH     = 4,
+	MQTT_DEV_STATUS_PUBACK      = 5,
+	MQTT_DEV_STATUS_PUBREC      = 6,
+	MQTT_DEV_STATUS_PUBREL      = 7,
+	MQTT_DEV_STATUS_PUBCOMP     = 8,
+	MQTT_DEV_STATUS_SUBSCRIBE   = 9,
+	MQTT_DEV_STATUS_SUBACK      = 10,
+	MQTT_DEV_STATUS_UNSUBSCRIBE = 11,
+	MQTT_DEV_STATUS_UNSUBACK    = 12,
+	MQTT_DEV_STATUS_PINGREQ     = 13,
+	MQTT_DEV_STATUS_PINGRESP    = 14,
+	MQTT_DEV_STATUS_DISCONNECT  = 15
 };
 
 typedef enum
 {
-  MQTT_MSG_TYPE_NULL		= -1,//nomal at command
-  MQTT_MSG_TYPE_CONNECT     = 1,
-  MQTT_MSG_TYPE_CONNACK     = 2,
-  MQTT_MSG_TYPE_PUBLISH     = 3,
-  MQTT_MSG_TYPE_PUBACK      = 4,
-  MQTT_MSG_TYPE_PUBREC      = 5,
-  MQTT_MSG_TYPE_PUBREL      = 6,
-  MQTT_MSG_TYPE_PUBCOMP     = 7,
-  MQTT_MSG_TYPE_SUBSCRIBE   = 8,
-  MQTT_MSG_TYPE_SUBACK      = 9,
-  MQTT_MSG_TYPE_UNSUBSCRIBE = 10,
-  MQTT_MSG_TYPE_UNSUBACK    = 11,
-  MQTT_MSG_TYPE_PINGREQ     = 12,
-  MQTT_MSG_TYPE_PINGRESP    = 13,
-  MQTT_MSG_TYPE_DISCONNECT  = 14
+	MQTT_MSG_TYPE_NULL		= -1,//nomal at command
+	MQTT_MSG_TYPE_CONNECT     = 1,
+	MQTT_MSG_TYPE_CONNACK     = 2,
+	MQTT_MSG_TYPE_PUBLISH     = 3,
+	MQTT_MSG_TYPE_PUBACK      = 4,
+	MQTT_MSG_TYPE_PUBREC      = 5,
+	MQTT_MSG_TYPE_PUBREL      = 6,
+	MQTT_MSG_TYPE_PUBCOMP     = 7,
+	MQTT_MSG_TYPE_SUBSCRIBE   = 8,
+	MQTT_MSG_TYPE_SUBACK      = 9,
+	MQTT_MSG_TYPE_UNSUBSCRIBE = 10,
+	MQTT_MSG_TYPE_UNSUBACK    = 11,
+	MQTT_MSG_TYPE_PINGREQ     = 12,
+	MQTT_MSG_TYPE_PINGRESP    = 13,
+	MQTT_MSG_TYPE_DISCONNECT  = 14
 }mqtt_message_type;
 
 typedef struct
 {
-  uint8_t* data;
-  uint16_t length;
+	uint8_t* data;
+	uint16_t length;
 
 } mqtt_message_t;
 
 typedef struct
 {
-  mqtt_message_t message;
+	mqtt_message_t message;
 
-  uint16_t message_id;
-  uint8_t* buffer;
-  uint16_t buffer_length;
+	uint16_t message_id;
+	uint8_t* buffer;
+	uint16_t buffer_length;
 
 } mqtt_connection_t;
 
 typedef struct mqtt_connect_info
 {
-  const char* client_id;
-  const char* username;
-  const char* password;
-  const char* will_topic;
-  const char* will_message;
-  int keepalive;
-  int will_qos;
-  int will_retain;
-  int clean_session;
+	const char* client_id;
+	const char* username;
+	const char* password;
+	const char* will_topic;
+	const char* will_message;
+	int keepalive;
+	int will_qos;
+	int will_retain;
+	int clean_session;
 
 } mqtt_connect_info_t;
 
 typedef struct mqtt_event_data_t
 {
-  uint8_t type;
-  char *topic;
-  char *data;
+	uint8_t type;
+	char *topic;
+	char *data;
 
-  uint16_t topic_length;
-  uint16_t data_length;
-  uint16_t data_offset;
+	uint16_t topic_length;
+	uint16_t data_length;
+	uint16_t data_offset;
 } mqtt_event_data_t;
 
 #define MQTT_FLAG_CONNECTED          1
@@ -152,23 +152,21 @@ typedef struct mqtt_event_data_t
 
 typedef struct mqtt_state_t
 {
-  uint16_t port;
-  int auto_reconnect;
-  mqtt_connect_info_t* connect_info;
+	unsigned short port;
+	int auto_reconnect;
+	mqtt_connect_info_t* connect_info;
 
-  uint8_t* in_buffer;
-  uint8_t* out_buffer;
-  int in_buffer_length;
-  int out_buffer_length;
-  uint16_t message_length;
-  uint16_t message_length_read;
-  mqtt_message_t* outbound_message;
-  mqtt_connection_t mqtt_connection;
-  uint16_t pending_msg_id;
-  int pending_msg_type;
+	unsigned char* in_buffer;
+	unsigned char* out_buffer;
+	int in_buffer_length;
+	int out_buffer_length;
+	unsigned short message_length;
+	unsigned short message_length_read;
+	mqtt_message_t* outbound_message;
+	mqtt_connection_t mqtt_connection;
+	unsigned short pending_msg_id;
+	int pending_msg_type;
 	int mqtt_flags;
-//	unsigned char *outdata[OUT_DATA_LEN_MAX];
-	//char jsonbuff[750];
 } mqtt_state_t;
 
 struct mqtt_dev_operations {
@@ -187,19 +185,19 @@ typedef struct mqtt_dev_status
 {
 	enum mqtt_dev_statu connect_status;
 	/*由于4G模块的原因，最多支持1500个字节，也就750个hex!*/
-  	uint8_t in_buffer[1500];//750 1024
+  	unsigned char  in_buffer[1500];//750 1024
 	int in_pos;
 	int in_waitting;
   	char fixhead;
 	char parse_packet_flag;						/*indicate whether can parse the module's mqtt data*/
 	/*是否为mqtt协议头标志！*/	
-  	uint8_t out_buffer[1500];	
+  	unsigned char out_buffer[1500];	
 	mqtt_state_t mqtt_state[1];
 	mqtt_connect_info_t connect_info;
 	char subscribe_topic[128];
-	uint32_t pub_in_num;
-	uint32_t pub_out_num;
-	uint32_t reset_count;
+	unsigned int pub_in_num;
+	unsigned int pub_out_num;
+	unsigned int reset_count;
 	unsigned int recv_bytes;
  	char iot;
 	struct mqtt_dev_operations *ops;

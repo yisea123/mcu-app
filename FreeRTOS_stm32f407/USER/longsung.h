@@ -61,8 +61,8 @@ typedef struct {
 
 typedef struct {
 	char inited;
-	int pos;
-	int overflow;
+	unsigned int pos;
+	unsigned char overflow;
 	void *p_dev;
 	char in[ MAX_LINE_LEN ];
 }UartReader;
@@ -177,7 +177,12 @@ struct core_operations {
 	void (* make_mqtt_command )( void *argc, char index, unsigned int interval, int para );
  	void (* atcmd_set_ack )( void *dev, int index );
 	void (* set_mqtt_cmd_clean )( void *dev );
-	void (* mqtt_set_mesg_ack ) ( void *mqtt_dev, int type, uint16_t msg_id );	
+	void (* mqtt_set_mesg_ack ) ( void *mqtt_dev, int type, uint16_t msg_id );
+	
+	void (* system_lock )( void *dev, unsigned int tick);
+	void (* system_unlock )( void *dev );	
+	void (* system_sleep )( void *dev, unsigned int tick );	
+	void (* wake_up_system )( void *dev );	
 };
 
 typedef struct {
@@ -202,7 +207,6 @@ typedef struct {
 	char sm_num;
 	int sm_index_read;
 	int sm_index_delete;
-	//char sm_data_flag;
 	char sm_read_flag;
 	char sm_delete_flag;
 	
@@ -229,7 +233,7 @@ typedef struct {
 	struct list_head mqtt_head;				/*mqtt type AtCommand wait ack list, add to list if need wait ack*/	
 	struct list_head at_wait_head;			/*nomal AT type AtCommand wait ack list, add to list if need wait ack*/	
 
-	xSemaphoreHandle os_mutex;				/*for protect list and all thing*/
+	xSemaphoreHandle system_mutex;				/*for protect list and all thing*/
 	unsigned int wu_tick;					/*wake up timer peroid tick*/
 	TimerHandle_t wu_timer;					/*timer for wake up pxModuleTask*/	
 	TimerHandle_t hb_timer; 				/*heartbeat freeRTOS timer*/
@@ -237,21 +241,24 @@ typedef struct {
 
 	Ringfifo* uart_fifo;					/*pointer to module uart data fifo*/
 	AtCommand* atcmd;						/*AtCommand that be sending*/
+	
 	AtCommand *p_atcommand;					/*buffer manager for at command*/
-	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/		
+	MqttBuffer *p_mqttbuff[3];				/*buffer manager for mqtt buffer*/	
+	
 	UartReader *reader;						/*UartReader instance*/
 	mqtt_dev_status *mqtt_dev;				/*mqtt_dev_status instance*/
 	struct core_operations *ops;			/*core operations*/
 	ComModule *module;						/*pointer to the instance of ComModule*/
 	
 	ComModule *module_list;
-	xSemaphoreHandle list_mutex;				/*for protect module_list */	
-	char testtest;
+	xSemaphoreHandle list_mutex;			/*for protect module_list */	
+
+	char debug;								/*for debug, delete when releas codes */
 }DevStatus;
 
 extern void HandleModuleTask( void * pvParameters );
-extern void test_mqtt_publish( void *data );
-extern int register_communication_module( struct ComModule * instance );
+extern void test_mqtt_publish( char *data );
+extern int register_communication_module( TaskHandle_t task, ComModule * instance );
 #endif
 
 

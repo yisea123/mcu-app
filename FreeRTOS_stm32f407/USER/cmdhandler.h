@@ -37,7 +37,7 @@ extern int handle_can_command( char *data, int len );
 
 extern void HandleCanCommandTask(void * pvParameters);
 
-//extern void Printf_System_Jiffies( void );
+//extern void printf_system_jiffies( void );
 
 extern void stop_timer_work( void );
 

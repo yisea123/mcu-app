@@ -900,7 +900,7 @@ void MusicDelVolume( void )
 	WM8978_HPvol_Set(xMusicVolume, xMusicVolume);	
 }
 
-void SpeakerAddVolume( void )
+void speaker_add_volume( void )
 {
 	xSpeakerVolume += 2;
 	if( xSpeakerVolume > 63 )
@@ -911,7 +911,7 @@ void SpeakerAddVolume( void )
 	WM8978_SPKvol_Set(xSpeakerVolume);	
 }
 
-void SpeakerDelVolume( void )
+void speaker_del_volume( void )
 {
 	xSpeakerVolume -= 2;
 	if( xSpeakerVolume < 0 )

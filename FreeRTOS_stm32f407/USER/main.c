@@ -89,7 +89,7 @@ int main(void)
 	//vSemaphoreCreateBinary( mLogSemaphore );
 	//vSemaphoreCreateBinary( mDmaSemaphore );	
 #if( BOARD_NUM == 3)	
-	xTaskCreate( HandleModuleTask, (const char *)"Module", configMINIMAL_STACK_SIZE*7, NULL, tskIDLE_PRIORITY + 7, &pxModuleTask );
+	xTaskCreate( HandleModuleTask, (const char *)"Module", configMINIMAL_STACK_SIZE*8, NULL, tskIDLE_PRIORITY + 7, &pxModuleTask );
 	xTaskCreate( HandleCanCommandTask, (const char *)"CanCommand", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 10, &pxCanCommandTask );
 	xTaskCreate( HandleCanTask, (const char *)"CanStream", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 8, &pxCanTask );
 #endif
@@ -100,7 +100,7 @@ int main(void)
 	xTaskCreate( Music_Player, (const char *)"Player", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 7, &pxMusicPlayer );
 #endif
 	//xTaskCreate( Read_Fatfs, (const char *)"Rfatfs", configMINIMAL_STACK_SIZE*2, NULL, tskIDLE_PRIORITY + 1, NULL );		
-	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*6, NULL, tskIDLE_PRIORITY + 3, &pxUsmartTask );
+	xTaskCreate( usamrt_debug_task, (const char *)"Usmart", configMINIMAL_STACK_SIZE*7, NULL, tskIDLE_PRIORITY + 3, &pxUsmartTask );
 	xTaskCreate( Feed_Wdg_Task, (const char *)"Wdg", configMINIMAL_STACK_SIZE*1, NULL, configMAX_PRIORITIES - 1 , NULL );	
 	//xTaskCreate( LED0_Task, (const char *)"LED0", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 2, NULL );
 	//xTaskCreate( LED1_Task, (const char *)"LED1", configMINIMAL_STACK_SIZE*1, NULL, tskIDLE_PRIORITY + 3, NULL );
@@ -663,7 +663,7 @@ void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName 
 	vTaskPrioritySet( NULL, pre );
 }
 
-void Printf_Application_Version( void )
+void printf_application_version( void )
 {
 		BOOT_LOG
 }
