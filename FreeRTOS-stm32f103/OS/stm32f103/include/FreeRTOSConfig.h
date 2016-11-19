@@ -91,8 +91,6 @@
 //#define configCHECK_FOR_STACK_OVERFLOW	2// 1 or 2 or 0
 //
 #define configUSE_PREEMPTION		1
-/*可抢占配置*/
-
 #define configUSE_TASK_SWTICH_HOOK	1
 #define configUSE_IDLE_HOOK			1
 #define configUSE_TICK_HOOK			0
@@ -100,37 +98,43 @@
 #define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
 
 
-#define configMAX_PRIORITIES		( 8 )
+#define configMAX_PRIORITIES		( 5 )
 //此参数用于定义可供用户使用的最大优先级数，
 //如果这个定义的是5，那么用户可以使用的优先级
 //号是0,1,2,3,4，不包含5，对于这一点，初学者要特别
 //的注意。
 
-#define configUSE_TIMERS			1
-#define configTIMER_TASK_PRIORITY	7// the most height priority
-#define configTIMER_QUEUE_LENGTH	3
-#define configTIMER_TASK_STACK_DEPTH (128+128)
-
-
 #define configMINIMAL_STACK_SIZE	( ( unsigned short ) 128 )
-//#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 17 * 1024 ) )
-#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 10 * 1024 ) )
-#define configTOTAL_XHEAP_SIZE		( 7 * 1024 )
 
-#define configMAX_TASK_NAME_LEN		( 16 )
+#define configUSE_TIMERS			1
+#define configTIMER_TASK_PRIORITY	(configMAX_PRIORITIES -1)// the most height priority
+#define configTIMER_QUEUE_LENGTH	3
+#define configTIMER_TASK_STACK_DEPTH ( configMINIMAL_STACK_SIZE * 1 )
+
+
+//#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 17 * 1024 ) )
+#define configTOTAL_HEAP_SIZE		( ( size_t ) ( 10 * 1024 ) )//15
+#define configTOTAL_XHEAP_SIZE		( 1 * 1024 )
+
+#define configMAX_TASK_NAME_LEN		( 10 )//16
 
 #define configUSE_MUTEXES					1
 #define configUSE_COUNTING_SEMAPHORES		1
+
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS	1
+
+#define  configCHECK_FOR_STACK_OVERFLOW   1
 
 /******************************************/
 #define INCLUDE_uxTaskGetStackHighWaterMark   1
 
 #define configUSE_TRACE_FACILITY		1
-#define configGENERATE_RUN_TIME_STATS	1
-extern volatile unsigned long ulHighFrequencyTimerTicks;  
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() ( ulHighFrequencyTimerTicks = 0UL )  
-#define portGET_RUN_TIME_COUNTER_VALUE() ulHighFrequencyTimerTicks 
+//#define configGENERATE_RUN_TIME_STATS	1
+//extern volatile unsigned long ulHighFrequencyTimerTicks;  
+//#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() ( ulHighFrequencyTimerTicks = 0UL )  
+//#define portGET_RUN_TIME_COUNTER_VALUE() ulHighFrequencyTimerTicks 
 /******************************************/
+#define configUSE_STATS_FORMATTING_FUNCTIONS 1
 
 //#define configASSERT( x )  if( ( x ) == 0 ) printf("%s:%s:%d", __FILE__, __FUNCTION__, __LINE__ )  
 
@@ -155,6 +159,10 @@ to exclude the API function. */
 #define INCLUDE_vTaskSuspend			1
 #define INCLUDE_vTaskDelayUntil			1
 #define INCLUDE_vTaskDelay				1
+#define INCLUDE_xTaskGetSchedulerState 	1
+#define INCLUDE_xTaskGetHandle			1
+#define INCLUDE_xTaskAbortDelay			1
+#define INCLUDE_xTaskLogLevel			1
 
 /* This is the raw value as per the Cortex-M3 NVIC.  Values can be 255
 (lowest) to 0 (1?) (highest). */

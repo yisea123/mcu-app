@@ -20,7 +20,13 @@
 #define GPIO_LED4_PORT   GPIOB
 #define GPIO_LED4_PIN    GPIO_Pin_1
 
+#define GPIO_GPRO_VCC_CLK    RCC_APB2Periph_GPIOE
+#define GPIO_GPRO_VCC_PORT   GPIOE
+#define GPIO_GPRO_VCC_PIN    GPIO_Pin_2
 
+#define GPIO_GPRO_RESET_CLK    RCC_APB2Periph_GPIOB
+#define GPIO_GPRO_RESET_PORT   GPIOB
+#define GPIO_GPRO_RESET_PIN    GPIO_Pin_1
 
 #define LED1             0X01
 #define LED2             0X02

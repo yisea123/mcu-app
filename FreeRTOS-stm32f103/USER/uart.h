@@ -5,9 +5,9 @@
 #include "stm32f10x_rcc.h"
 #include "string.h"
 
-#define OPEN_UART1
-//#define OPEN_UART2
-//#define OPEN_UART3
+//#define OPEN_UART1
+#define OPEN_UART2
+#define OPEN_UART3
 
 
 #if defined (OPEN_UART1)

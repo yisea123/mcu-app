@@ -53,15 +53,18 @@
 //*str1:字符串1指针
 //*str2:字符串2指针
 //返回值:0，相等;1，不相等;
-u8 usmart_strcmp(u8 *str1,u8 *str2)
+u8 usmart_strcmp( u8 *str1, u8 *str2 )
 {
-	while(1)
-	{
-		if(*str1!=*str2)return 1;//不相等
-		if(*str1=='\0')break;//对比完成了.
+	while( 1 )
+	{		
+		if( *str1 != *str2 )
+			return 1;//不相等
+		if( *str1 == '\0' )
+		break;
 		str1++;
 		str2++;
 	}
+	
 	return 0;//两个字符串相等
 }
 //把str1的内容copy到str2
@@ -151,18 +154,22 @@ u8 usmart_str2num(u8*str,u32 *res)
 //*nlen:指令名长度		
 //maxlen:最大长度(做限制,指令不可能太长的)	
 //返回值:0,成功;其他,失败.	  
-u8 usmart_get_cmdname(u8*str,u8*cmdname,u8 *nlen,u8 maxlen)
+u8 usmart_get_cmdname( u8 *str, u8 *cmdname, u8 *nlen, u8 maxlen )
 {
-	*nlen=0;
- 	while(*str!=' '&&*str!='\0') //找到空格或者结束符则认为结束了
+	*nlen = 0;
+	
+ 	while( *str != ' ' && *str != '\0' ) //找到空格或者结束符则认为结束了
 	{
-		*cmdname=*str;
+		*cmdname = *str;
 		str++;
 		cmdname++;
-		(*nlen)++;//统计命令长度
-		if(*nlen>=maxlen)return 1;//错误的指令
+		( *nlen )++;//统计命令长度
+		
+		if( *nlen >= maxlen )
+			return 1;//错误的指令
 	}
-	*cmdname='\0';//加入结束符
+	*cmdname = '\0';//加入结束符
+	
 	return 0;//正常返回
 }
 //获取下一个字符（当中间有很多空格的时候，此函数直接忽略空格，找到空格之后的第一个字符）
@@ -180,7 +187,7 @@ u8 usmart_search_nextc(u8* str)
 //*pnum:函数的参数个数
 //*rval:是否需要显示返回值(0,不需要;1,需要)
 //返回值:0,成功;其他,错误代码.
-u8 usmart_get_fname(u8*str,u8*fname,u8 *pnum,u8 *rval)
+u8 usmart_get_fname(u8*str, u8*fname, u8 *pnum, u8 *rval)
 {
 	u8 res;
 	u8 fover=0;	  //括号深度
@@ -193,7 +200,7 @@ u8 usmart_get_fname(u8*str,u8*fname,u8 *pnum,u8 *rval)
 	u8 pcnt=0;	 //参数计数器
 	u8 nchar;
 	//判断函数是否有返回值
-	strtemp=str;
+	strtemp = str;
 	while(*strtemp!='\0')//没有结束
 	{
 		if(*strtemp!=' '&&(pcnt&0X7F)<5)//最多记录5个字符

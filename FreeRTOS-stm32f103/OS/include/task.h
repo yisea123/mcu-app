@@ -129,6 +129,19 @@ typedef enum
 	eSetValueWithoutOverwrite	/* Set the task's notification value if the previous value has been read by the task. */
 } eNotifyAction;
 
+/*for log level*/
+typedef enum
+{
+	eLogLevel_0 = 0, /*hight prirory*/
+	eLogLevel_1,
+	eLogLevel_2,
+	eLogLevel_3,
+	eLogLevel_4,	 /*default prirory*/
+	eLogLevel_5,
+	eLogLevel_6,
+	eLogLevel_7	
+} eLogLevel;
+
 /*
  * Used internally only.
  */
@@ -177,6 +190,9 @@ typedef struct xTASK_STATUS
 	uint16_t usStackHighWaterMark;	/* The minimum amount of stack space that has remained for the task since the task was created.  The closer this value is to zero the closer the task has come to overflowing its stack. */
 	float uStackFreePer;			// = uxReturn *sizeof( StackType_t ) * 100.0/pxTCB->xStackSize;
 	UBaseType_t xStackSize;
+	#if( INCLUDE_xTaskLogLevel == 1 )	
+	eLogLevel	eLogLevel;
+	#endif
 } TaskStatus_t;
 
 /* Possible return values for eTaskConfirmSleepModeStatus(). */
@@ -2259,6 +2275,14 @@ eSleepModeStatus eTaskConfirmSleepModeStatus( void ) PRIVILEGED_FUNCTION;
  * taken and return the handle of the task that has taken the mutex.
  */
 void *pvTaskIncrementMutexHeldCount( void ) PRIVILEGED_FUNCTION;
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+
+eLogLevel ucGetTaskLogLevel( TaskHandle_t pxHandle ) PRIVILEGED_FUNCTION;
+
+void vSetTaskLogLevel( TaskHandle_t pxHandle,  eLogLevel level) PRIVILEGED_FUNCTION;
+
+#endif
 
 #ifdef __cplusplus
 }

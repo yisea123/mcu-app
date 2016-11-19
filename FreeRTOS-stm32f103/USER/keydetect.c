@@ -7,6 +7,7 @@
 #include "xmalloc.h"
 #include "semphr.h"
 #include "led.h"
+#include <stdio.h>
 
 unsigned int keyEventTotal = 0;
 KEYEVENT keyEvent[10];
@@ -131,6 +132,149 @@ void key_gpioA_pin5_callback(KEY_VALUE value)
 		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
 }
 
+void key_gpioE_pin10_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+void key_gpioE_pin11_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+void key_gpioE_pin12_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+void key_gpioE_pin13_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+void key_gpioE_pin14_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
+
+void key_gpioE_pin15_callback(KEY_VALUE value)
+{
+		char key;
+	
+		if (get_led_status(LED1)) {
+				led_off(LED1);
+		} else { 
+				led_on(LED1);
+		}
+		
+		if (value == KEY_SINGLE) {
+				key = 1;	
+				printf("%s %d\r\n", __func__, key);
+		} else if (value == KEY_DOUBLE) {
+				key = 2;				
+				printf("%s 2\r\n", __func__);
+		} else if (value == KEY_LONG_PRESS) {
+				key = 3;
+				printf("%s 3\r\n", __func__);
+		}
+
+		//deliver_message(make_message(CMD_RUNNING_CONTROL, &key, 1), miniTimer);			
+}
 
 /*
 * author: yangjianzhou
@@ -191,7 +335,16 @@ void keyevent_detect_task(TimerHandle_t xTimer )
 {	
 	portTickType xLastWakeTime;
 
+ 	printf("%s  enter\r\n", __func__);
+
 	register_key_event(GPIOA, GPIO_Pin_5, key_gpioA_pin5_callback);
+	register_key_event(GPIOE, GPIO_Pin_10, key_gpioE_pin10_callback);
+	register_key_event(GPIOE, GPIO_Pin_11, key_gpioE_pin11_callback);
+	register_key_event(GPIOE, GPIO_Pin_12, key_gpioE_pin12_callback);
+	register_key_event(GPIOE, GPIO_Pin_13, key_gpioE_pin13_callback);
+	register_key_event(GPIOE, GPIO_Pin_14, key_gpioE_pin14_callback);
+	register_key_event(GPIOE, GPIO_Pin_15, key_gpioE_pin15_callback);
+
 	xLastWakeTime = xTaskGetTickCount();	
 	while (1) {
 		vTaskDelayUntil(&xLastWakeTime, 6/portTICK_PERIOD_MS);	

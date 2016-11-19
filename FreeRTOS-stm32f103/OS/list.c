@@ -112,10 +112,18 @@ void vListInitialiseItem( ListItem_t * const pxItem )
 	listSET_SECOND_LIST_ITEM_INTEGRITY_CHECK_VALUE( pxItem );
 }
 /*-----------------------------------------------------------*/
+void printf_debug_list1 (List_t * const pxList) ;
+void printf_debug_list2 (List_t * const pxList) ;
 
+
+/*插入到最后一个节点，就是插入到pxIndex ->pxPrevious
+位置，因为遍历时，是从pxIndex ->pxNext开始遍历，
+而在某些链表中，pxIndex是会移动的，比如就绪链表*/
 void vListInsertEnd( List_t * const pxList, ListItem_t * const pxNewListItem )
 {
 ListItem_t * const pxIndex = pxList->pxIndex;
+
+	//printf_debug_list2(pxList);
 
 	/* Only effective when configASSERT() is also defined, these tests may catch
 	the list data structures being overwritten in memory.  They will not catch
@@ -139,14 +147,19 @@ ListItem_t * const pxIndex = pxList->pxIndex;
 	pxNewListItem->pvContainer = ( void * ) pxList;
 
 	( pxList->uxNumberOfItems )++;
+	//printf_debug_list1(pxList);
 }
 /*-----------------------------------------------------------*/
 
 /*根据xItemValue的数据，排序的插入到列表中去*/
+void printf_debug_delay_list_before (List_t * const pxList) ;
+
 void vListInsert( List_t * const pxList, ListItem_t * const pxNewListItem )
 {
 ListItem_t *pxIterator;
 const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
+
+	//printf_debug_delay_list_before( pxList );
 
 	/* Only effective when configASSERT() is also defined, these tests may catch
 	the list data structures being overwritten in memory.  They will not catch
@@ -207,8 +220,11 @@ const TickType_t xValueOfInsertion = pxNewListItem->xItemValue;
 	pxNewListItem->pvContainer = ( void * ) pxList;
 
 	( pxList->uxNumberOfItems )++;
+
+	//printf_debug_delay_list_after( pxList );
 }
 /*-----------------------------------------------------------*/
+extern void printf_debug_list(List_t * const pxList) ;
 
 /*从ListItem_t 所在的链表pvContainer中删除掉自己*/
 UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
@@ -216,6 +232,9 @@ UBaseType_t uxListRemove( ListItem_t * const pxItemToRemove )
 /* The list item knows which list it is in.  Obtain the list from the list
 item. */
 List_t * const pxList = ( List_t * ) pxItemToRemove->pvContainer;
+	//printf_debug_list2(pxList);
+	
+	//printf_debug_delay_list_before( pxList );
 
 	pxItemToRemove->pxNext->pxPrevious = pxItemToRemove->pxPrevious;
 	pxItemToRemove->pxPrevious->pxNext = pxItemToRemove->pxNext;
@@ -235,6 +254,9 @@ List_t * const pxList = ( List_t * ) pxItemToRemove->pvContainer;
 
 	pxItemToRemove->pvContainer = NULL;
 	( pxList->uxNumberOfItems )--;
+	
+    //printf_debug_list(pxList);
+	//printf_debug_delay_list_after1( pxList );
 
 	return pxList->uxNumberOfItems;
 }

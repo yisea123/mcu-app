@@ -81,6 +81,7 @@ void TIM2_IRQHandler(void)
 
 volatile unsigned long ulHighFrequencyTimerTicks;
 
+//(void) timer3_int_init(5-1, 1440);//0.01ms   100us
 void timer3_int_init(u16 arr,u16 psc)
 {
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;

@@ -3,7 +3,7 @@
 
 #include <stm32f10x.h>
 #include <string.h>
-#include "xlist.h"
+//#include "xlist.h"
 //#include "message.h"
 
 //#define MINIBALANCE			1		

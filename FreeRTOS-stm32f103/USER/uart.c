@@ -1,11 +1,48 @@
 #include "uart.h"
+#include "sys.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
+#include "rfifo.h"
+#include "semphr.h"
 
-#ifdef __GNUC__
-// With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf set to 'Yes') calls __io_putchar()
-#define UART_PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define UART_PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif /* __GNUC__ */
+extern Ringfifo uart1fifo;
+extern xTaskHandle pxUsmartTask;
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+	eLogLevel ucOsLogLevel = eLogLevel_4;
+#endif
+
+#if 1
+//#pragma import(__use_no_semihosting)			   
+//标准库需要的支持函数				   
+struct __FILE 
+{ 
+	int handle; 
+}; 
+
+FILE __stdout;		 
+
+_sys_exit(int x) 
+{ 
+	x = x; 
+} 
+
+int fputc(int ch, FILE *f)
+{	
+
+#if( INCLUDE_xTaskLogLevel == 1 )
+	if( ucGetTaskLogLevel( NULL ) > ucOsLogLevel )
+	{
+		return ch;
+	}
+#endif
+
+	while((USART3->SR&0X40)==0); 
+	USART3->DR = (u8) ch;	   
+	return ch;
+}
+#endif 
 
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {FAILED = 0, PASSED = !FAILED} TestStatus;
@@ -130,8 +167,8 @@ void nvic_configuration(void)
 #if defined (OPEN_UART2)
     //使能串口中断，并设置优先级
     NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 #endif
@@ -139,8 +176,8 @@ void nvic_configuration(void)
 #if defined (OPEN_UART3)
     //使能串口中断，并设置优先级
     NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 #endif
@@ -200,24 +237,28 @@ void uart1_send_string(const char *data)
 
 void USART1_IRQHandler(void)
 {
-	//int ret;
-	//int len = 0;	
-	uint8_t ch = 0;// err;
-	//static unsigned char pre = 0;
+	uint8_t ch = 0;
 	
-#if SYSTEM_SUPPORT_OS 		//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
-	OSIntEnter();    
-#endif
-	
-	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) { 		
+	if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) 
+	{ 		
 			USART_ClearITPendingBit(USART1,USART_IT_RXNE);
 			ch = USART_ReceiveData(USART1);
-			ch = ch;
+			if( uart1fifo.hasInit == 1 )
+			{
+				if( rfifo_put( &uart1fifo, &ch, 1 ) != 1 ) 
+				{
+						uart1fifo.lostBytes++;
+				} 
+				else 
+				{
+			
+				}
+				vTaskNotifyGiveFromISR( pxUsmartTask, NULL);
+			}
+			
 	}
 
-#if SYSTEM_SUPPORT_OS 	//如果SYSTEM_SUPPORT_OS为真，则需要支持OS.
-	OSIntExit();  											 
-#endif	
+
 }
 
 #include "rfifo.h"
@@ -230,9 +271,53 @@ void USART3_IRQHandler(void)
   { 
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
 		ch = USART_ReceiveData(USART3);
-		ch = ch;
+		if( uart1fifo.hasInit == 1 )
+		{
+			if( rfifo_put( &uart1fifo, &ch, 1 ) != 1 ) 
+			{
+					uart1fifo.lostBytes++;
+			} 
+			else 
+			{
+		
+			}
+			vTaskNotifyGiveFromISR( pxUsmartTask, NULL);
+		}
+
 	}
 }
+
+#if defined (OPEN_UART2)
+
+extern Ringfifo uart2fifo[1];
+extern xTaskHandle pxModuleTask;
+
+void USART2_IRQHandler(void)
+{
+  u8 ch;
+  
+  if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+  { 
+		USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+		ch = USART_ReceiveData(USART2);
+		
+		if( uart2fifo->hasInit == 1 )
+		{
+			if( rfifo_put( uart2fifo, &ch, 1 ) != 1 ) 
+			{
+					uart2fifo->lostBytes++;
+			} 
+			else 
+			{
+		
+			}
+			vTaskNotifyGiveFromISR( pxModuleTask, NULL);
+		}
+
+	}
+}
+
+#endif
 
 void uarts_init(void)
 {
@@ -241,28 +326,4 @@ void uarts_init(void)
     nvic_configuration();
 }
 
-
-//不使用半主机模式, 如果没有这段，则需要在target选项中选择使用USE microLIB
-// #if 1
-// #pragma import(__use_no_semihosting)
-// struct __FILE
-// {
-// 	int handle;
-// };
-// FILE __stdout;
-
-// _sys_exit(int x)
-// {
-// 	x = x;
-// }
-// #endif
-
-UART_PUTCHAR_PROTOTYPE
-{
-    //Place your implementation of fputc here , e.g. write a character to the USART
-    USART_SendData(USART1, (u8)ch);
-    //Loop until the end of transmission
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
-    return ch;
-}
 

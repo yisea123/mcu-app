@@ -1,14 +1,15 @@
 #include "rfifo.h"
-#include <stdio.h>
+#include "stdio.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 /*
 * author: yangjianzhou
 * function: init ring buffer.
 **/
-struct rfifo* rfifo_init(struct rfifo *ring)
+struct rfifo* rfifo_init(struct rfifo *ring, int size)
 {
-	int size = MAX_RBUFFER_LEN;
-	
+	//int size = MAX_RBUFFER_LEN;
 	if (!ring) {
 		 printf("ring_buf is NULL\r\n");
 		 return NULL;
@@ -17,12 +18,18 @@ struct rfifo* rfifo_init(struct rfifo *ring)
 		 printf("size must be power of 2\r\n");
 		 return NULL;
 	}
+	/*we never vPortFree buffer*/
+	ring->buffer = pvPortMalloc( size );
+	if	( ring->buffer == NULL) {	
+		 printf("pvPortMalloc fail!\r\n");
+		 return NULL;		
+	}
 	ring->hasInit = 1;
-	ring->size = MAX_RBUFFER_LEN;
+	ring->size = size;
 	ring->in = 0;
 	ring->out = 0;
 	ring->lost = 0;
-  ring->lostBytes = 0;
+  	ring->lostBytes = 0;
 	
 	return ring;
 }

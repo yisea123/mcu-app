@@ -331,6 +331,21 @@ List_t * const pxConstList = ( pxList );													\
 }
 
 
+#define listGET_OWNER_OF_PRE_ENTRY( pxTCB, pxList )										\
+{																							\
+List_t * const pxConstList = ( pxList );													\
+	/* Increment the index to the next item and return the item, ensuring */				\
+	/* we don't return the marker used at the end of the list.  */							\
+	( pxConstList )->pxIndex = ( pxConstList )->pxIndex->pxPrevious;							\
+	if( ( void * ) ( pxConstList )->pxIndex == ( void * ) &( ( pxConstList )->xListEnd ) )	\
+	{																						\
+		( pxConstList )->pxIndex = ( pxConstList )->pxIndex->pxPrevious;						\
+	}																						\
+	( pxTCB ) = ( pxConstList )->pxIndex->pvOwner;											\
+}
+
+
+
 /*
  * Access function to obtain the owner of the first entry in a list.  Lists
  * are normally sorted in ascending item value order.

@@ -78,6 +78,7 @@ task.h is included from an application file. */
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "stdio.h"
 
 #if ( configUSE_CO_ROUTINES == 1 )
 	#include "croutine.h"
@@ -1306,7 +1307,7 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 				peeked. */
 				pcOriginalReadPosition = pxQueue->u.pcReadFrom;
 
-				printf("xqueue copy data here\r\n");
+				//printf("xqueue copy data here\r\n");
 				prvCopyDataFromQueue( pxQueue, pvBuffer );
 
 				//仅仅是读取了消息，不把消息删除掉
@@ -1456,9 +1457,9 @@ Queue_t * const pxQueue = ( Queue_t * ) xQueue;
 					//进入任务调度， 任务延时到
 					//或者队列中有消息时，任务被切入
 					//又进入for循环中，去读取队列的消息
-					printf("xqueue read block here!\r\n");
+					//printf("xqueue read block here!\r\n");
 					portYIELD_WITHIN_API();
-					printf("xqueue wake up here!\r\n");
+					//printf("xqueue wake up here!\r\n");
 /**
 vTaskSwitchHook: pcTaskName = Receiver
 xqueue read block here!
@@ -2529,7 +2530,7 @@ BaseType_t xReturn;
 		
 		if( pxQueue->uxMessagesWaiting == ( UBaseType_t ) 0U )
 		{
-			/* There is nothing in the queue, block for the specified period. */
+			/* There is nothing in the queue, block for the specified period. */		
 			vTaskPlaceOnEventListRestricted( &( pxQueue->xTasksWaitingToReceive ), xTicksToWait, xWaitIndefinitely );
 		}
 		else

@@ -69,6 +69,7 @@
 
 /* Standard includes. */
 #include <stdlib.h>
+#include <stdio.h>
 
 /* Defining MPU_WRAPPERS_INCLUDED_FROM_API_FILE prevents task.h from redefining
 all the API functions to use the MPU wrappers.  That should only be done when
@@ -108,6 +109,7 @@ typedef struct tmrTimerControl
 	TickType_t				xTimerPeriodInTicks;/*<< How quickly and often the timer expires. */
 	UBaseType_t				uxAutoReload;		/*<< Set to pdTRUE if the timer should be automatically restarted once expired.  Set to pdFALSE if the timer is, in effect, a one-shot timer. */
 	void 					*pvTimerID;			/*<< An ID to identify the timer.  This allows the timer to be identified when the same callback is used for multiple timers. */
+	void 					*pvPivate;			/* add by yangjianzhou.*/
 	TimerCallbackFunction_t	pxCallbackFunction;	/*<< The function that will be called when the timer expires. */
 	#if( configUSE_TRACE_FACILITY == 1 )
 		UBaseType_t			uxTimerNumber;		/*<< An ID assigned by trace tools such as FreeRTOS+Trace */
@@ -280,7 +282,7 @@ BaseType_t xReturn = pdFAIL;
 
 			vApplicationGetTimerTaskMemory( &pxTimerTaskTCBBuffer, &pxTimerTaskStackBuffer, &ulTimerTaskStackSize );
 			xTimerTaskHandle = xTaskCreateStatic(	prvTimerTask,
-													"Tmr Svc",
+													"sysTr",
 													ulTimerTaskStackSize,
 													NULL,
 													( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
@@ -295,7 +297,7 @@ BaseType_t xReturn = pdFAIL;
 		#else
 		{//enter this branch 定时器任务创建
 			xReturn = xTaskCreate(	prvTimerTask,
-									"Tmr Svc",
+									"sysTr",
 									configTIMER_TASK_STACK_DEPTH,
 									NULL,
 									( ( UBaseType_t ) configTIMER_TASK_PRIORITY ) | portPRIVILEGE_BIT,
@@ -520,7 +522,7 @@ Timer_t * const pxTimer = ( Timer_t * ) listGET_OWNER_OF_HEAD_ENTRY( pxCurrentTi
 	expiry time and re-insert the timer in the list of active timers. */
 	if( pxTimer->uxAutoReload == ( UBaseType_t ) pdTRUE )
 	{
-	/*如果定时器设定了周期性，再把定时器加入链表*/
+		/*如果定时器设定了周期性，再把定时器加入链表*/
 		/* The timer is inserted into a list using a time relative to anything
 		other than the current time.  It will therefore be inserted into the
 		correct list relative to the time this task thinks it is now. */
@@ -559,8 +561,8 @@ PRIVILEGED_DATA static List_t *pxOverflowTimerList;
 */
 static void prvTimerTask( void *pvParameters )
 {
-TickType_t xNextExpireTime;
-BaseType_t xListWasEmpty;
+TickType_t xNextExpireTime;//下一个要到期的时间
+BaseType_t xListWasEmpty;//定时器链表是否是空
 
 	/* Just to avoid compiler warnings. */
 	( void ) pvParameters;
@@ -581,6 +583,7 @@ BaseType_t xListWasEmpty;
 	{
 		/* Query the timers list to see if it contains any timers, and if so,
 		obtain the time at which the next timer will expire. */
+		/*获取定时器中最小的到期时间*/		
 		xNextExpireTime = prvGetNextExpireTime( &xListWasEmpty );
 
 		/* If a timer has expired, process it.  Otherwise, block this task
@@ -607,6 +610,12 @@ BaseType_t xTimerListsWereSwitched;
 		when the lists were switched will have been processed within the
 		prvSampleTimeNow() function. */
 		xTimeNow = prvSampleTimeNow( &xTimerListsWereSwitched );
+
+#if TIMERDEBUG
+		printf("%s: xTimeNow = %ld, xListWasEmpty = %ld\r\n", 
+			__func__, xTimeNow, xListWasEmpty);
+#endif
+		/*如果时钟tick没有溢出了，链表没发生了切换*/
 		if( xTimerListsWereSwitched == pdFALSE )
 		{
 			/* The tick count has not overflowed, has the timer expired? */
@@ -614,6 +623,9 @@ BaseType_t xTimerListsWereSwitched;
 			{
 				//如果超时了。。回调定时器函数
 				( void ) xTaskResumeAll();
+#if TIMERDEBUG				
+				printf ("## Timer expired!! Callback....\r\n");
+#endif
 				prvProcessExpiredTimer( xNextExpireTime, xTimeNow );
 			}
 			else
@@ -641,6 +653,11 @@ BaseType_t xTimerListsWereSwitched;
 				//到xTimerQueue中，定时器服务任务就会被切入，做出
 				//相应的动作，或者回调定时器函数，或者取出消息
 				//队列中的消息
+				{
+#if TIMERDEBUG				
+					printf( "##Add Timer Task to xTimerQueue->xTasksWaitingToReceive!\r\n" );
+#endif
+				}					
 				vQueueWaitForMessageRestricted( xTimerQueue, ( xNextExpireTime - xTimeNow ), xListWasEmpty );
 
 				if( xTaskResumeAll() == pdFALSE )
@@ -649,7 +666,14 @@ BaseType_t xTimerListsWereSwitched;
 					block time to expire.  If a command arrived between the
 					critical section being exited and this yield then the yield
 					will not cause the task to block. */
+#if TIMERDEBUG					
+					printf( "##Timer Task Switch out!!!\r\n" );
+#endif
 					portYIELD_WITHIN_API();
+
+#if TIMERDEBUG
+					printf( "##Timer Task Switch in!!!\r\n" );
+#endif
 				}
 				else
 				{
@@ -665,6 +689,7 @@ BaseType_t xTimerListsWereSwitched;
 }
 /*-----------------------------------------------------------*/
 
+/*获取定时器中最小的到期时间*/
 static TickType_t prvGetNextExpireTime( BaseType_t * const pxListWasEmpty )
 {
 TickType_t xNextExpireTime;
@@ -694,6 +719,9 @@ TickType_t xNextExpireTime;
 		xNextExpireTime = ( TickType_t ) 0U;
 	}
 
+#if TIMERDEBUG
+	printf("%s: xNextExpireTime = %ld\r\n", __func__, xNextExpireTime);
+#endif
 	return xNextExpireTime;
 }
 /*-----------------------------------------------------------*/
@@ -773,6 +801,9 @@ TickType_t xTimeNow;
 	/*查看是否有队列消息发到定时器来*/
 	while( xQueueReceive( xTimerQueue, &xMessage, tmrNO_DELAY ) != pdFAIL ) /*lint !e603 xMessage does not have to be initialised as it is passed out, not in, and it is not used unless xQueueReceive() returns pdTRUE. */
 	{
+#if TIMERDEBUG		
+		printf("## xTimerQueue receive message....\r\n");
+#endif
 		#if ( INCLUDE_xTimerPendFunctionCall == 1 )
 		{
 			/* Negative commands are pended function calls rather than timer
@@ -807,7 +838,13 @@ TickType_t xTimeNow;
 			，从链表中删除*/
 			if( listIS_CONTAINED_WITHIN( NULL, &( pxTimer->xTimerListItem ) ) == pdFALSE )
 			{
+#if TIMERDEBUG				
+				printf( "this timer is in the List! uxListRemove it!\r\n" );
+#endif
 				/* The timer is in a list, remove it. */
+				/*timer 结构体的链表操作都只在这个任务中
+				中断或者其它任务没有操作这个链表，
+				所以不用关中断或者suspendAll()关闭调度器*/
 				( void ) uxListRemove( &( pxTimer->xTimerListItem ) );
 			}
 			else
@@ -853,6 +890,9 @@ TickType_t xTimeNow;
 					}
 					else
 					{
+#if TIMERDEBUG					
+						printf( "add timer to list(pxCurrentTimerList/pxOverflowTimerList) success!!\r\n" );
+#endif
 						mtCOVERAGE_TEST_MARKER();
 					}
 					break;
@@ -913,6 +953,8 @@ TickType_t xTimeNow;
 }
 /*-----------------------------------------------------------*/
 
+/*TICK溢出，把pxCurrentTimerList的定时器全部回调，
+然后再判断是否要周期运行，是的话就重新加入*/
 static void prvSwitchTimerLists( void )
 {
 TickType_t xNextExpireTime, xReloadTime;
@@ -957,6 +999,8 @@ BaseType_t xResult;
 			}
 			else
 			{
+				/*如果超时，就把定时器的加入动作发到消息队列中
+				去，后续再处理*/
 				xResult = xTimerGenericCommand( pxTimer, tmrCOMMAND_START_DONT_TRACE, xNextExpireTime, NULL, tmrNO_DELAY );
 				configASSERT( xResult );
 				( void ) xResult;
@@ -1076,6 +1120,37 @@ Timer_t * const pxTimer = ( Timer_t * ) xTimer;
 	}
 	taskEXIT_CRITICAL();
 }
+
+void *pvTimerGetPrivate( const TimerHandle_t xTimer )
+{
+Timer_t * const pxTimer = ( Timer_t * ) xTimer;
+void *pvReturn;
+
+	configASSERT( xTimer );
+
+	taskENTER_CRITICAL();
+	{
+		pvReturn = pxTimer->pvPivate;
+	}
+	taskEXIT_CRITICAL();
+
+	return pvReturn;
+}
+/*-----------------------------------------------------------*/
+
+void vTimerSetPrivate( TimerHandle_t xTimer, void *pvNewPrivate )
+{
+Timer_t * const pxTimer = ( Timer_t * ) xTimer;
+
+	configASSERT( xTimer );
+
+	taskENTER_CRITICAL();
+	{
+		pxTimer->pvPivate = pvNewPrivate;
+	}
+	taskEXIT_CRITICAL();
+}
+
 /*-----------------------------------------------------------*/
 
 #if( INCLUDE_xTimerPendFunctionCall == 1 )
